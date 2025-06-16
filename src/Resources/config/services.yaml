@@ -1,0 +1,32 @@
+services:
+  # default configuration for services in *this* file
+  _defaults:
+    autowire: true      # Automatically injects dependencies in your services.
+    autoconfigure: true # Automatically registers your services as commands, event subscribers, etc.
+    public: true
+
+  ProductBundle\:
+    resource: '../../'
+    exclude:
+      - '../../DependencyInjection/'
+      - '../../Enum/'
+      - '../../Entity/'
+      - '../../Event/'
+      - '../../Message/'
+      - '../../Model/'
+      - '../../Exception/'
+      - '../../Resources/'
+      - '../../Tests/'
+      - '../../LegacyProcedure/'
+
+  ProductBundle\Repository\SkuRepository:
+    autowire: true
+    public: true
+  ProductBundle\Repository\StockRepository:
+    autowire: true
+    public: true
+
+  # 自动读取标签相关配置
+  product.tag.fetcher:
+    class: ProductBundle\ProductTagFetcher
+    public: true

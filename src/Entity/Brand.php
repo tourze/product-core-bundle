@@ -1,0 +1,209 @@
+<?php
+
+namespace ProductBundle\Entity;
+
+use Doctrine\DBAL\Types\Types;
+use Doctrine\ORM\Mapping as ORM;
+use ProductBundle\Repository\BrandRepository;
+use Symfony\Component\Serializer\Attribute\Groups;
+use Tourze\DoctrineIndexedBundle\Attribute\IndexColumn;
+use Tourze\DoctrineIpBundle\Attribute\CreateIpColumn;
+use Tourze\DoctrineIpBundle\Attribute\UpdateIpColumn;
+use Tourze\DoctrineSnowflakeBundle\Service\SnowflakeIdGenerator;
+use Tourze\DoctrineTrackBundle\Attribute\TrackColumn;
+use Tourze\DoctrineUserBundle\Attribute\CreatedByColumn;
+use Tourze\DoctrineUserBundle\Attribute\UpdatedByColumn;
+use Tourze\EasyAdmin\Attribute\Action\Creatable;
+use Tourze\EasyAdmin\Attribute\Action\Deletable;
+use Tourze\EasyAdmin\Attribute\Action\Editable;
+use Tourze\EasyAdmin\Attribute\Action\Listable;
+use Tourze\EasyAdmin\Attribute\Column\BoolColumn;
+use Tourze\EasyAdmin\Attribute\Column\ExportColumn;
+use Tourze\EasyAdmin\Attribute\Column\ListColumn;
+use Tourze\EasyAdmin\Attribute\Field\FormField;
+use Tourze\EasyAdmin\Attribute\Permission\AsPermission;
+
+/**
+ * @see https://blog.csdn.net/zhichaosong/article/details/120316738
+ */
+#[AsPermission(title: '品牌管理')]
+#[Listable]
+#[Deletable]
+#[Editable]
+#[Creatable]
+#[ORM\Table(name: 'product_brand', options: ['comment' => '品牌管理表'])]
+#[ORM\Entity(repositoryClass: BrandRepository::class)]
+class Brand implements \Stringable
+{
+    #[Filterable]
+    #[IndexColumn]
+    #[ListColumn(order: 98, sorter: true)]
+    #[ExportColumn]
+    #[CreateTimeColumn]
+    #[Groups(['restful_read', 'admin_curd', 'restful_read'])]
+    #[ORM\Column(type: Types::DATETIME_MUTABLE, nullable: true, options: ['comment' => '创建时间'])]
+    private ?\DateTimeInterface $createTime = null;
+
+    #[UpdateTimeColumn]
+    #[ListColumn(order: 99, sorter: true)]
+    #[Groups(['restful_read', 'admin_curd', 'restful_read'])]
+    #[Filterable]
+    #[ExportColumn]
+    #[ORM\Column(type: Types::DATETIME_MUTABLE, nullable: true, options: ['comment' => '更新时间'])]
+    private ?\DateTimeInterface $updateTime = null;
+    #[ExportColumn]
+    #[ListColumn(order: -1, sorter: true)]
+    #[Groups(['restful_read', 'admin_curd', 'recursive_view', 'api_tree'])]
+    #[ORM\Id]
+    #[ORM\GeneratedValue(strategy: 'CUSTOM')]
+    #[ORM\CustomIdGenerator(SnowflakeIdGenerator::class)]
+    #[ORM\Column(type: Types::BIGINT, nullable: false, options: ['comment' => 'ID'])]
+    private ?string $id = null;
+    #[CreatedByColumn]
+    #[Groups(['restful_read'])]
+    #[ORM\Column(nullable: true, options: ['comment' => '创建人'])]
+    private ?string $createdBy = null;
+    #[UpdatedByColumn]
+    #[Groups(['restful_read'])]
+    #[ORM\Column(nullable: true, options: ['comment' => '更新人'])]
+    private ?string $updatedBy = null;
+    #[BoolColumn]
+    #[IndexColumn]
+    #[TrackColumn]
+    #[Groups(['admin_curd', 'restful_read', 'restful_read', 'restful_write'])]
+    #[ORM\Column(type: Types::BOOLEAN, nullable: true, options: ['comment' => '有效', 'default' => 0])]
+    #[ListColumn(order: 97)]
+    #[FormField(order: 97)]
+    private ?bool $valid = false;
+    #[Groups(['admin_curd'])]
+    #[ListColumn]
+    #[FormField]
+    #[ORM\Column(type: Types::STRING, length: 64, options: ['comment' => '标题'])]
+    private ?string $name = null;
+    #[ORM\Column(type: Types::STRING, length: 255, nullable: true, options: ['comment' => 'LOGO地址'])]
+    private ?string $logoUrl = null;
+    #[CreateIpColumn]
+    #[ORM\Column(length: 128, nullable: true, options: ['comment' => '创建时IP'])]
+    private ?string $createdFromIp = null;
+    #[UpdateIpColumn]
+    #[ORM\Column(length: 128, nullable: true, options: ['comment' => '更新时IP'])]
+    private ?string $updatedFromIp = null;
+
+    public function getCreateTime(): ?\DateTimeInterface
+    {
+        return $this->createTime;
+    }
+
+    public function setCreateTime(?\DateTimeInterface $createdAt): void
+    {
+        $this->createTime = $createdAt;
+    }
+
+    public function getUpdateTime(): ?\DateTimeInterface
+    {
+        return $this->updateTime;
+    }
+
+    public function setUpdateTime(?\DateTimeInterface $updateTime): void
+    {
+        $this->updateTime = $updateTime;
+    }
+
+    public function __toString(): string
+    {
+        if (!$this->getId()) {
+            return '';
+        }
+
+        return "{$this->getName()}";
+    }
+
+    public function getId(): ?string
+    {
+        return $this->id;
+    }
+
+    public function getName(): ?string
+    {
+        return $this->name;
+    }
+
+    public function setName(string $name): self
+    {
+        $this->name = $name;
+
+        return $this;
+    }
+
+    public function getCreatedBy(): ?string
+    {
+        return $this->createdBy;
+    }
+
+    public function setCreatedBy(?string $createdBy): self
+    {
+        $this->createdBy = $createdBy;
+
+        return $this;
+    }
+
+    public function getUpdatedBy(): ?string
+    {
+        return $this->updatedBy;
+    }
+
+    public function setUpdatedBy(?string $updatedBy): self
+    {
+        $this->updatedBy = $updatedBy;
+
+        return $this;
+    }
+
+    public function isValid(): ?bool
+    {
+        return $this->valid;
+    }
+
+    public function setValid(?bool $valid): self
+    {
+        $this->valid = $valid;
+
+        return $this;
+    }
+
+    public function getLogoUrl(): ?string
+    {
+        return $this->logoUrl;
+    }
+
+    public function setLogoUrl(?string $logoUrl): self
+    {
+        $this->logoUrl = $logoUrl;
+
+        return $this;
+    }
+
+    public function getCreatedFromIp(): ?string
+    {
+        return $this->createdFromIp;
+    }
+
+    public function setCreatedFromIp(?string $createdFromIp): static
+    {
+        $this->createdFromIp = $createdFromIp;
+
+        return $this;
+    }
+
+    public function getUpdatedFromIp(): ?string
+    {
+        return $this->updatedFromIp;
+    }
+
+    public function setUpdatedFromIp(?string $updatedFromIp): static
+    {
+        $this->updatedFromIp = $updatedFromIp;
+
+        return $this;
+    }
+}

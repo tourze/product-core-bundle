@@ -1,0 +1,209 @@
+<?php
+
+namespace ProductBundle\Command;
+
+use Carbon\Carbon;
+use Doctrine\ORM\EntityManagerInterface;
+use HttpClientBundle\Service\SmartHttpClient;
+use ProductBundle\Entity\Price;
+use ProductBundle\Entity\Sku;
+use ProductBundle\Entity\SkuAttribute;
+use ProductBundle\Entity\Spu;
+use ProductBundle\Entity\SpuAttribute;
+use ProductBundle\Enum\PriceType;
+use ProductBundle\Enum\SpuState;
+use ProductBundle\Repository\PriceRepository;
+use ProductBundle\Repository\SkuAttributeRepository;
+use ProductBundle\Repository\SkuRepository;
+use ProductBundle\Repository\SpuAttributeRepository;
+use ProductBundle\Repository\SpuRepository;
+use Symfony\Component\Console\Attribute\AsCommand;
+use Symfony\Component\Console\Command\Command;
+use Symfony\Component\Console\Input\InputInterface;
+use Symfony\Component\Console\Output\OutputInterface;
+use Symfony\Component\VarExporter\VarExporter;
+use Yiisoft\Json\Json;
+
+#[AsCommand(name: 'product:cib-mall:crawl-spu', description: '采集兴业银行商城SPU数据')]
+class CibMallCrawlSpuCommand extends Command
+{
+    public function __construct(
+        private readonly SmartHttpClient $httpClient,
+        private readonly SpuRepository $spuRepository,
+        private readonly SpuAttributeRepository $spuAttributeRepository,
+        private readonly SkuRepository $skuRepository,
+        private readonly SkuAttributeRepository $skuAttributeRepository,
+        private readonly PriceRepository $priceRepository,
+        private readonly EntityManagerInterface $entityManager,
+        ?string $name = null,
+    ) {
+        parent::__construct($name);
+    }
+
+    protected function execute(InputInterface $input, OutputInterface $output): int
+    {
+        $skuIds = [];
+
+        $shopHome = $this->httpClient
+            ->request('POST', 'https://mall.cib.com.cn/unified-mall-web/api/shopHome/getShopHome', [
+                'body' => [
+                    'json' => Json::encode((object) []),
+                ],
+            ])
+            ->getContent();
+        $shopHome = Json::decode($shopHome);
+        $skuIds = array_merge($skuIds, explode(',', (string) $shopHome['goodsOne']['link']));
+
+        $shopHomeBottom = $this->httpClient
+            ->request('POST', 'https://mall.cib.com.cn/unified-mall-web/api/shopHome/getShopHomeBoottom', [
+                'body' => [
+                    'json' => Json::encode((object) []),
+                ],
+            ])
+            ->getContent();
+        $shopHomeBottom = Json::decode($shopHomeBottom);
+        $skuIds = array_merge($skuIds, explode(',', (string) $shopHomeBottom['goodsTwo']['link']));
+        $skuIds = array_merge($skuIds, explode(',', (string) $shopHomeBottom['goodsThree']['link']));
+        $skuIds = array_merge($skuIds, explode(',', (string) $shopHomeBottom['goodsFour']['link']));
+
+        $skuIds = array_unique($skuIds);
+        $output->writeln('当前计划入库的SKU ID: ' . VarExporter::export($skuIds));
+
+        foreach ($skuIds as $skuId) {
+            $output->writeln("正在抓取：{$skuId}");
+            $response = $this->httpClient->request('POST', 'https://mall.cib.com.cn/unified-mall-web/api/goods/getGoods', [
+                'body' => [
+                    'json' => Json::encode([
+                        'skuId' => $skuId,
+                    ]),
+                ],
+            ]);
+            $response = $response->getContent();
+            $response = Json::decode($response);
+            $output->writeln(VarExporter::export($response));
+
+            // 准备SPU
+            $spuGTIN = "CIB-MALL-{$response['goodsSpu']['spuId']}";
+            $spu = $this->spuRepository->findOneBy(['gtin' => $spuGTIN]);
+            if (!$spu) {
+                $spu = new Spu();
+                $spu->setGtin($spuGTIN);
+            }
+
+            $spu->setTitle($response['goodsSpu']['name']);
+            $spu->setState(SpuState::ONLINE);
+            // 描述
+            $spuHtml = '';
+            foreach ($response['goodsSpu']['picsList'] as $pic) {
+                $spuHtml .= "<img src='https://file.cibfintech.com/{$pic}' alt=''>";
+            }
+
+            $spu->setContent($spuHtml);
+            $spu->setValid(false);
+            $this->entityManager->persist($spu);
+
+            // SPU属性
+            foreach ($response['goodsSpuPropertyCustom'] as $item) {
+                if ('无' === $item['name']) {
+                    continue;
+                }
+
+                $attr = $this->spuAttributeRepository->findOneBy([
+                    'spu' => $spu,
+                    'name' => $item['name'],
+                ]);
+                if (!$attr) {
+                    $attr = new SpuAttribute();
+                    $attr->setSpu($spu);
+                    $attr->setName($item['name']);
+                    $attr->setValue($item['valueName']);
+                    $this->entityManager->persist($attr);
+                }
+            }
+
+            // 遍历SKU
+            $spuThumbs = [];
+            foreach ($response['goodsSkus'] as $item) {
+                $skuGTIN = "{$spuGTIN}-{$item['skuId']}";
+                $sku = $this->skuRepository->findOneBy([
+                    'spu' => $spu,
+                    'gtin' => $skuGTIN,
+                ]);
+                if (!$sku) {
+                    $sku = new Sku();
+                    $sku->setSpu($spu);
+                    $sku->setGtin($skuGTIN);
+                }
+
+                $sku->setUnit('件');
+
+                // 图片
+                $thumbs = [];
+                foreach ($item['picsList'] as $pic) {
+                    $spuThumbs[$pic] = [
+                        'can_delete' => true,
+                        'fileName' => '',
+                        'id' => 0,
+                        'name' => '',
+                        'path' => "https://file.cibfintech.com/{$pic}",
+                        'url' => "https://file.cibfintech.com/{$pic}",
+                    ];
+                    $thumbs[] = [
+                        'can_delete' => true,
+                        'fileName' => '',
+                        'id' => 0,
+                        'name' => '',
+                        'path' => "https://file.cibfintech.com/{$pic}",
+                        'url' => "https://file.cibfintech.com/{$pic}",
+                    ];
+                }
+
+                $sku->setThumbs($thumbs ?: null);
+                $this->entityManager->persist($sku);
+
+                // 价格
+                $price = $this->priceRepository->findOneBy([
+                    'sku' => $sku,
+                    'type' => PriceType::SALE->value,
+                ]);
+                if (!$price) {
+                    $price = new Price();
+                    $price->setSku($sku);
+                    $price->setType(PriceType::SALE);
+                }
+
+                $price->setCurrency('CNY');
+                $price->setPrice($item['price'] / 100);
+                $price->setEffectTime(Carbon::now());
+                $price->setExpireTime(Carbon::now()->addYears(100));
+                $this->entityManager->persist($price);
+
+                // 属性
+                foreach ($response['goodsSpu']['propertysList'] as $j => $property) {
+                    if (isset($item['propertysList'][$j])) {
+                        $attribute = $this->skuAttributeRepository->findOneBy([
+                            'sku' => $sku,
+                            'name' => $property['name'],
+                        ]);
+                        if (!$attribute) {
+                            $attribute = new SkuAttribute();
+                            $attribute->setSku($sku);
+                            $attribute->setName($property['name']);
+                        }
+
+                        $attribute->setValue($item['propertysList'][$j]);
+                        $this->entityManager->persist($attribute);
+                    }
+                }
+            }
+
+            $spuThumbs = array_values($spuThumbs);
+            $spu->setThumbs($spuThumbs);
+            $spu->setValid(true);
+            $this->entityManager->persist($spu);
+            $this->entityManager->flush();
+        }
+
+        return Command::SUCCESS;
+    }
+}
