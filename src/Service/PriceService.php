@@ -2,7 +2,7 @@
 
 namespace ProductBundle\Service;
 
-use AppBundle\Entity\BizUser;
+use BizUserBundle\Entity\BizUser;
 use Carbon\CarbonInterface;
 use ProductBundle\Entity\Price;
 use ProductBundle\Entity\Sku;
