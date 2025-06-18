@@ -17,6 +17,7 @@ use Tourze\Symfony\CronJob\Attribute\AsCronTask;
 #[AsCommand(name: 'product:auto-take-down-spu', description: '自动下架商品')]
 class AutoTakeDownSpuCommand extends Command
 {
+    public const NAME = 'product:auto-take-down-spu';
     public function __construct(
         private readonly SpuRepository $spuRepository,
         private readonly LoggerInterface $logger,

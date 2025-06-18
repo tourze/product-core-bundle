@@ -9,61 +9,31 @@ use Doctrine\ORM\Mapping as ORM;
 use ProductBundle\Repository\TagRepository;
 use Symfony\Component\Serializer\Attribute\Groups;
 use Symfony\Component\Serializer\Attribute\Ignore;
-use Tourze\DoctrineIndexedBundle\Attribute\IndexColumn;
 use Tourze\DoctrineTimestampBundle\Traits\TimestampableAware;
-use Tourze\DoctrineUserBundle\Attribute\CreatedByColumn;
 use Tourze\DoctrineUserBundle\Attribute\UpdatedByColumn;
-use Tourze\EasyAdmin\Attribute\Action\Creatable;
-use Tourze\EasyAdmin\Attribute\Action\Deletable;
-use Tourze\EasyAdmin\Attribute\Action\Editable;
-use Tourze\EasyAdmin\Attribute\Column\ListColumn;
-use Tourze\EasyAdmin\Attribute\Field\FormField;
-use Tourze\EasyAdmin\Attribute\Filter\Filterable;
-use Tourze\EasyAdmin\Attribute\Permission\AsPermission;
+use Tourze\DoctrineUserBundle\Traits\BlameableAware;
 use Tourze\EnumExtra\Itemable;
 
-#[AsPermission(title: '标签')]
-#[Deletable]
-#[Editable]
-#[Creatable]
 #[ORM\Table(name: 'product_tag', options: ['comment' => '产品标签'])]
 #[ORM\Entity(repositoryClass: TagRepository::class)]
 class Tag implements \Stringable, Itemable
 {
+        use BlameableAware;
     use TimestampableAware;
-    #[Filterable]
-    #[IndexColumn]
-    #[ListColumn(order: 98, sorter: true)]
-    #[ExportColumn]
-    #[CreateTimeColumn]
+
+
     #[Groups(['restful_read', 'admin_curd', 'restful_read'])]
-    #[ORM\Column(type: Types::DATETIME_MUTABLE, nullable: true, options: ['comment' => '创建时间'])]#[UpdateTimeColumn]
-    #[ListColumn(order: 99, sorter: true)]
-    #[Groups(['restful_read', 'admin_curd', 'restful_read'])]
-    #[Filterable]
-    #[ExportColumn]
-    #[ORM\Column(type: Types::DATETIME_MUTABLE, nullable: true, options: ['comment' => '更新时间'])]#[CreatedByColumn]
-    #[Groups(['restful_read'])]
-    #[ORM\Column(nullable: true, options: ['comment' => '创建人'])]
+    #[ORM\Column(type: Types::DATETIME_IMMUTABLE, nullable: true, options: ['comment' => '创建时间'])]
     private ?string $createdBy = null;
     #[UpdatedByColumn]
-    #[Groups(['restful_read'])]
     #[ORM\Column(nullable: true, options: ['comment' => '更新人'])]
     private ?string $updatedBy = null;
-    #[ListColumn]
-    #[Groups(['restful_read'])]
     #[ORM\Id]
     #[ORM\GeneratedValue]
     #[ORM\Column(type: Types::INTEGER, options: ['comment' => '标签ID'])]
     private ?int $id = 0;
-    #[IndexColumn]
     #[ORM\Column(length: 40, nullable: true, options: ['comment' => '目录'])]
     private ?string $category = null;
-    #[IndexColumn]
-    #[FormField]
-    #[Filterable]
-    #[ListColumn]
-    #[Groups(['restful_read'])]
     #[ORM\Column(type: Types::STRING, length: 30, unique: true, options: ['comment' => '标签名'])]
     private ?string $name = null;
     /**
@@ -76,8 +46,6 @@ class Tag implements \Stringable, Itemable
     private ?string $textColor = null;
     #[ORM\Column(length: 20, nullable: true, options: ['comment' => '背景颜色'])]
     private ?string $bgColor = null;
-    #[FormField]
-    #[ListColumn]
     #[ORM\Column(length: 255, nullable: true, options: ['comment' => '备注'])]
     private ?string $remark = null;
 
@@ -124,7 +92,6 @@ class Tag implements \Stringable, Itemable
         return $this;
     }
 
-    #[ListColumn(title: 'SPU数量')]
     public function getSpuCount(): int
     {
         return $this->getSpus()->count();

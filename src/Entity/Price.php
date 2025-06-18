@@ -21,20 +21,13 @@ use Tourze\DoctrineIpBundle\Attribute\UpdateIpColumn;
 use Tourze\DoctrinePrecisionBundle\Attribute\PrecisionColumn;
 use Tourze\DoctrineTimestampBundle\Traits\TimestampableAware;
 use Tourze\DoctrineTrackBundle\Attribute\TrackColumn;
-use Tourze\DoctrineUserBundle\Attribute\CreatedByColumn;
 use Tourze\DoctrineUserBundle\Attribute\UpdatedByColumn;
-use Tourze\EasyAdmin\Attribute\Action\Creatable;
-use Tourze\EasyAdmin\Attribute\Action\Deletable;
-use Tourze\EasyAdmin\Attribute\Action\Editable;
+use Tourze\DoctrineUserBundle\Traits\BlameableAware;
 use Tourze\EasyAdmin\Attribute\Action\Listable;
-use Tourze\EasyAdmin\Attribute\Column\BoolColumn;
-use Tourze\EasyAdmin\Attribute\Column\ListColumn;
 use Tourze\EasyAdmin\Attribute\Event\BeforeCreate;
 use Tourze\EasyAdmin\Attribute\Event\BeforeEdit;
-use Tourze\EasyAdmin\Attribute\Field\FormField;
 use Tourze\EasyAdmin\Attribute\Field\RichTextField;
 use Tourze\EasyAdmin\Attribute\Field\SelectField;
-use Tourze\EasyAdmin\Attribute\Filter\Filterable;
 
 /**
  * 价格
@@ -49,34 +42,20 @@ use Tourze\EasyAdmin\Attribute\Filter\Filterable;
  * @see https://cloud.tencent.com/developer/article/1866203
  */
 #[Listable]
-#[Deletable]
-#[Editable]
-#[Creatable]
 #[ORM\Table(name: 'product_price', options: ['comment' => '产品价格'])]
 #[ORM\Entity(repositoryClass: PriceRepository::class)]
 class Price implements \Stringable, AdminArrayInterface
 {
+        use BlameableAware;
     use TimestampableAware;
-    #[Filterable]
-    #[IndexColumn]
-    #[ListColumn(order: 98, sorter: true)]
-    #[ExportColumn]
-    #[CreateTimeColumn]
+
+
     #[Groups(['restful_read', 'admin_curd', 'restful_read'])]
-    #[ORM\Column(type: Types::DATETIME_MUTABLE, nullable: true, options: ['comment' => '创建时间'])]#[UpdateTimeColumn]
-    #[ListColumn(order: 99, sorter: true)]
-    #[Groups(['restful_read', 'admin_curd', 'restful_read'])]
-    #[Filterable]
-    #[ExportColumn]
-    #[ORM\Column(type: Types::DATETIME_MUTABLE, nullable: true, options: ['comment' => '更新时间'])]#[CreatedByColumn]
-    #[Groups(['restful_read'])]
-    #[ORM\Column(nullable: true, options: ['comment' => '创建人'])]
+    #[ORM\Column(type: Types::DATETIME_IMMUTABLE, nullable: true, options: ['comment' => '创建时间'])]
     private ?string $createdBy = null;
     #[UpdatedByColumn]
-    #[Groups(['restful_read'])]
     #[ORM\Column(nullable: true, options: ['comment' => '更新人'])]
     private ?string $updatedBy = null;
-    #[ListColumn]
     #[Groups(['admin_curd'])]
     #[ORM\Id]
     #[ORM\GeneratedValue]
@@ -87,82 +66,47 @@ class Price implements \Stringable, AdminArrayInterface
     #[ORM\JoinColumn(nullable: false, onDelete: 'CASCADE')]
     private ?Sku $sku = null;
     #[TrackColumn]
-    #[Groups(['admin_curd'])]
-    #[FormField(span: 9)]
-    #[ListColumn(sorter: true)]
     #[ORM\Column(type: Types::STRING, length: 60, enumType: PriceType::class, options: ['default' => 'sale', 'comment' => '类型'])]
     private PriceType $type;
-    #[TrackColumn]
     #[SelectField(targetEntity: CurrencyManager::class)]
-    #[FormField(span: 5)]
-    #[Filterable]
     #[Groups(['restful_read', 'admin_curd'])]
     #[ORM\Column(type: Types::STRING, length: 10, options: ['default' => 'CNY', 'comment' => '币种'])]
     private ?string $currency = null;
     /**
      * @var string|null 我们理解这个金额不包含税费
      */
-    #[TrackColumn]
     #[PrecisionColumn]
-    #[FormField(span: 5)]
-    #[ListColumn(sorter: true)]
-    #[Groups(['restful_read', 'admin_curd'])]
     #[ORM\Column(type: Types::DECIMAL, precision: 20, scale: 2, options: ['comment' => '金额'])]
     private ?string $price = null;
     /**
      * @see https://you.kaola.com/footer/index.html?key=footer_tariff
      */
-    #[TrackColumn]
-    #[FormField(span: 5)]
-    #[Groups(['restful_read', 'admin_curd'])]
     #[ORM\Column(type: Types::FLOAT, nullable: true, options: ['comment' => '税率(%)'])]
     private ?float $taxRate = null;
     /**
      * 一些特殊的价格，希望更加灵活，此时可以使用公式能力.
      */
-    #[Groups(['admin_curd'])]
     #[ORM\Column(type: Types::STRING, length: 120, nullable: true, options: ['comment' => '公式'])]
     private ?string $formula = null;
-    #[BoolColumn]
-    #[Groups(['admin_curd'])]
-    #[FormField(span: 8)]
-    #[ListColumn]
     #[ORM\Column(type: Types::BOOLEAN, nullable: true, options: ['comment' => '允许退款', 'default' => 1])]
     private ?bool $canRefund = true;
-    #[Groups(['admin_curd'])]
-    #[FormField(span: 8)]
-    #[ListColumn(sorter: true)]
     #[ORM\Column(type: Types::INTEGER, nullable: true, options: ['comment' => '优先级', 'default' => 0])]
     private ?int $priority = null;
-    #[Groups(['admin_curd'])]
-    #[FormField(span: 9)]
-    #[ORM\Column(type: Types::DATETIME_MUTABLE, nullable: true, options: ['comment' => '生效时间'])]
+    #[ORM\Column(type: Types::DATETIME_IMMUTABLE, nullable: true, options: ['comment' => '生效时间'])]
     private ?\DateTimeInterface $effectTime = null;
-    #[Groups(['admin_curd'])]
-    #[FormField(span: 15)]
     #[Assert\GreaterThan(propertyPath: 'effectTime')]
-    #[ORM\Column(type: Types::DATETIME_MUTABLE, nullable: true, options: ['comment' => '过期时间'])]
+    #[ORM\Column(type: Types::DATETIME_IMMUTABLE, nullable: true, options: ['comment' => '过期时间'])]
     private ?\DateTimeInterface $expireTime = null;
-    #[TrackColumn]
-    #[Groups(['admin_curd'])]
-    #[FormField]
-    #[Filterable]
     #[ORM\Column(type: Types::STRING, length: 1000, nullable: true, options: ['comment' => '备注'])]
     private ?string $remark = null;
     /**
      * @BraftEditor
      */
     #[RichTextField]
-    #[TrackColumn]
-    #[Groups(['admin_curd'])]
-    #[FormField]
     #[ORM\Column(type: Types::TEXT, nullable: true, options: ['comment' => '描述'])]
     private ?string $description = null;
-    #[Groups(['admin_curd'])]
     #[ORM\Column(type: Types::BOOLEAN, nullable: true, options: ['comment' => '是否默认'])]
     private ?bool $isDefault = false;
-    #[TrackColumn]
-    #[Groups(['restful_read', 'admin_curd'])]
     #[ORM\Column(nullable: true, options: ['comment' => '最小购买数量'])]
     private ?int $minBuyQuantity = null;
     #[CreateIpColumn]
@@ -188,7 +132,6 @@ class Price implements \Stringable, AdminArrayInterface
         return $this->id;
     }
 
-    #[ListColumn(title: '生效时间')]
     public function getDateRange(): string
     {
         $startDate = Carbon::parse($this->getEffectTime());
@@ -308,7 +251,6 @@ class Price implements \Stringable, AdminArrayInterface
         return $this;
     }
 
-    #[ListColumn(order: 1, title: '货币')]
     public function renderCurrency(): string
     {
         foreach (Kernel::container()->get(CurrencyService::class)->getCurrencies() as $currency) {

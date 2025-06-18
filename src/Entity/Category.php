@@ -15,96 +15,58 @@ use ProductBundle\Repository\CategoryRepository;
 use Symfony\Component\Serializer\Attribute\Groups;
 use Symfony\Component\Serializer\Attribute\Ignore;
 use Tourze\Arrayable\AdminArrayInterface;
-use Tourze\DoctrineIndexedBundle\Attribute\IndexColumn;
 use Tourze\DoctrineTimestampBundle\Traits\TimestampableAware;
 use Tourze\DoctrineTrackBundle\Attribute\TrackColumn;
-use Tourze\DoctrineUserBundle\Attribute\CreatedByColumn;
 use Tourze\DoctrineUserBundle\Attribute\UpdatedByColumn;
-use Tourze\EasyAdmin\Attribute\Action\Creatable;
-use Tourze\EasyAdmin\Attribute\Action\Deletable;
-use Tourze\EasyAdmin\Attribute\Action\Editable;
-use Tourze\EasyAdmin\Attribute\Column\BoolColumn;
-use Tourze\EasyAdmin\Attribute\Column\ListColumn;
+use Tourze\DoctrineUserBundle\Traits\BlameableAware;
 use Tourze\EasyAdmin\Attribute\Column\PictureColumn;
 use Tourze\EasyAdmin\Attribute\Column\TreeView;
-use Tourze\EasyAdmin\Attribute\Field\FormField;
 use Tourze\EasyAdmin\Attribute\Field\ImagePickerField;
 use Tourze\EasyAdmin\Attribute\Field\RichTextField;
 use Tourze\EasyAdmin\Attribute\Field\SelectField;
-use Tourze\EasyAdmin\Attribute\Filter\Keyword;
-use Tourze\EasyAdmin\Attribute\Permission\AsPermission;
 use Tourze\EnumExtra\Itemable;
 
-#[AsPermission(title: '产品分类')]
-#[Deletable]
-#[Editable]
-#[Creatable]
 #[TreeView(dataModel: Category::class, targetAttribute: 'parent')]
 #[ORM\Table(name: 'product_category', options: ['comment' => '产品分类表'])]
 #[ORM\Entity(repositoryClass: CategoryRepository::class)]
 class Category implements \Stringable, Itemable, AdminArrayInterface
 {
+        use BlameableAware;
     use TimestampableAware;
-    #[ListColumn(order: -1)]
-    #[ExportColumn]
+
     #[Groups(['restful_read', 'api_tree', 'admin_curd', 'api_list'])]
     #[ORM\Id]
     #[ORM\GeneratedValue]
     #[ORM\Column(type: Types::INTEGER, options: ['comment' => 'ID'])]
     private ?int $id = 0;
-    #[Filterable]
-    #[IndexColumn]
-    #[ListColumn(order: 98, sorter: true)]
-    #[ExportColumn]
-    #[CreateTimeColumn]
+
+
     #[Groups(['restful_read', 'admin_curd', 'restful_read'])]
-    #[ORM\Column(type: Types::DATETIME_MUTABLE, nullable: true, options: ['comment' => '创建时间'])]#[UpdateTimeColumn]
-    #[ListColumn(order: 99, sorter: true)]
-    #[Groups(['restful_read', 'admin_curd', 'restful_read'])]
-    #[Filterable]
-    #[ExportColumn]
-    #[ORM\Column(type: Types::DATETIME_MUTABLE, nullable: true, options: ['comment' => '更新时间'])]#[CreatedByColumn]
-    #[Groups(['restful_read'])]
-    #[ORM\Column(nullable: true, options: ['comment' => '创建人'])]
+    #[ORM\Column(type: Types::DATETIME_IMMUTABLE, nullable: true, options: ['comment' => '创建时间'])]
     private ?string $createdBy = null;
     #[UpdatedByColumn]
-    #[Groups(['restful_read'])]
     #[ORM\Column(nullable: true, options: ['comment' => '更新人'])]
     private ?string $updatedBy = null;
-    #[BoolColumn]
-    #[IndexColumn]
     #[TrackColumn]
     #[Groups(['admin_curd', 'restful_read', 'restful_read', 'restful_write'])]
     #[ORM\Column(type: Types::BOOLEAN, nullable: true, options: ['comment' => '有效', 'default' => 0])]
-    #[ListColumn(order: 97)]
-    #[FormField(order: 97)]
     private ?bool $valid = false;
-    #[FormField]
-    #[Keyword]
-    #[ListColumn]
     #[Groups(['restful_read', 'api_tree'])]
     #[ORM\Column(type: Types::STRING, length: 60, options: ['comment' => '分类名'])]
     private ?string $title = null;
-    #[FormField(title: '上级分类')]
     #[Ignore]
-    #[ListColumn(title: '上级分类')]
     #[ORM\ManyToOne(targetEntity: Category::class, inversedBy: 'children')]
     #[ORM\JoinColumn(onDelete: 'SET NULL')]
     private ?Category $parent = null;
     use SortableTrait;
     #[ImagePickerField]
     #[PictureColumn]
-    #[FormField]
-    #[ListColumn]
-    #[Groups(['restful_read'])]
     #[ORM\Column(type: Types::STRING, length: 255, nullable: true, options: ['comment' => 'LOGO地址'])]
     private ?string $logoUrl = null;
     /**
      * @BraftEditor
      */
     #[RichTextField]
-    #[FormField]
-    #[Groups(['restful_read'])]
     #[ORM\Column(type: Types::TEXT, nullable: true, options: ['comment' => '简介'])]
     private ?string $description = null;
     /**
@@ -112,7 +74,6 @@ class Category implements \Stringable, Itemable, AdminArrayInterface
      *
      * @var Collection<Category>
      */
-    #[Groups(['restful_read', 'api_tree'])]
     #[ORM\OneToMany(targetEntity: Category::class, mappedBy: 'parent')]
     private Collection $children;
     /**
@@ -120,7 +81,6 @@ class Category implements \Stringable, Itemable, AdminArrayInterface
      *
      * @var Collection<Spu>
      */
-    #[Ignore]
     #[ORM\ManyToMany(targetEntity: Spu::class, inversedBy: 'categories', fetch: 'EXTRA_LAZY')]
     private Collection $spus;
     #[ORM\Column(type: Types::STRING, length: 100, nullable: true, options: ['comment' => '备注'])]
@@ -130,13 +90,9 @@ class Category implements \Stringable, Itemable, AdminArrayInterface
      *
      * @var Collection<CategoryLimitRule>
      */
-    #[FormField(title: '限制规则')]
-    #[ListColumn(title: '限制规则')]
     #[ORM\OneToMany(mappedBy: 'category', targetEntity: CategoryLimitRule::class, cascade: ['persist'], orphanRemoval: true)]
     private Collection $limitRules;
-    #[Groups(['restful_read', 'api_tree'])]
     #[SelectField(targetEntity: 'product.tag.fetcher', mode: 'multiple')]
-    #[FormField]
     #[ORM\Column(type: Types::JSON, nullable: true, options: ['comment' => '显示标签'])]
     private ?array $showTags = [];
 
@@ -349,7 +305,6 @@ class Category implements \Stringable, Itemable, AdminArrayInterface
         ];
     }
 
-    #[ListColumn(title: 'SPU数')]
     public function renderSpuCount(): int
     {
         return $this->getSpus()->count();

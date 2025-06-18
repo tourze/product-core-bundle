@@ -22,7 +22,7 @@ class AdminMenu
 
     public function __invoke(ItemInterface $item): void
     {
-        if (!$item->getChild('电商中心')) {
+        if ($item->getChild('电商中心') === null) {
             $item->addChild('电商中心');
         }
         $item->getChild('电商中心')->addChild('产品/SPU')->setUri($this->linkGenerator->getCurdListPage(Spu::class));

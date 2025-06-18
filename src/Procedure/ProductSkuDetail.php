@@ -26,7 +26,7 @@ class ProductSkuDetail extends BaseProcedure
     public function execute(): array
     {
         $sku = $this->skuRepository->find($this->skuId);
-        if (!$sku) {
+        if ($sku === null) {
             throw new ApiException('找不到SKU');
         }
         if (!$sku->getSpu()?->isValid()) {

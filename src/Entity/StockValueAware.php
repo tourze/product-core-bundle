@@ -5,8 +5,6 @@ namespace ProductBundle\Entity;
 use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
 use Symfony\Component\Serializer\Attribute\Groups;
-use Tourze\EasyAdmin\Attribute\Column\ListColumn;
-use Tourze\EasyAdmin\Attribute\Field\FormField;
 
 /**
  * 一些常规的库存字段信息.
@@ -14,21 +12,15 @@ use Tourze\EasyAdmin\Attribute\Field\FormField;
 trait StockValueAware
 {
     #[Groups(['admin_curd'])]
-    #[ListColumn(sorter: true, showExpression: '!hasEnv("FIXED_PRODUCT_STOCK_NUMBER")')]
     #[ORM\Column(type: Types::INTEGER, options: ['comment' => '可用库存', 'default' => 0])]
     private ?int $validStock = 0;
 
-    #[Groups(['admin_curd'])]
     #[ORM\Column(type: Types::INTEGER, options: ['comment' => '已售库存', 'default' => 0])]
     private ?int $soldStock = 0;
 
-    #[Groups(['admin_curd'])]
     #[ORM\Column(type: Types::INTEGER, options: ['comment' => '锁定库存', 'default' => 0])]
     private ?int $lockStock = 0;
 
-    #[Groups(['admin_curd'])]
-    #[FormField(span: 6)]
-    #[ListColumn(sorter: true, showExpression: '!hasEnv("FIXED_PRODUCT_STOCK_NUMBER")')]
     #[ORM\Column(type: Types::INTEGER, options: ['comment' => '虚拟库存', 'default' => 0])]
     private ?int $virtualStock = 0;
 

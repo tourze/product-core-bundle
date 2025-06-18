@@ -12,7 +12,7 @@ class TagService
     {
     }
 
-    #[Cacheble(ttl: DAY_IN_SECONDS, tags: [Tag::class])]
+    #[Cacheble(ttl: 86400, tags: [Tag::class])]
     public function findTags(array $items): array
     {
         $postTags = [];

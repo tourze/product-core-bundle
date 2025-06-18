@@ -14,6 +14,7 @@ use Yiisoft\Json\Json;
 #[AsCommand(name: 'product:cib-mall:crawl-category', description: '采集兴业银行商城分类数据')]
 class CibMallCrawlCategoryCommand extends Command
 {
+    public const NAME = 'product:cib-mall:crawl-category';
     public function __construct(
         private readonly SmartHttpClient $httpClient,
         private readonly CategoryRepository $categoryRepository,
@@ -42,7 +43,7 @@ class CibMallCrawlCategoryCommand extends Command
         foreach ($data as $datum) {
             $remark = "CIB-CATEGORY-{$datum['id']}";
             $category = $this->categoryRepository->findOneBy(['remark' => $remark]);
-            if (!$category) {
+            if ($category === null) {
                 $category = new Category();
                 $category->setRemark($remark);
             }
@@ -50,7 +51,8 @@ class CibMallCrawlCategoryCommand extends Command
             $category->setTitle($datum['name']);
             $category->setParent($parent);
             $category->setLogoUrl("https://file.cibfintech.com/{$datum['pic']}");
-            $this->categoryRepository->add($category);
+            $this->entityManager->persist($category);
+            $this->entityManager->flush();
             if (isset($datum['subList']) && (is_countable($datum['subList']) ? count($datum['subList']) : 0) > 0) {
                 $this->loopSave($datum['subList'], $level + 1, $category);
             }

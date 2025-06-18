@@ -39,7 +39,7 @@ class ProductSpuDetail extends CacheableProcedure
             'id' => $this->spuId,
             'valid' => true,
         ]);
-        if (!$spu) {
+        if ($spu === null) {
             throw new ApiException('找不到产品');
         }
         $result = $spu->retrieveSpuArray();

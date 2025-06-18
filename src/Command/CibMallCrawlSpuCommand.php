@@ -27,6 +27,7 @@ use Yiisoft\Json\Json;
 #[AsCommand(name: 'product:cib-mall:crawl-spu', description: '采集兴业银行商城SPU数据')]
 class CibMallCrawlSpuCommand extends Command
 {
+    public const NAME = 'product:cib-mall:crawl-spu';
     public function __construct(
         private readonly SmartHttpClient $httpClient,
         private readonly SpuRepository $spuRepository,
@@ -85,7 +86,7 @@ class CibMallCrawlSpuCommand extends Command
             // 准备SPU
             $spuGTIN = "CIB-MALL-{$response['goodsSpu']['spuId']}";
             $spu = $this->spuRepository->findOneBy(['gtin' => $spuGTIN]);
-            if (!$spu) {
+            if ($spu === null) {
                 $spu = new Spu();
                 $spu->setGtin($spuGTIN);
             }
@@ -112,7 +113,7 @@ class CibMallCrawlSpuCommand extends Command
                     'spu' => $spu,
                     'name' => $item['name'],
                 ]);
-                if (!$attr) {
+                if ($attr === null) {
                     $attr = new SpuAttribute();
                     $attr->setSpu($spu);
                     $attr->setName($item['name']);
@@ -129,7 +130,7 @@ class CibMallCrawlSpuCommand extends Command
                     'spu' => $spu,
                     'gtin' => $skuGTIN,
                 ]);
-                if (!$sku) {
+                if ($sku === null) {
                     $sku = new Sku();
                     $sku->setSpu($spu);
                     $sku->setGtin($skuGTIN);
@@ -166,14 +167,14 @@ class CibMallCrawlSpuCommand extends Command
                     'sku' => $sku,
                     'type' => PriceType::SALE->value,
                 ]);
-                if (!$price) {
+                if ($price === null) {
                     $price = new Price();
                     $price->setSku($sku);
                     $price->setType(PriceType::SALE);
                 }
 
                 $price->setCurrency('CNY');
-                $price->setPrice($item['price'] / 100);
+                $price->setPrice((string) ($item['price'] / 100));
                 $price->setEffectTime(Carbon::now());
                 $price->setExpireTime(Carbon::now()->addYears(100));
                 $this->entityManager->persist($price);
@@ -185,7 +186,7 @@ class CibMallCrawlSpuCommand extends Command
                             'sku' => $sku,
                             'name' => $property['name'],
                         ]);
-                        if (!$attribute) {
+                        if ($attribute === null) {
                             $attribute = new SkuAttribute();
                             $attribute->setSku($sku);
                             $attribute->setName($property['name']);

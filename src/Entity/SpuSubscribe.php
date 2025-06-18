@@ -5,10 +5,7 @@ namespace ProductBundle\Entity;
 use AntdCpBundle\Builder\Column\UserColumn;
 use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
-use Tourze\DoctrineIndexedBundle\Attribute\IndexColumn;
 use Tourze\DoctrineTimestampBundle\Traits\TimestampableAware;
-use Tourze\EasyAdmin\Attribute\Column\ListColumn;
-use Tourze\EasyAdmin\Attribute\Filter\Filterable;
 
 /**
  * 商品申请表
@@ -16,39 +13,25 @@ use Tourze\EasyAdmin\Attribute\Filter\Filterable;
 #[ORM\Table(name: 'ims_goods_subscribe', options: ['comment' => '商品申请表'])]
 #[ORM\UniqueConstraint(name: 'goods_subscribe_idx_unique', columns: ['goods_id', 'member_id'])]
 #[ORM\Entity]
-class SpuSubscribe
+class SpuSubscribe implements \Stringable
 {
     use TimestampableAware;
-    #[ListColumn(order: -1)]
-    #[ExportColumn]
+
     #[Groups(['restful_read', 'api_tree', 'admin_curd', 'api_list'])]
     #[ORM\Id]
     #[ORM\GeneratedValue]
     #[ORM\Column(type: Types::INTEGER, options: ['comment' => 'ID'])]
     private ?int $id = 0;
-    #[Filterable]
-    #[IndexColumn]
-    #[ListColumn(order: 98, sorter: true)]
-    #[ExportColumn]
-    #[CreateTimeColumn]
+
+
     #[Groups(['restful_read', 'admin_curd', 'restful_read'])]
-    #[ORM\Column(type: Types::DATETIME_MUTABLE, nullable: true, options: ['comment' => '创建时间'])]#[UpdateTimeColumn]
-    #[ListColumn(order: 99, sorter: true)]
-    #[Groups(['restful_read', 'admin_curd', 'restful_read'])]
-    #[Filterable]
-    #[ExportColumn]
-    #[ORM\Column(type: Types::DATETIME_MUTABLE, nullable: true, options: ['comment' => '更新时间'])]#[IndexColumn]
-    #[ORM\Column(type: Types::INTEGER, nullable: false, options: ['comment' => '商品ID'])]
+    #[ORM\Column(type: Types::DATETIME_IMMUTABLE, nullable: true, options: ['comment' => '创建时间'])]
     private int $goodsId;
     /**
      * @UserColumn
      */
-    #[IndexColumn]
-    #[ListColumn]
-    #[Filterable]
     #[ORM\Column(type: Types::INTEGER, nullable: false, options: ['comment' => '用户'])]
     private int $memberId;
-    #[IndexColumn]
     #[ORM\Column(type: Types::BOOLEAN, nullable: false, options: ['default' => '0', 'comment' => '状态'])]
     private bool $status = false;
 
@@ -83,5 +66,10 @@ class SpuSubscribe
     public function setStatus(bool $status): void
     {
         $this->status = $status;
+    }
+
+    public function __toString(): string
+    {
+        return (string) ($this->getId() ?? '');
     }
 }

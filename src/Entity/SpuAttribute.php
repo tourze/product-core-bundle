@@ -14,67 +14,38 @@ use Tourze\DoctrineSnowflakeBundle\Service\SnowflakeIdGenerator;
 use Tourze\DoctrineTimestampBundle\Traits\TimestampableAware;
 use Tourze\DoctrineUserBundle\Attribute\CreatedByColumn;
 use Tourze\DoctrineUserBundle\Attribute\UpdatedByColumn;
-use Tourze\EasyAdmin\Attribute\Action\Creatable;
-use Tourze\EasyAdmin\Attribute\Action\Deletable;
-use Tourze\EasyAdmin\Attribute\Action\Editable;
-use Tourze\EasyAdmin\Attribute\Column\ExportColumn;
-use Tourze\EasyAdmin\Attribute\Column\ListColumn;
-use Tourze\EasyAdmin\Attribute\Field\FormField;
-use Tourze\EasyAdmin\Attribute\Filter\Filterable;
-use Tourze\EasyAdmin\Attribute\Permission\AsPermission;
+use Tourze\DoctrineUserBundle\Traits\BlameableAware;
 
-#[AsPermission(title: '关键属性')]
-#[Deletable]
-#[Editable]
-#[Creatable]
 #[ORM\Table(name: 'product_spu_attribute', options: ['comment' => '产品SPU属性'])]
 #[ORM\UniqueConstraint(name: 'product_spu_attribute_idx_uniq', columns: ['spu_id', 'name'])]
 #[ORM\Entity(repositoryClass: SpuAttributeRepository::class)]
 class SpuAttribute implements \Stringable, AdminArrayInterface
 {
+        use BlameableAware;
     use TimestampableAware;
-    #[Filterable]
-    #[IndexColumn]
-    #[ListColumn(order: 98, sorter: true)]
-    #[ExportColumn]
-    #[CreateTimeColumn]
+
+
     #[Groups(['restful_read', 'admin_curd', 'restful_read'])]
-    #[ORM\Column(type: Types::DATETIME_MUTABLE, nullable: true, options: ['comment' => '创建时间'])]#[UpdateTimeColumn]
-    #[ListColumn(order: 99, sorter: true)]
-    #[Groups(['restful_read', 'admin_curd', 'restful_read'])]
-    #[Filterable]
-    #[ExportColumn]
-    #[ORM\Column(type: Types::DATETIME_MUTABLE, nullable: true, options: ['comment' => '更新时间'])]#[ExportColumn]
-    #[ListColumn(order: -1, sorter: true)]
-    #[Groups(['restful_read', 'admin_curd', 'recursive_view', 'api_tree'])]
+    #[ORM\Column(type: Types::DATETIME_IMMUTABLE, nullable: true, options: ['comment' => '创建时间'])]
     #[ORM\Id]
     #[ORM\GeneratedValue(strategy: 'CUSTOM')]
     #[ORM\CustomIdGenerator(SnowflakeIdGenerator::class)]
-    #[ORM\Column(type: Types::BIGINT, nullable: false, options: ['comment' => 'ID'])]
     private ?string $id = null;
     #[CreatedByColumn]
     #[Groups(['restful_read'])]
     #[ORM\Column(nullable: true, options: ['comment' => '创建人'])]
     private ?string $createdBy = null;
     #[UpdatedByColumn]
-    #[Groups(['restful_read'])]
     #[ORM\Column(nullable: true, options: ['comment' => '更新人'])]
     private ?string $updatedBy = null;
     #[Ignore]
     #[ORM\ManyToOne(targetEntity: Spu::class, inversedBy: 'attributes')]
     #[ORM\JoinColumn(nullable: false, onDelete: 'CASCADE')]
     private ?Spu $spu = null;
-    #[FormField(span: 7)]
-    #[Filterable]
-    #[ListColumn]
-    #[Groups(['restful_read'])]
     #[ORM\Column(type: Types::STRING, length: 30, options: ['comment' => '属性名'])]
     private ?string $name = null;
-    #[FormField(span: 7)]
-    #[Groups(['restful_read'])]
     #[ORM\Column(type: Types::STRING, length: 64, options: ['comment' => '属性值'])]
     private ?string $value = null;
-    #[FormField(span: 10)]
     #[ORM\Column(type: Types::STRING, length: 100, nullable: true, options: ['comment' => '备注'])]
     private ?string $remark = null;
     #[CreateIpColumn]

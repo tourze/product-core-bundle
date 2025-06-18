@@ -21,31 +21,22 @@ use ProductBundle\Service\StockService;
 use Symfony\Component\Serializer\Attribute\Groups;
 use Symfony\Component\Serializer\Attribute\Ignore;
 use Tourze\Arrayable\AdminArrayInterface;
-use Tourze\DoctrineIndexedBundle\Attribute\IndexColumn;
 use Tourze\DoctrineIpBundle\Attribute\CreateIpColumn;
 use Tourze\DoctrineIpBundle\Attribute\UpdateIpColumn;
 use Tourze\DoctrineSnowflakeBundle\Attribute\SnowflakeColumn;
 use Tourze\DoctrineTimestampBundle\Traits\TimestampableAware;
 use Tourze\DoctrineTrackBundle\Attribute\TrackColumn;
-use Tourze\DoctrineUserBundle\Attribute\CreatedByColumn;
 use Tourze\DoctrineUserBundle\Attribute\UpdatedByColumn;
+use Tourze\DoctrineUserBundle\Traits\BlameableAware;
 use Tourze\EasyAdmin\Attribute\Action\Creatable;
 use Tourze\EasyAdmin\Attribute\Action\CurdAction;
-use Tourze\EasyAdmin\Attribute\Action\Deletable;
 use Tourze\EasyAdmin\Attribute\Action\Editable;
 use Tourze\EasyAdmin\Attribute\Action\Exportable;
 use Tourze\EasyAdmin\Attribute\Action\Listable;
 use Tourze\EasyAdmin\Attribute\Action\ListAction;
-use Tourze\EasyAdmin\Attribute\Column\BoolColumn;
-use Tourze\EasyAdmin\Attribute\Column\ExportColumn;
-use Tourze\EasyAdmin\Attribute\Column\ListColumn;
 use Tourze\EasyAdmin\Attribute\Event\BeforeCreate;
 use Tourze\EasyAdmin\Attribute\Event\BeforeEdit;
-use Tourze\EasyAdmin\Attribute\Field\FormField;
 use Tourze\EasyAdmin\Attribute\Field\ImagePickerField;
-use Tourze\EasyAdmin\Attribute\Filter\Filterable;
-use Tourze\EasyAdmin\Attribute\Filter\Keyword;
-use Tourze\EasyAdmin\Attribute\Permission\AsPermission;
 use Tourze\EnumExtra\Itemable;
 use Tourze\LockServiceBundle\Model\LockEntity;
 use Yiisoft\Arrays\ArraySorter;
@@ -67,48 +58,30 @@ use Yiisoft\Arrays\ArraySorter;
  * @see https://learnku.com/articles/21461
  */
 #[Exportable(label: '导出')]
-#[AsPermission(title: 'SKU管理')]
 #[Listable]
-#[Deletable]
 #[Editable(drawerWidth: 850)]
 #[Creatable(drawerWidth: 850)]
 #[ORM\Table(name: 'product_sku', options: ['comment' => '产品SKU'])]
 #[ORM\Entity(repositoryClass: SkuRepository::class)]
 class Sku implements \Stringable, Itemable, AdminArrayInterface, LockEntity
 {
+        use BlameableAware;
     use TimestampableAware;
-    #[Filterable]
-    #[IndexColumn]
-    #[ListColumn(order: 98, sorter: true)]
-    #[ExportColumn]
-    #[CreateTimeColumn]
+
+
     #[Groups(['restful_read', 'admin_curd', 'restful_read'])]
-    #[ORM\Column(type: Types::DATETIME_MUTABLE, nullable: true, options: ['comment' => '创建时间'])]#[UpdateTimeColumn]
-    #[ListColumn(order: 99, sorter: true)]
-    #[Groups(['restful_read', 'admin_curd', 'restful_read'])]
-    #[Filterable]
-    #[ExportColumn]
-    #[ORM\Column(type: Types::DATETIME_MUTABLE, nullable: true, options: ['comment' => '更新时间'])]#[CreatedByColumn]
-    #[Groups(['restful_read'])]
-    #[ORM\Column(nullable: true, options: ['comment' => '创建人'])]
+    #[ORM\Column(type: Types::DATETIME_IMMUTABLE, nullable: true, options: ['comment' => '创建时间'])]
     private ?string $createdBy = null;
     #[UpdatedByColumn]
-    #[Groups(['restful_read'])]
     #[ORM\Column(nullable: true, options: ['comment' => '更新人'])]
     private ?string $updatedBy = null;
     #[Groups(['restful_read', 'admin_curd'])]
-    #[ListColumn]
-    #[ExportColumn]
-    #[Keyword]
     #[ORM\Id]
     #[ORM\GeneratedValue]
     #[ORM\Column(type: Types::INTEGER, options: ['comment' => 'SkuID'])]
     private ?int $id = 0;
-    #[FormField(title: '所属SPU', required: true)]
-    #[Filterable(label: 'SPU', inputWidth: 200)]
+
     #[Ignore]
-    #[ListColumn(title: '所属SPU', width: 360)]
-    #[ExportColumn]
     #[ORM\ManyToOne(targetEntity: Spu::class, cascade: ['persist'], fetch: 'EXTRA_LAZY', inversedBy: 'skus')]
     #[ORM\JoinColumn(nullable: false, onDelete: 'CASCADE')]
     private ?Spu $spu = null;
@@ -117,31 +90,16 @@ class Sku implements \Stringable, Itemable, AdminArrayInterface, LockEntity
      * 全球唯一编码，可以是UPC、EAN、69码等等.
      */
     #[TrackColumn]
-    #[FormField(span: 12)]
-    #[Keyword]
-    #[Groups(['restful_read', 'admin_curd'])]
     #[SnowflakeColumn(prefix: 'SKU')]
     #[ORM\Column(type: Types::STRING, length: 40, nullable: true, options: ['comment' => '全球唯一编码'])]
     private ?string $gtin = '';
     /**
      * 制造商部件号，一般可以理解为型号，或其他自编码
      */
-    #[TrackColumn]
-    #[Keyword]
-    #[Groups(['restful_read', 'admin_curd'])]
     #[ORM\Column(type: Types::STRING, length: 60, nullable: true, options: ['comment' => '厂商型号码'])]
     private ?string $mpn = null;
-    #[TrackColumn]
-    #[FormField(span: 6)]
-    #[Filterable]
-    #[Groups(['restful_read', 'admin_curd'])]
-    #[ListColumn(width: 50)]
-    #[ExportColumn]
     #[ORM\Column(type: Types::STRING, length: 10, options: ['default' => '个', 'comment' => '单位'])]
     private ?string $unit = null;
-    #[TrackColumn]
-    #[FormField(span: 6)]
-    #[Groups(['restful_read', 'admin_curd'])]
     #[ORM\Column(type: Types::BOOLEAN, nullable: true, options: ['comment' => '需要收货', 'default' => 1])]
     private ?bool $needConsignee = null;
     /**
@@ -152,8 +110,6 @@ class Sku implements \Stringable, Itemable, AdminArrayInterface, LockEntity
     #[ORM\OneToMany(mappedBy: 'sku', targetEntity: Price::class, cascade: ['persist'], fetch: 'EXTRA_LAZY', orphanRemoval: true)]
     private Collection $prices;
     #[ImagePickerField(limit: 9)]
-    #[FormField]
-    #[Groups(['restful_read', 'admin_curd'])]
     #[ORM\Column(type: Types::JSON, nullable: true, options: ['comment' => '图片'])]
     private ?array $thumbs = [];
     /**
@@ -161,10 +117,6 @@ class Sku implements \Stringable, Itemable, AdminArrayInterface, LockEntity
      *
      * @var Collection<SkuAttribute>
      */
-    #[FormField(title: '销售属性', required: true)]
-    #[Groups(['restful_read', 'admin_curd'])]
-    #[ListColumn(title: '销售属性')]
-    #[ExportColumn]
     #[ORM\OneToMany(mappedBy: 'sku', targetEntity: SkuAttribute::class, cascade: ['persist'], fetch: 'EXTRA_LAZY', orphanRemoval: true)]
     private Collection $attributes;
     /**
@@ -172,23 +124,18 @@ class Sku implements \Stringable, Itemable, AdminArrayInterface, LockEntity
      *
      * @var Collection<SkuPackage>
      */
-    #[FormField(title: '打包属性')]
-    #[Groups(['admin_curd'])]
     #[ORM\OneToMany(mappedBy: 'sku', targetEntity: SkuPackage::class, cascade: ['persist'], fetch: 'EXTRA_LAZY', orphanRemoval: true)]
     private Collection $packages;
     /**
      * @var Collection<int, Stock>|Stock[]
      */
-    #[Ignore]
     #[ORM\OneToMany(mappedBy: 'sku', targetEntity: Stock::class, fetch: 'EXTRA_LAZY', orphanRemoval: true)]
     private Collection $stocks;
-    #[Groups(['admin_curd'])]
     #[ORM\Column(type: Types::STRING, length: 255, nullable: true, options: ['comment' => '备注'])]
     private ?string $remark = null;
     /**
      * @var Collection<int, StockLog>|StockLog[]
      */
-    #[Ignore]
     #[ORM\OneToMany(mappedBy: 'sku', targetEntity: StockLog::class)]
     private Collection $stockLogs;
     /**
@@ -196,31 +143,16 @@ class Sku implements \Stringable, Itemable, AdminArrayInterface, LockEntity
      *
      * @var Collection<SkuLimitRule>
      */
-    #[FormField(title: '限制规则')]
     #[ORM\OneToMany(mappedBy: 'sku', targetEntity: SkuLimitRule::class, cascade: ['persist'], fetch: 'EXTRA_LAZY', orphanRemoval: true)]
     private Collection $limitRules;
-    #[ListColumn(showExpression: '!hasEnv("FIXED_PRODUCT_STOCK_NUMBER")', tooltipDesc: '统计销量')]
-    #[ExportColumn]
-    #[Groups(['restful_read', 'admin_curd'])]
     #[ORM\Column(type: Types::INTEGER, nullable: false, options: ['default' => '0', 'comment' => '真实销量'])]
     private int $salesReal = 0;
-    #[Groups(['restful_read', 'admin_curd'])]
-    #[ListColumn(showExpression: '!hasEnv("FIXED_PRODUCT_STOCK_NUMBER")')]
-    #[ExportColumn]
-    #[FormField(title: '虚拟销量', span: 6, showExpression: '!hasEnv("FIXED_PRODUCT_STOCK_NUMBER")')]
     #[ORM\Column(type: Types::INTEGER, nullable: false, options: ['default' => '0', 'comment' => '虚拟销量'])]
     private int $salesVirtual = 0;
-    #[TrackColumn]
-    #[FormField(showExpression: 'hasEnv("SHOW_PRODUCT_SKU_DISPATCH_PERIOD") && !!env("SHOW_PRODUCT_SKU_DISPATCH_PERIOD")')]
     #[Groups(['admin_curd', 'restful_read'])]
     #[ORM\Column(nullable: true, options: ['comment' => '发货期限'])]
     private ?int $dispatchPeriod = null;
-    #[BoolColumn]
-    #[IndexColumn]
-    #[Groups(['admin_curd', 'restful_read'])]
     #[ORM\Column(type: Types::BOOLEAN, nullable: true, options: ['comment' => '上架', 'default' => 1])]
-    #[ListColumn(order: 98)]
-    #[FormField(order: 98)]
     private ?bool $valid = true;
     #[CreateIpColumn]
     #[ORM\Column(length: 128, nullable: true, options: ['comment' => '创建时IP'])]
@@ -488,8 +420,7 @@ class Sku implements \Stringable, Itemable, AdminArrayInterface, LockEntity
         return $this;
     }
 
-    #[ListColumn(order: 2, title: '当前价格')]
-    #[ExportColumn]
+
     public function renderCurrentPrice(): array
     {
         $prices = $this->determineOnTimeSalePrice(Carbon::now());
@@ -874,7 +805,7 @@ class Sku implements \Stringable, Itemable, AdminArrayInterface, LockEntity
             ->filter(fn (Price $price) => PriceType::ORIGINAL_PRICE === $price->getType())
             ->first();
 
-        return $price ? $price->getPrice() : null;
+        return $price !== null ? $price->getPrice()  : null;
     }
 
     /**

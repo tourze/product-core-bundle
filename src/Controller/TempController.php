@@ -9,7 +9,7 @@ class TempController extends AbstractController
 {
     #[Route('/goods/temp/image')]
     #[Route('/mall/temp/image')]
-    public function image()
+    public function __invoke()
     {
         $images = [
             'https://img20.360buyimg.com/jdcms/s300x300_jfs/t1/109165/10/34331/55262/63ccb8d4Fd3e2422c/0195804b335d3e6d.jpg.webp',

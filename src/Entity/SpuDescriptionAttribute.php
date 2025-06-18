@@ -10,64 +10,34 @@ use Symfony\Component\Serializer\Attribute\Ignore;
 use Tourze\Arrayable\AdminArrayInterface;
 use Tourze\DoctrineTimestampBundle\Traits\TimestampableAware;
 use Tourze\DoctrineTrackBundle\Attribute\TrackColumn;
-use Tourze\DoctrineUserBundle\Attribute\CreatedByColumn;
 use Tourze\DoctrineUserBundle\Attribute\UpdatedByColumn;
-use Tourze\EasyAdmin\Attribute\Action\Creatable;
-use Tourze\EasyAdmin\Attribute\Action\Deletable;
-use Tourze\EasyAdmin\Attribute\Action\Editable;
-use Tourze\EasyAdmin\Attribute\Column\ListColumn;
-use Tourze\EasyAdmin\Attribute\Field\FormField;
-use Tourze\EasyAdmin\Attribute\Filter\Filterable;
-use Tourze\EasyAdmin\Attribute\Permission\AsPermission;
+use Tourze\DoctrineUserBundle\Traits\BlameableAware;
 
-#[AsPermission(title: 'spu描述属性')]
-#[Deletable]
-#[Editable]
-#[Creatable]
 #[ORM\Table(name: 'product_sku_description_attribute', options: ['comment' => '产品SPU描述属性'])]
 #[ORM\Entity(repositoryClass: SpuDescriptionAttributeRepository::class)]
 class SpuDescriptionAttribute implements \Stringable, AdminArrayInterface
 {
+        use BlameableAware;
     use TimestampableAware;
-    #[ListColumn(order: -1)]
-    #[ExportColumn]
+
     #[Groups(['restful_read', 'api_tree', 'admin_curd', 'api_list'])]
     #[ORM\Id]
     #[ORM\GeneratedValue]
     #[ORM\Column(type: Types::INTEGER, options: ['comment' => 'ID'])]
     private ?int $id = 0;
-    #[Filterable]
-    #[IndexColumn]
-    #[ListColumn(order: 98, sorter: true)]
-    #[ExportColumn]
-    #[CreateTimeColumn]
+
+
     #[Groups(['restful_read', 'admin_curd', 'restful_read'])]
-    #[ORM\Column(type: Types::DATETIME_MUTABLE, nullable: true, options: ['comment' => '创建时间'])]#[UpdateTimeColumn]
-    #[ListColumn(order: 99, sorter: true)]
-    #[Groups(['restful_read', 'admin_curd', 'restful_read'])]
-    #[Filterable]
-    #[ExportColumn]
-    #[ORM\Column(type: Types::DATETIME_MUTABLE, nullable: true, options: ['comment' => '更新时间'])]#[CreatedByColumn]
-    #[Groups(['restful_read'])]
-    #[ORM\Column(nullable: true, options: ['comment' => '创建人'])]
+    #[ORM\Column(type: Types::DATETIME_IMMUTABLE, nullable: true, options: ['comment' => '创建时间'])]
     private ?string $createdBy = null;
     #[UpdatedByColumn]
-    #[Groups(['restful_read'])]
     #[ORM\Column(nullable: true, options: ['comment' => '更新人'])]
     private ?string $updatedBy = null;
     #[TrackColumn]
-    #[FormField(span: 6)]
-    #[Filterable]
-    #[ListColumn]
-    #[Groups(['restful_read'])]
     #[ORM\Column(type: Types::STRING, length: 30, options: ['comment' => '标题'])]
     private ?string $name = null;
-    #[TrackColumn]
-    #[FormField(span: 16)]
-    #[Groups(['restful_read'])]
     #[ORM\Column(type: Types::TEXT, options: ['comment' => '内容'])]
     private ?string $value = null;
-    #[TrackColumn]
     #[Ignore]
     #[ORM\ManyToOne(cascade: ['persist'], inversedBy: 'descriptionAttribute')]
     #[ORM\JoinColumn(nullable: false, onDelete: 'CASCADE')]

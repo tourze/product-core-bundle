@@ -20,28 +20,18 @@ use Symfony\Bundle\SecurityBundle\Security;
 use Symfony\Component\Serializer\Attribute\Groups;
 use Symfony\Component\Serializer\Attribute\Ignore;
 use Tourze\Arrayable\AdminArrayInterface;
-use Tourze\DoctrineIndexedBundle\Attribute\IndexColumn;
 use Tourze\DoctrineIpBundle\Attribute\CreateIpColumn;
 use Tourze\DoctrineIpBundle\Attribute\UpdateIpColumn;
 use Tourze\DoctrineSnowflakeBundle\Attribute\SnowflakeColumn;
 use Tourze\DoctrineTimestampBundle\Traits\TimestampableAware;
 use Tourze\DoctrineTrackBundle\Attribute\TrackColumn;
-use Tourze\DoctrineUserBundle\Attribute\CreatedByColumn;
 use Tourze\DoctrineUserBundle\Attribute\UpdatedByColumn;
-use Tourze\EasyAdmin\Attribute\Action\Creatable;
-use Tourze\EasyAdmin\Attribute\Action\Deletable;
-use Tourze\EasyAdmin\Attribute\Action\Editable;
-use Tourze\EasyAdmin\Attribute\Column\BoolColumn;
-use Tourze\EasyAdmin\Attribute\Column\ListColumn;
+use Tourze\DoctrineUserBundle\Traits\BlameableAware;
 use Tourze\EasyAdmin\Attribute\Column\PictureColumn;
 use Tourze\EasyAdmin\Attribute\Event\BeforeCreate;
-use Tourze\EasyAdmin\Attribute\Field\FormField;
 use Tourze\EasyAdmin\Attribute\Field\ImagePickerField;
 use Tourze\EasyAdmin\Attribute\Field\RichTextField;
 use Tourze\EasyAdmin\Attribute\Field\SelectField;
-use Tourze\EasyAdmin\Attribute\Filter\Filterable;
-use Tourze\EasyAdmin\Attribute\Filter\Keyword;
-use Tourze\EasyAdmin\Attribute\Permission\AsPermission;
 use Tourze\EnumExtra\Itemable;
 use Tourze\ResourceManageBundle\Model\ResourceIdentity;
 use Yiisoft\Arrays\ArrayHelper;
@@ -51,44 +41,24 @@ use Yiisoft\Json\Json;
  * @see https://www.duosku.com/tmallyunying/4.html
  * @see https://blog.csdn.net/zhichaosong/article/details/120316738 这种设计很适合多商户体系
  */
-#[AsPermission(title: 'SPU管理')]
-#[Deletable]
-#[Editable]
-#[Creatable]
 #[ORM\Table(name: 'product_spu', options: ['comment' => '产品SPU'])]
 #[ORM\Entity(repositoryClass: SpuRepository::class)]
 class Spu implements \Stringable, Itemable, AdminArrayInterface, ResourceIdentity
 {
+        use BlameableAware;
     use TimestampableAware;
-    #[Filterable]
-    #[IndexColumn]
-    #[ListColumn(order: 98, sorter: true)]
-    #[ExportColumn]
-    #[CreateTimeColumn]
+
+
     #[Groups(['restful_read', 'admin_curd', 'restful_read'])]
-    #[ORM\Column(type: Types::DATETIME_MUTABLE, nullable: true, options: ['comment' => '创建时间'])]#[UpdateTimeColumn]
-    #[ListColumn(order: 99, sorter: true)]
-    #[Groups(['restful_read', 'admin_curd', 'restful_read'])]
-    #[Filterable]
-    #[ExportColumn]
-    #[ORM\Column(type: Types::DATETIME_MUTABLE, nullable: true, options: ['comment' => '更新时间'])]#[CreatedByColumn]
-    #[Groups(['restful_read'])]
-    #[ORM\Column(nullable: true, options: ['comment' => '创建人'])]
+    #[ORM\Column(type: Types::DATETIME_IMMUTABLE, nullable: true, options: ['comment' => '创建时间'])]
     private ?string $createdBy = null;
     #[UpdatedByColumn]
-    #[Groups(['restful_read'])]
     #[ORM\Column(nullable: true, options: ['comment' => '更新人'])]
     private ?string $updatedBy = null;
-    #[Groups(['restful_read'])]
-    #[ListColumn]
-    #[Keyword]
     #[ORM\Id]
     #[ORM\GeneratedValue]
     #[ORM\Column(type: Types::INTEGER, options: ['comment' => 'SpuID'])]
     private ?int $id = 0;
-    #[Groups(['restful_read'])]
-    #[ListColumn(title: '供应商', showExpression: "env('SHOW_SPU_SUPPLIER') && is_granted('ROLE_ADMIN')")]
-    #[FormField(title: '供应商', showExpression: "env('SHOW_SPU_SUPPLIER') && is_granted('ROLE_ADMIN')")]
     #[ORM\ManyToOne]
     #[ORM\JoinColumn(onDelete: 'SET NULL')]
     private ?Supplier $supplier = null;
@@ -97,35 +67,17 @@ class Spu implements \Stringable, Itemable, AdminArrayInterface, ResourceIdentit
      * 全球唯一编码，可以是UPC、EAN、69码等等.
      */
     #[TrackColumn]
-    #[FormField(span: 10)]
-    #[Keyword]
-    #[ListColumn]
-    #[Groups(['restful_read'])]
     #[SnowflakeColumn(prefix: 'SPU')]
     #[ORM\Column(type: Types::STRING, length: 40, unique: true, nullable: true, options: ['comment' => '唯一编码'])]
     private ?string $gtin = '';
-    #[TrackColumn]
-    #[FormField(span: 14)]
-    #[Filterable]
-    #[Keyword]
-    #[Groups(['restful_read'])]
-    #[ListColumn(width: 350)]
     #[ORM\Column(type: Types::STRING, length: 120, options: ['comment' => '标题'])]
     private string $title = '';
     #[SelectField(targetEntity: ProductTypeFetcher::class)]
-    #[Groups(['restful_read'])]
-    #[ListColumn]
-    #[FormField(span: 5)]
     #[ORM\Column(type: Types::STRING, length: 60, nullable: true, options: ['default' => 'normal', 'comment' => '类型'])]
     private ?string $type = null;
-    #[FormField(title: '品牌', span: 5)]
     #[Groups(['admin_curd'])]
     #[ORM\ManyToOne(targetEntity: Brand::class)]
     private ?Brand $brand = null;
-    #[TrackColumn]
-    #[FormField(title: '副标题(换行配置示例：文案<p>需要换行文案</p >)', span: 14)]
-    #[Filterable]
-    #[Groups(['restful_read'])]
     #[ORM\Column(type: Types::STRING, length: 1024, nullable: true, options: ['comment' => '副标题'])]
     private ?string $subtitle = '';
     /**
@@ -138,33 +90,21 @@ class Spu implements \Stringable, Itemable, AdminArrayInterface, ResourceIdentit
      *
      * @var Collection<Category>
      */
-    #[Filterable(label: '分类')]
-    #[FormField(title: '分类')]
-    #[ListColumn(title: '分类')]
-    #[Groups(['restful_read'])]
+
     #[ORM\ManyToMany(targetEntity: Category::class, mappedBy: 'spus', fetch: 'EXTRA_LAZY')]
     private Collection $categories;
     /**
      * @var Collection<Tag>
      */
-    #[FormField(title: '标签')]
-    #[Groups(['restful_read'])]
     #[ORM\ManyToMany(targetEntity: Tag::class, mappedBy: 'spus', fetch: 'EXTRA_LAZY')]
     private Collection $tags;
     #[ORM\Column(type: Types::STRING, length: 40, nullable: true, enumType: SpuState::class, options: ['comment' => '状态'])]
     private ?SpuState $state;
     #[ImagePickerField]
     #[PictureColumn]
-    #[TrackColumn]
-    #[FormField]
-    #[ListColumn]
-    #[Groups(['restful_read'])]
     #[ORM\Column(type: Types::STRING, length: 1000, nullable: true, options: ['comment' => '主图'])]
     private ?string $mainPic = null;
     #[ImagePickerField(limit: 9)]
-    #[TrackColumn]
-    #[FormField]
-    #[Groups(['restful_read'])]
     #[ORM\Column(type: Types::JSON, nullable: true, options: ['comment' => '轮播图'])]
     private ?array $thumbs = [];
     /**
@@ -174,8 +114,6 @@ class Spu implements \Stringable, Itemable, AdminArrayInterface, ResourceIdentit
      *
      * @var Collection<SpuAttribute>
      */
-    #[FormField(title: '关键属性')]
-    #[Groups(['restful_read'])]
     #[ORM\OneToMany(mappedBy: 'spu', targetEntity: SpuAttribute::class, cascade: ['persist'], fetch: 'EXTRA_LAZY', orphanRemoval: true)]
     private Collection $attributes;
     /**
@@ -183,20 +121,14 @@ class Spu implements \Stringable, Itemable, AdminArrayInterface, ResourceIdentit
      *
      * @var Collection<SpuDescriptionAttribute>
      */
-    #[FormField(title: '商品描述属性')]
-    #[Groups(['restful_read'])]
     #[ORM\OneToMany(mappedBy: 'spu', targetEntity: SpuDescriptionAttribute::class, cascade: ['persist'], fetch: 'EXTRA_LAZY', orphanRemoval: true)]
     private Collection $descriptionAttribute;
     /**
      * @BraftEditor
      */
     #[RichTextField]
-    #[TrackColumn]
-    #[FormField]
-    #[Groups(['restful_read'])]
     #[ORM\Column(type: Types::TEXT, nullable: true, options: ['comment' => '描述'])]
     private ?string $content = null;
-    #[TrackColumn]
     #[ORM\Column(type: Types::TEXT, nullable: true, options: ['comment' => '备注'])]
     private ?string $remark = null;
     /**
@@ -204,36 +136,23 @@ class Spu implements \Stringable, Itemable, AdminArrayInterface, ResourceIdentit
      *
      * @var Collection<SpuLimitRule>
      */
-    #[FormField(title: '限制规则')]
     #[ORM\OneToMany(mappedBy: 'spu', targetEntity: SpuLimitRule::class, cascade: ['persist'], fetch: 'EXTRA_LAZY', orphanRemoval: true)]
     private Collection $limitRules;
     #[SelectField(targetEntity: 'product.tag.fetcher', mode: 'multiple')]
-    #[FormField]
     #[ORM\Column(type: Types::JSON, nullable: true, options: ['comment' => '显示标签'])]
     private ?array $showTags = [];
     #[Ignore]
-    #[FormField(title: '可用运费模板', showExpression: "env('SHOW_FREIGHT_TEMPLATE')")]
     #[ORM\ManyToMany(targetEntity: FreightTemplate::class, inversedBy: 'spus', fetch: 'EXTRA_LAZY')]
     private Collection $freightTemplates;
-    #[BoolColumn]
-    #[IndexColumn]
-    #[ListColumn(order: 98)]
     #[Groups(['admin_curd', 'restful_read'])]
     #[ORM\Column(type: Types::BOOLEAN, nullable: true, options: ['comment' => '上架'])]
     private ?bool $valid = false;
-    #[BoolColumn]
-    #[IndexColumn]
-    #[Groups(['admin_curd'])]
-    #[ListColumn(order: 99, title: '审核状态', showExpression: "env('SHOW_SPU_AUDIT_STATUS')")]
     #[ORM\Column(type: Types::BOOLEAN, nullable: true, options: ['comment' => '审核状态', 'default' => 1])]
     private ?bool $audited = true;
-    #[FormField(title: '自动发布时间', span: 12)]
     #[Groups(['restful_read', 'admin_curd'])]
-    #[ORM\Column(type: Types::DATETIME_MUTABLE, nullable: true, options: ['comment' => '自动发布时间'])]
+    #[ORM\Column(type: Types::DATETIME_IMMUTABLE, nullable: true, options: ['comment' => '自动发布时间'])]
     private ?\DateTimeInterface $autoReleaseTime = null;
-    #[FormField(title: '自动下架时间', span: 12)]
-    #[Groups(['restful_read', 'admin_curd'])]
-    #[ORM\Column(type: Types::DATETIME_MUTABLE, nullable: true, options: ['comment' => '自动下架时间'])]
+    #[ORM\Column(type: Types::DATETIME_IMMUTABLE, nullable: true, options: ['comment' => '自动下架时间'])]
     private ?\DateTimeInterface $autoTakeDownTime = null;
     #[CreateIpColumn]
     #[ORM\Column(length: 128, nullable: true, options: ['comment' => '创建时IP'])]
@@ -396,8 +315,6 @@ class Spu implements \Stringable, Itemable, AdminArrayInterface, ResourceIdentit
     /**
      * 获取在售库存.
      */
-    #[Ignore]
-    #[ListColumn(title: '在售库存', width: 100, showExpression: '!hasEnv("FIXED_PRODUCT_STOCK_NUMBER")')]
     public function getOnSaleStock(): int
     {
         if (isset($_ENV['FIXED_PRODUCT_STOCK_NUMBER'])) {

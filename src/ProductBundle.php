@@ -4,7 +4,6 @@ namespace ProductBundle;
 
 use Symfony\Component\HttpKernel\Bundle\Bundle;
 use Tourze\BundleDependency\BundleDependencyInterface;
-use Tourze\EasyAdmin\Attribute\Permission\AsPermission;
 
 /**
  * 商品模块
@@ -33,7 +32,6 @@ use Tourze\EasyAdmin\Attribute\Permission\AsPermission;
  * @see https://xie.infoq.cn/article/d70abaebdc1db54681a741729
  * @see https://learnku.com/articles/21623
  */
-#[AsPermission(title: '产品模块')]
 class ProductBundle extends Bundle implements BundleDependencyInterface
 {
     public static function getBundleDependencies(): array

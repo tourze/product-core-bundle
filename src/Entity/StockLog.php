@@ -14,63 +14,41 @@ use Tourze\DoctrineSnowflakeBundle\Service\SnowflakeIdGenerator;
 use Tourze\DoctrineTimestampBundle\Traits\TimestampableAware;
 use Tourze\DoctrineUserBundle\Attribute\CreatedByColumn;
 use Tourze\DoctrineUserBundle\Attribute\UpdatedByColumn;
-use Tourze\EasyAdmin\Attribute\Column\ExportColumn;
-use Tourze\EasyAdmin\Attribute\Column\ListColumn;
-use Tourze\EasyAdmin\Attribute\Field\FormField;
-use Tourze\EasyAdmin\Attribute\Filter\Filterable;
-use Tourze\EasyAdmin\Attribute\Permission\AsPermission;
+use Tourze\DoctrineUserBundle\Traits\BlameableAware;
 
-#[AsPermission(title: '库存日志')]
 #[ORM\Entity(repositoryClass: StockLogRepository::class)]
 #[ORM\Table(name: 'product_stock_log', options: ['comment' => '库存日志'])]
 class StockLog implements AdminArrayInterface
+, \Stringable
 {
+        use BlameableAware;
     use TimestampableAware;
-    #[Filterable]
-    #[IndexColumn]
-    #[ListColumn(order: 98, sorter: true)]
-    #[ExportColumn]
-    #[CreateTimeColumn]
+
+
     #[Groups(['restful_read', 'admin_curd', 'restful_read'])]
-    #[ORM\Column(type: Types::DATETIME_MUTABLE, nullable: true, options: ['comment' => '创建时间'])]#[UpdateTimeColumn]
-    #[ListColumn(order: 99, sorter: true)]
-    #[Groups(['restful_read', 'admin_curd', 'restful_read'])]
-    #[Filterable]
-    #[ExportColumn]
-    #[ORM\Column(type: Types::DATETIME_MUTABLE, nullable: true, options: ['comment' => '更新时间'])]#[ExportColumn]
-    #[ListColumn(order: -1, sorter: true)]
-    #[Groups(['restful_read', 'admin_curd', 'recursive_view', 'api_tree'])]
+    #[ORM\Column(type: Types::DATETIME_IMMUTABLE, nullable: true, options: ['comment' => '创建时间'])]
     #[ORM\Id]
     #[ORM\GeneratedValue(strategy: 'CUSTOM')]
     #[ORM\CustomIdGenerator(SnowflakeIdGenerator::class)]
-    #[ORM\Column(type: Types::BIGINT, nullable: false, options: ['comment' => 'ID'])]
     private ?string $id = null;
     #[CreatedByColumn]
     #[Groups(['restful_read'])]
     #[ORM\Column(nullable: true, options: ['comment' => '创建人'])]
     private ?string $createdBy = null;
     #[UpdatedByColumn]
-    #[Groups(['restful_read'])]
     #[ORM\Column(nullable: true, options: ['comment' => '更新人'])]
     private ?string $updatedBy = null;
-    #[FormField(title: 'SKU')]
-    #[Filterable(label: 'SKU', inputWidth: 200)]
+
     #[ORM\ManyToOne(targetEntity: Sku::class, inversedBy: 'stockLogs')]
     #[ORM\JoinColumn(onDelete: 'SET NULL')]
     private ?Sku $sku = null;
     use StockValueAware;
     #[ORM\Column(type: Types::STRING, length: 1000, nullable: true, options: ['comment' => 'SKU名'])]
     private ?string $skuName = null;
-    #[FormField]
-    #[ListColumn]
     #[ORM\Column(type: Types::STRING, length: 30, enumType: StockChange::class, options: ['comment' => '类型'])]
     private StockChange $type;
-    #[FormField]
-    #[ListColumn]
     #[ORM\Column(type: Types::INTEGER, options: ['comment' => '数量'])]
     private ?int $quantity = 0;
-    #[FormField]
-    #[ListColumn]
     #[ORM\Column(type: Types::STRING, length: 255, nullable: true, options: ['comment' => '备注'])]
     private ?string $remark = '';
     #[CreateIpColumn]
@@ -116,7 +94,6 @@ class StockLog implements AdminArrayInterface
         return $this;
     }
 
-    #[ListColumn(order: -1, title: 'SKU')]
     public function renderSKU(): string
     {
         return $this->getSku() ? $this->getSku()->getFullName() : '';
@@ -209,5 +186,10 @@ class StockLog implements AdminArrayInterface
         $this->updatedFromIp = $updatedFromIp;
 
         return $this;
+    }
+
+    public function __toString(): string
+    {
+        return (string) ($this->getId() ?? '');
     }
 }

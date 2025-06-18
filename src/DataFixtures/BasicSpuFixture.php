@@ -23,7 +23,7 @@ class BasicSpuFixture extends Fixture
     {
         // 保存SPU
         $spu = $this->spuRepository->findOneBy(['title' => '比熊犬成犬粮']);
-        if (!$spu) {
+        if ($spu === null) {
             $spu = new Spu();
             $spu->setTitle('比熊犬成犬粮');
             $spu->setState(SpuState::ONLINE);

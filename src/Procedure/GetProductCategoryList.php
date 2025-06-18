@@ -42,7 +42,7 @@ class GetProductCategoryList extends CacheableProcedure
                 ->setParameter('id', $this->parent)
                 ->getQuery()
                 ->getOneOrNullResult();
-            if (!$parent) {
+            if ($parent === null) {
                 throw new ApiException('找不到父分类');
             }
         }

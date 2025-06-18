@@ -15,115 +15,62 @@ use StoreBundle\Entity\Store;
 use Symfony\Component\Serializer\Attribute\Groups;
 use Tourze\Arrayable\AdminArrayInterface;
 use Tourze\Arrayable\ApiArrayInterface;
-use Tourze\DoctrineIndexedBundle\Attribute\IndexColumn;
 use Tourze\DoctrinePrecisionBundle\Attribute\PrecisionColumn;
 use Tourze\DoctrineSnowflakeBundle\Service\SnowflakeIdGenerator;
 use Tourze\DoctrineTimestampBundle\Traits\TimestampableAware;
 use Tourze\DoctrineTrackBundle\Attribute\TrackColumn;
 use Tourze\DoctrineUserBundle\Attribute\CreatedByColumn;
 use Tourze\DoctrineUserBundle\Attribute\UpdatedByColumn;
-use Tourze\EasyAdmin\Attribute\Action\Creatable;
-use Tourze\EasyAdmin\Attribute\Action\Deletable;
-use Tourze\EasyAdmin\Attribute\Action\Editable;
+use Tourze\DoctrineUserBundle\Traits\BlameableAware;
 use Tourze\EasyAdmin\Attribute\Action\Listable;
-use Tourze\EasyAdmin\Attribute\Column\BoolColumn;
-use Tourze\EasyAdmin\Attribute\Column\ExportColumn;
-use Tourze\EasyAdmin\Attribute\Column\ListColumn;
-use Tourze\EasyAdmin\Attribute\Field\FormField;
 use Tourze\EasyAdmin\Attribute\Field\SelectField;
-use Tourze\EasyAdmin\Attribute\Filter\Filterable;
-use Tourze\EasyAdmin\Attribute\Permission\AsPermission;
 
 /**
  * @see https://developers.weixin.qq.com/miniprogram/dev/platform-capabilities/business-capabilities/ministore/minishopopencomponent/API/freight/update_freight_template.html
  */
-#[AsPermission(title: '运费模板')]
 #[Listable]
-#[Deletable]
-#[Editable]
-#[Creatable]
 #[ORM\Entity(repositoryClass: FreightTemplateRepository::class)]
 #[ORM\Table(name: 'product_freight_template', options: ['comment' => '运费模板'])]
 class FreightTemplate implements \Stringable, ApiArrayInterface, AdminArrayInterface
 {
+        use BlameableAware;
     use TimestampableAware;
-    #[Filterable]
-    #[IndexColumn]
-    #[ListColumn(order: 98, sorter: true)]
-    #[ExportColumn]
-    #[CreateTimeColumn]
+
+
     #[Groups(['restful_read', 'admin_curd', 'restful_read'])]
-    #[ORM\Column(type: Types::DATETIME_MUTABLE, nullable: true, options: ['comment' => '创建时间'])]#[UpdateTimeColumn]
-    #[ListColumn(order: 99, sorter: true)]
-    #[Groups(['restful_read', 'admin_curd', 'restful_read'])]
-    #[Filterable]
-    #[ExportColumn]
-    #[ORM\Column(type: Types::DATETIME_MUTABLE, nullable: true, options: ['comment' => '更新时间'])]#[ExportColumn]
-    #[ListColumn(order: -1, sorter: true)]
-    #[Groups(['restful_read', 'admin_curd', 'recursive_view', 'api_tree'])]
+    #[ORM\Column(type: Types::DATETIME_IMMUTABLE, nullable: true, options: ['comment' => '创建时间'])]
     #[ORM\Id]
     #[ORM\GeneratedValue(strategy: 'CUSTOM')]
     #[ORM\CustomIdGenerator(SnowflakeIdGenerator::class)]
-    #[ORM\Column(type: Types::BIGINT, nullable: false, options: ['comment' => 'ID'])]
     private ?string $id = null;
     #[CreatedByColumn]
     #[Groups(['restful_read'])]
     #[ORM\Column(nullable: true, options: ['comment' => '创建人'])]
     private ?string $createdBy = null;
     #[UpdatedByColumn]
-    #[Groups(['restful_read'])]
     #[ORM\Column(nullable: true, options: ['comment' => '更新人'])]
     private ?string $updatedBy = null;
-    #[BoolColumn]
-    #[IndexColumn]
     #[TrackColumn]
     #[Groups(['admin_curd', 'restful_read', 'restful_read', 'restful_write'])]
     #[ORM\Column(type: Types::BOOLEAN, nullable: true, options: ['comment' => '有效', 'default' => 0])]
-    #[ListColumn(order: 97)]
-    #[FormField(order: 97)]
     private ?bool $valid = false;
     use SortableTrait;
     #[Groups(['admin_curd', 'restful_read'])]
-    #[ListColumn]
-    #[FormField]
-    #[TrackColumn]
     #[ORM\Column(type: Types::STRING, length: 100, options: ['comment' => '名称'])]
     private string $name;
-    #[Groups(['admin_curd', 'restful_read'])]
-    #[ListColumn]
-    #[FormField(span: 6)]
-    #[TrackColumn]
     #[ORM\Column(length: 40, enumType: DeliveryType::class, options: ['comment' => '配送方式'])]
     private ?DeliveryType $deliveryType = null;
     #[Groups(['admin_curd'])]
-    #[ListColumn]
-    #[FormField(span: 6)]
-    #[TrackColumn]
     #[ORM\Column(length: 40, enumType: FreightValuationType::class, options: ['comment' => '计费方式'])]
     private ?FreightValuationType $valuationType = null;
-    #[Groups(['admin_curd'])]
     #[SelectField(targetEntity: CurrencyManager::class)]
-    #[TrackColumn]
-    #[ListColumn]
-    #[FormField(span: 6)]
-    #[Filterable]
     #[ORM\Column(type: Types::STRING, length: 10, options: ['default' => 'CNY', 'comment' => '币种'])]
     private ?string $currency = null;
     #[PrecisionColumn]
-    #[Groups(['admin_curd'])]
-    #[ListColumn]
-    #[FormField(span: 6)]
-    #[TrackColumn]
     #[ORM\Column(type: Types::DECIMAL, precision: 10, scale: 2, nullable: true, options: ['comment' => '费用'])]
     private ?string $fee = null;
-    #[Groups(['admin_curd'])]
-    #[ListColumn(title: '关联SPU')]
-    #[FormField(title: '关联SPU', allowRemote: false, remoteLimit: 99999)]
     #[ORM\ManyToMany(targetEntity: Spu::class, mappedBy: 'freightTemplates', fetch: 'EXTRA_LAZY')]
     private Collection $spus;
-    #[Groups(['admin_curd'])]
-    #[ListColumn(title: '关联门店')]
-    #[FormField(title: '关联门店')]
     #[ORM\ManyToMany(targetEntity: Store::class, fetch: 'EXTRA_LAZY')]
     private Collection $stores;
 
