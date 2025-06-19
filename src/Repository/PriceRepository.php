@@ -4,8 +4,8 @@ namespace ProductBundle\Repository;
 
 use Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository;
 use Doctrine\Persistence\ManagerRegistry;
-use DoctrineEnhanceBundle\Repository\CommonRepositoryAware;
 use ProductBundle\Entity\Price;
+use Tourze\TrainCourseBundle\Trait\CommonRepositoryAware;
 
 /**
  * @method Price|null find($id, $lockMode = null, $lockVersion = null)

@@ -4,8 +4,8 @@ namespace ProductBundle\Repository;
 
 use Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository;
 use Doctrine\Persistence\ManagerRegistry;
-use DoctrineEnhanceBundle\Repository\CommonRepositoryAware;
 use ProductBundle\Entity\SpuLimitRule;
+use Tourze\TrainCourseBundle\Trait\CommonRepositoryAware;
 
 /**
  * @method SpuLimitRule|null find($id, $lockMode = null, $lockVersion = null)

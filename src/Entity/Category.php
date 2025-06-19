@@ -10,7 +10,6 @@ use Doctrine\Common\Collections\Collection;
 use Doctrine\Common\Collections\Criteria;
 use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
-use DoctrineEnhanceBundle\Traits\SortableTrait;
 use ProductBundle\Repository\CategoryRepository;
 use Symfony\Component\Serializer\Attribute\Groups;
 use Symfony\Component\Serializer\Attribute\Ignore;
@@ -25,6 +24,7 @@ use Tourze\EasyAdmin\Attribute\Field\ImagePickerField;
 use Tourze\EasyAdmin\Attribute\Field\RichTextField;
 use Tourze\EasyAdmin\Attribute\Field\SelectField;
 use Tourze\EnumExtra\Itemable;
+use Tourze\TrainCourseBundle\Trait\SortableTrait;
 
 #[TreeView(dataModel: Category::class, targetAttribute: 'parent')]
 #[ORM\Table(name: 'product_category', options: ['comment' => '产品分类表'])]

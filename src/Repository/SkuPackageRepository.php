@@ -4,8 +4,8 @@ namespace ProductBundle\Repository;
 
 use Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository;
 use Doctrine\Persistence\ManagerRegistry;
-use DoctrineEnhanceBundle\Repository\CommonRepositoryAware;
 use ProductBundle\Entity\SkuPackage;
+use Tourze\TrainCourseBundle\Trait\CommonRepositoryAware;
 
 /**
  * @method SkuPackage|null find($id, $lockMode = null, $lockVersion = null)

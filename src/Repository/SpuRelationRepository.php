@@ -4,8 +4,8 @@ namespace ProductBundle\Repository;
 
 use Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository;
 use Doctrine\Persistence\ManagerRegistry;
-use DoctrineEnhanceBundle\Repository\CommonRepositoryAware;
 use ProductBundle\Entity\SpuRelation;
+use Tourze\TrainCourseBundle\Trait\CommonRepositoryAware;
 
 /**
  * @method SpuRelation|null find($id, $lockMode = null, $lockVersion = null)

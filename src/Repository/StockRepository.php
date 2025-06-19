@@ -4,8 +4,8 @@ namespace ProductBundle\Repository;
 
 use Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository;
 use Doctrine\Persistence\ManagerRegistry;
-use DoctrineEnhanceBundle\Repository\CommonRepositoryAware;
 use ProductBundle\Entity\Stock;
+use Tourze\TrainCourseBundle\Trait\CommonRepositoryAware;
 
 /**
  * 账实相符，只能做到这个程度

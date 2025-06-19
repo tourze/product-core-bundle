@@ -12,7 +12,6 @@ use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Collections\Collection;
 use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
-use DoctrineEnhanceBundle\Traits\SortableTrait;
 use ProductBundle\Enum\SpuState;
 use ProductBundle\ProductTypeFetcher;
 use ProductBundle\Repository\SpuRepository;
@@ -34,6 +33,7 @@ use Tourze\EasyAdmin\Attribute\Field\RichTextField;
 use Tourze\EasyAdmin\Attribute\Field\SelectField;
 use Tourze\EnumExtra\Itemable;
 use Tourze\ResourceManageBundle\Model\ResourceIdentity;
+use Tourze\TrainCourseBundle\Trait\SortableTrait;
 use Yiisoft\Arrays\ArrayHelper;
 use Yiisoft\Json\Json;
 

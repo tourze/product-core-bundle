@@ -7,7 +7,6 @@ use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Collections\Collection;
 use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
-use DoctrineEnhanceBundle\Traits\SortableTrait;
 use ProductBundle\Enum\DeliveryType;
 use ProductBundle\Enum\FreightValuationType;
 use ProductBundle\Repository\FreightTemplateRepository;
@@ -24,6 +23,7 @@ use Tourze\DoctrineUserBundle\Attribute\UpdatedByColumn;
 use Tourze\DoctrineUserBundle\Traits\BlameableAware;
 use Tourze\EasyAdmin\Attribute\Action\Listable;
 use Tourze\EasyAdmin\Attribute\Field\SelectField;
+use Tourze\TrainCourseBundle\Trait\SortableTrait;
 
 /**
  * @see https://developers.weixin.qq.com/miniprogram/dev/platform-capabilities/business-capabilities/ministore/minishopopencomponent/API/freight/update_freight_template.html

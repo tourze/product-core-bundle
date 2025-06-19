@@ -2,14 +2,14 @@
 
 namespace ProductBundle\Event;
 
-use DoctrineEnhanceBundle\Traits\QueryBuilderAware;
+// use DoctrineEnhanceBundle\Traits\QueryBuilderAware; // Trait not found
 use Symfony\Contracts\EventDispatcher\Event;
 use Tourze\JsonRPCEndpointBundle\Traits\InterruptCallbackTrait;
 
 class QuerySpuListByAttributesEvent extends Event
 {
     use InterruptCallbackTrait;
-    use QueryBuilderAware;
+    // use QueryBuilderAware; // Trait not found
 
     private array $attributes;
 
