@@ -2,7 +2,7 @@
 
 namespace ProductBundle\DataFixtures;
 
-use Carbon\Carbon;
+use Carbon\CarbonImmutable;
 use Doctrine\Bundle\FixturesBundle\Fixture;
 use Doctrine\Persistence\ObjectManager;
 use ProductBundle\Entity\Sku;
@@ -31,10 +31,10 @@ class BasicSpuFixture extends Fixture
             $spu->setThumbs([
                 ['url' => 'https://arvatorc.blob.core.chinacloudapi.cn/rcminipicture/pc15602380156089.jpg'],
             ]);
-            $spu->setCreateTime(Carbon::now());
+            $spu->setCreateTime(CarbonImmutable::now());
         }
 
-        $spu->setUpdateTime(Carbon::now());
+        $spu->setUpdateTime(CarbonImmutable::now());
         $manager->persist($spu);
 
         // 保存SKU
@@ -43,7 +43,7 @@ class BasicSpuFixture extends Fixture
             $sku = new Sku();
             $sku->setSpu($spu);
             $sku->setGtin('14610300');
-            $sku->setCreateTime(Carbon::now());
+            $sku->setCreateTime(CarbonImmutable::now());
             $sku->setUnit('个');
             $sku->setThumbs([
                 ['url' => 'https://arvatorc.blob.core.chinacloudapi.cn/rcminipicture/pc15602380105326.jpg'],
