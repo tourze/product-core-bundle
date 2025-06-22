@@ -2,11 +2,7 @@
 
 namespace ProductBundle\Entity;
 
-use AntdCpBundle\Builder\Field\BraftEditor;
-use App\Kernel;
-use AppBundle\Service\CurrencyManager;
-use AppBundle\Service\CurrencyService;
-use Carbon\Carbon;
+use Carbon\CarbonImmutable;
 use Carbon\CarbonInterface;
 use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
@@ -23,11 +19,6 @@ use Tourze\DoctrineTimestampBundle\Traits\TimestampableAware;
 use Tourze\DoctrineTrackBundle\Attribute\TrackColumn;
 use Tourze\DoctrineUserBundle\Attribute\UpdatedByColumn;
 use Tourze\DoctrineUserBundle\Traits\BlameableAware;
-use Tourze\EasyAdmin\Attribute\Action\Listable;
-use Tourze\EasyAdmin\Attribute\Event\BeforeCreate;
-use Tourze\EasyAdmin\Attribute\Event\BeforeEdit;
-use Tourze\EasyAdmin\Attribute\Field\RichTextField;
-use Tourze\EasyAdmin\Attribute\Field\SelectField;
 
 /**
  * 价格
@@ -41,7 +32,6 @@ use Tourze\EasyAdmin\Attribute\Field\SelectField;
  * @see http://www.woshipm.com/pd/2893875.html
  * @see https://cloud.tencent.com/developer/article/1866203
  */
-#[Listable]
 #[ORM\Table(name: 'product_price', options: ['comment' => '产品价格'])]
 #[ORM\Entity(repositoryClass: PriceRepository::class)]
 class Price implements \Stringable, AdminArrayInterface
@@ -51,7 +41,7 @@ class Price implements \Stringable, AdminArrayInterface
 
 
     #[Groups(['restful_read', 'admin_curd', 'restful_read'])]
-    #[ORM\Column(type: Types::DATETIME_IMMUTABLE, nullable: true, options: ['comment' => '创建时间'])]
+    #[ORM\Column(nullable: true, options: ['comment' => '创建人'])]
     private ?string $createdBy = null;
     #[UpdatedByColumn]
     #[ORM\Column(nullable: true, options: ['comment' => '更新人'])]
@@ -68,7 +58,6 @@ class Price implements \Stringable, AdminArrayInterface
     #[TrackColumn]
     #[ORM\Column(type: Types::STRING, length: 60, enumType: PriceType::class, options: ['default' => 'sale', 'comment' => '类型'])]
     private PriceType $type;
-    #[SelectField(targetEntity: CurrencyManager::class)]
     #[Groups(['restful_read', 'admin_curd'])]
     #[ORM\Column(type: Types::STRING, length: 10, options: ['default' => 'CNY', 'comment' => '币种'])]
     private ?string $currency = null;
@@ -78,14 +67,8 @@ class Price implements \Stringable, AdminArrayInterface
     #[PrecisionColumn]
     #[ORM\Column(type: Types::DECIMAL, precision: 20, scale: 2, options: ['comment' => '金额'])]
     private ?string $price = null;
-    /**
-     * @see https://you.kaola.com/footer/index.html?key=footer_tariff
-     */
     #[ORM\Column(type: Types::FLOAT, nullable: true, options: ['comment' => '税率(%)'])]
     private ?float $taxRate = null;
-    /**
-     * 一些特殊的价格，希望更加灵活，此时可以使用公式能力.
-     */
     #[ORM\Column(type: Types::STRING, length: 120, nullable: true, options: ['comment' => '公式'])]
     private ?string $formula = null;
     #[ORM\Column(type: Types::BOOLEAN, nullable: true, options: ['comment' => '允许退款', 'default' => 1])]
@@ -99,10 +82,6 @@ class Price implements \Stringable, AdminArrayInterface
     private ?\DateTimeInterface $expireTime = null;
     #[ORM\Column(type: Types::STRING, length: 1000, nullable: true, options: ['comment' => '备注'])]
     private ?string $remark = null;
-    /**
-     * @BraftEditor
-     */
-    #[RichTextField]
     #[ORM\Column(type: Types::TEXT, nullable: true, options: ['comment' => '描述'])]
     private ?string $description = null;
     #[ORM\Column(type: Types::BOOLEAN, nullable: true, options: ['comment' => '是否默认'])]
@@ -118,7 +97,7 @@ class Price implements \Stringable, AdminArrayInterface
 
     public function __toString(): string
     {
-        if (!$this->getId()) {
+        if ($this->getId() === null || $this->getId() === 0) {
             return '';
         }
 
@@ -134,8 +113,8 @@ class Price implements \Stringable, AdminArrayInterface
 
     public function getDateRange(): string
     {
-        $startDate = Carbon::parse($this->getEffectTime());
-        $endDate = Carbon::parse($this->getExpireTime());
+        $startDate = CarbonImmutable::parse($this->getEffectTime());
+        $endDate = CarbonImmutable::parse($this->getExpireTime());
 
         return self::getHumanizeDayText($startDate, $endDate);
     }
@@ -253,12 +232,7 @@ class Price implements \Stringable, AdminArrayInterface
 
     public function renderCurrency(): string
     {
-        foreach (Kernel::container()->get(CurrencyService::class)->getCurrencies() as $currency) {
-            if ($currency->getCurrencyCode() === $this->getCurrency()) {
-                return $currency->getName();
-            }
-        }
-
+        // Currency service integration removed - AppBundle not available
         return strval($this->getCurrency());
     }
 
@@ -286,8 +260,6 @@ class Price implements \Stringable, AdminArrayInterface
         return $this;
     }
 
-    #[BeforeCreate]
-    #[BeforeEdit]
     public function validDateRange(): void
     {
         // TODO 如果是销售价格，我们要确保同一时间点，不会有多个销售价格
@@ -318,10 +290,10 @@ class Price implements \Stringable, AdminArrayInterface
      */
     public function checkByDateTime(CarbonInterface $now): bool
     {
-        if ($this->getEffectTime() && $now->lessThan($this->getEffectTime())) {
+        if ($this->getEffectTime() !== null && $now->lessThan($this->getEffectTime())) {
             return false;
         }
-        if ($this->getExpireTime() && $now->greaterThan($this->getExpireTime())) {
+        if ($this->getExpireTime() !== null && $now->greaterThan($this->getExpireTime())) {
             return false;
         }
 
@@ -374,7 +346,8 @@ class Price implements \Stringable, AdminArrayInterface
     #[Groups(['restful_read', 'admin_curd'])]
     public function getDisplayPrice(): string
     {
-        return Kernel::container()->get(CurrencyManager::class)->getDisplayPrice($this->getCurrency(), $this->getPrice());
+        // CurrencyManager integration removed - AppBundle not available
+        return $this->getCurrency() . ' ' . $this->getPrice();
     }
 
     /**
@@ -383,7 +356,10 @@ class Price implements \Stringable, AdminArrayInterface
     #[Groups(['restful_read', 'admin_curd'])]
     public function getTax(): float
     {
-        return Kernel::container()->get(CurrencyManager::class)->getPriceNumber($this->getPrice() * ($this->getTaxRate() / 100));
+        // CurrencyManager integration removed - AppBundle not available
+        $price = floatval($this->getPrice() ?? 0);
+        $taxRate = $this->getTaxRate() ?? 0;
+        return round($price * ($taxRate / 100), 2);
     }
 
     /**
@@ -392,7 +368,8 @@ class Price implements \Stringable, AdminArrayInterface
     #[Groups(['restful_read', 'admin_curd'])]
     public function getDisplayTax(): string
     {
-        return Kernel::container()->get(CurrencyManager::class)->getDisplayPrice($this->getCurrency(), $this->getTax());
+        // CurrencyManager integration removed - AppBundle not available
+        return $this->getCurrency() . ' ' . number_format($this->getTax(), 2);
     }
 
     /**
@@ -401,7 +378,9 @@ class Price implements \Stringable, AdminArrayInterface
     #[Groups(['restful_read', 'admin_curd'])]
     public function getTaxPrice(): float
     {
-        return Kernel::container()->get(CurrencyManager::class)->getPriceNumber($this->getPrice() + $this->getTax());
+        // CurrencyManager integration removed - AppBundle not available
+        $price = floatval($this->getPrice() ?? 0);
+        return round($price + $this->getTax(), 2);
     }
 
     /**
@@ -410,7 +389,8 @@ class Price implements \Stringable, AdminArrayInterface
     #[Groups(['restful_read', 'admin_curd'])]
     public function getDisplayTaxPrice(): string
     {
-        return Kernel::container()->get(CurrencyManager::class)->getDisplayPrice($this->getCurrency(), $this->getTaxPrice());
+        // CurrencyManager integration removed - AppBundle not available
+        return $this->getCurrency() . ' ' . number_format($this->getTaxPrice(), 2);
     }
 
     public function retrieveSkuArray(): array

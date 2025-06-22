@@ -2,7 +2,6 @@
 
 namespace ProductBundle;
 
-use AntdCpBundle\Builder\Field\SelectDataInterrupt;
 use Symfony\Component\DependencyInjection\Attribute\TaggedIterator;
 use Tourze\EnumExtra\SelectDataFetcher;
 
@@ -16,14 +15,12 @@ class ProductTagFetcher implements SelectDataFetcher
     ) {
     }
 
-    public function genSelectData(): array
+    public function genSelectData(): iterable
     {
         $result = [];
         foreach ($this->providers as $provider) {
             $subData = $provider->genSelectData();
-            if ($provider instanceof SelectDataInterrupt && $provider->isInterrupt()) {
-                return iterator_to_array($subData);
-            }
+            // Skip interrupt check as AntdCpBundle is not available
 
             /* @var SelectDataFetcher $provider */
             if (!is_array($subData)) {

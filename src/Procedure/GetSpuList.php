@@ -2,8 +2,6 @@
 
 namespace ProductBundle\Procedure;
 
-use AppBundle\Entity\Supplier;
-use AppBundle\Service\UserTagService;
 use Doctrine\Common\Collections\Criteria;
 use Doctrine\ORM\EntityManagerInterface;
 use ProductBundle\Entity\Spu;
@@ -58,7 +56,6 @@ class GetSpuList extends BaseProcedure
         private readonly EventDispatcherInterface $eventDispatcher,
         private readonly EntityManagerInterface $entityManager,
         private readonly LoggerInterface $procedureLogger,
-        private readonly UserTagService $userTagService,
     ) {
     }
 
@@ -73,7 +70,7 @@ class GetSpuList extends BaseProcedure
             ->addOrderBy('a.id', Criteria::DESC);
 
         // 查找指定目录
-        if ($this->categoryIds) {
+        if (!empty($this->categoryIds)) {
             $categoryIds = $this->categoryService->findSearchableId($this->categoryIds);
             if (empty($categoryIds)) {
                 $qb->andWhere('3=2');
@@ -85,7 +82,7 @@ class GetSpuList extends BaseProcedure
         }
 
         // 查找关键属性
-        if ($this->spuAttributes) {
+        if (!empty($this->spuAttributes)) {
             $qb->innerJoin('a.attributes', 'attr');
 
             $attrParts = [];
@@ -107,11 +104,11 @@ class GetSpuList extends BaseProcedure
             $qb->setParameter('keyword2', "%{$keyword}%");
         }
 
-        if ($this->type) {
+        if (!empty($this->type)) {
             $qb->andWhere('a.type = :type')->setParameter('type', $this->type);
         }
 
-        if ($this->gtin) {
+        if (!empty($this->gtin)) {
             $qb->andWhere('a.gtin LIKE :gtin');
             $qb->setParameter('gtin', "%{$this->gtin}%");
         }
@@ -119,7 +116,8 @@ class GetSpuList extends BaseProcedure
         if (!empty($this->supplier)) {
             $supplier = $this->entityManager
                 ->createQueryBuilder()
-                ->from(Supplier::class, 'a')
+                // Supplier integration removed - AppBundle not available
+                // ->from(Supplier::class, 'a')
                 ->select('a')
                 ->andWhere('(a.id = :id OR a.title = :title) AND a.valid = true')
                 ->setParameter('id', $this->supplier)
@@ -127,7 +125,7 @@ class GetSpuList extends BaseProcedure
                 ->getQuery()
                 ->getOneOrNullResult();
 
-            if ($supplier) {
+            if ($supplier !== null) {
                 $qb->andWhere('a.supplier = :supplier');
                 $qb->setParameter('supplier', $supplier);
             } else {
@@ -144,7 +142,7 @@ class GetSpuList extends BaseProcedure
         $this->procedureLogger->debug('最终参与筛选的标签列表', [
             'tags' => $event->getTags(),
         ]);
-        if ($event->getTags()) {
+        if (!empty($event->getTags())) {
             $postTags = $this->tagService->findTags($event->getTags());
             if (!empty($postTags)) {
                 $qb->innerJoin('a.tags', 't');
@@ -157,8 +155,9 @@ class GetSpuList extends BaseProcedure
             'a.showTags is null',
             'JSON_LENGTH(a.showTags) = 0',
         ];
-        if ($this->security->getUser()) {
-            $tagIds = $this->userTagService->getTagIdsByUser($this->security->getUser());
+        if ($this->security->getUser() !== null) {
+            // UserTagService integration removed - AppBundle not available
+            $tagIds = [];
             foreach ($tagIds as $k => $tagId) {
                 $whereList[] = "JSON_SEARCH(a.showTags, 'one', :keyword_{$k}) IS NOT NULL";
                 $qb->setParameter("keyword_{$k}", $tagId);

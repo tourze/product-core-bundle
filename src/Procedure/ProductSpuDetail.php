@@ -52,36 +52,36 @@ class ProductSpuDetail extends CacheableProcedure
             $result['skus'] = array_values($result['skus']);
         }
 
-        if (!$this->security->getUser()) {
+        if ($this->security->getUser() === null) {
             return $result;
         }
 
         $event = new SpuDetailEvent();
         $event->setSpu($spu);
         $event->setResult($result);
-        $event->setSender($this->security->getUser() ?: SystemUser::instance());
+        $event->setSender($this->security->getUser() ?? SystemUser::instance());
         $event->setReceiver(SystemUser::instance());
         $this->eventDispatcher->dispatch($event);
 
         return $event->getResult();
     }
 
-    protected function getCacheKey(JsonRpcRequest $request): string
+    public function getCacheKey(JsonRpcRequest $request): string
     {
         $key = static::buildParamCacheKey($request->getParams());
-        if ($this->security->getUser()) {
+        if ($this->security->getUser() !== null) {
             $key .= '-' . $this->security->getUser()->getUserIdentifier();
         }
 
         return $key;
     }
 
-    protected function getCacheDuration(JsonRpcRequest $request): int
+    public function getCacheDuration(JsonRpcRequest $request): int
     {
-        return MINUTE_IN_SECONDS;
+        return 60; // 1 minute
     }
 
-    protected function getCacheTags(JsonRpcRequest $request): iterable
+    public function getCacheTags(JsonRpcRequest $request): iterable
     {
         yield CacheHelper::getClassTags(Spu::class);
         yield CacheHelper::getClassTags(Sku::class);

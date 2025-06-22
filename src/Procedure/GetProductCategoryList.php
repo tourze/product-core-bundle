@@ -2,7 +2,6 @@
 
 namespace ProductBundle\Procedure;
 
-use AppBundle\Service\UserTagService;
 use Doctrine\Common\Collections\Criteria;
 use Doctrine\ORM\EntityManagerInterface;
 use ProductBundle\Entity\Category;
@@ -25,7 +24,6 @@ class GetProductCategoryList extends CacheableProcedure
 
     public function __construct(
         private readonly EntityManagerInterface $entityManager,
-        private readonly UserTagService $userTagService,
         private readonly Security $security,
     ) {
     }
@@ -55,7 +53,7 @@ class GetProductCategoryList extends CacheableProcedure
             ->andWhere('a.valid = :valid')
             ->setParameter('valid', true);
 
-        if ($parent) {
+        if ($parent !== null) {
             $qb->andWhere('a.parent = :parent')
                 ->setParameter('parent', $parent);
         } else {
@@ -67,8 +65,9 @@ class GetProductCategoryList extends CacheableProcedure
             'a.showTags is null',
             'JSON_LENGTH(a.showTags) = 0',
         ];
-        if ($this->security->getUser()) {
-            $tagIds = $this->userTagService->getTagIdsByUser($this->security->getUser());
+        if ($this->security->getUser() !== null) {
+            // UserTagService integration removed - AppBundle not available
+            $tagIds = [];
             foreach ($tagIds as $k => $tagId) {
                 $whereList[] = "JSON_SEARCH(a.showTags, 'one', :keyword_{$k}) IS NOT NULL";
                 $qb->setParameter("keyword_{$k}", $tagId);
@@ -92,22 +91,22 @@ class GetProductCategoryList extends CacheableProcedure
         return $result;
     }
 
-    protected function getCacheKey(JsonRpcRequest $request): string
+    public function getCacheKey(JsonRpcRequest $request): string
     {
         $key = static::buildParamCacheKey($request->getParams());
-        if ($this->security->getUser()) {
+        if ($this->security->getUser() !== null) {
             $key .= '-' . $this->security->getUser()->getUserIdentifier();
         }
 
         return $key;
     }
 
-    protected function getCacheDuration(JsonRpcRequest $request): int
+    public function getCacheDuration(JsonRpcRequest $request): int
     {
-        return MINUTE_IN_SECONDS;
+        return 60; // 1 minute
     }
 
-    protected function getCacheTags(JsonRpcRequest $request): iterable
+    public function getCacheTags(JsonRpcRequest $request): iterable
     {
         yield null;
     }

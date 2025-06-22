@@ -48,7 +48,7 @@ class StockLog implements AdminArrayInterface
     #[ORM\Column(type: Types::STRING, length: 30, enumType: StockChange::class, options: ['comment' => '类型'])]
     private StockChange $type;
     #[ORM\Column(type: Types::INTEGER, options: ['comment' => '数量'])]
-    private ?int $quantity = 0;
+    private int $quantity = 0;
     #[ORM\Column(type: Types::STRING, length: 255, nullable: true, options: ['comment' => '备注'])]
     private ?string $remark = '';
     #[CreateIpColumn]
@@ -96,7 +96,7 @@ class StockLog implements AdminArrayInterface
 
     public function renderSKU(): string
     {
-        return $this->getSku() ? $this->getSku()->getFullName() : '';
+        return $this->getSku() !== null ? $this->getSku()->getFullName() : '';
     }
 
     public function getSku(): ?Sku

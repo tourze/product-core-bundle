@@ -26,7 +26,7 @@ class TagService
                 $tag = $this->tagRepository->findOneBy(['name' => $item['name']]);
             }
 
-            if ($tag) {
+            if ($tag !== null) {
                 $postTags[$tag->getId()] = $tag->getId();
             }
         }

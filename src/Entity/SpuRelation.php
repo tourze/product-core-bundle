@@ -41,8 +41,10 @@ class SpuRelation implements \Stringable
     private ?Spu $spu1 = null;
     #[ORM\JoinColumn(nullable: false, onDelete: 'CASCADE')]
     private ?Spu $spu2 = null;
-    #[ORM\Column(length: 30)]
-    private ?string $relation = null;public function getId(): ?string
+    #[ORM\Column(length: 30, options: ['comment' => '关系类型'])]
+    private ?string $relation = null;
+
+    public function getId(): ?string
     {
         return $this->id;
     }

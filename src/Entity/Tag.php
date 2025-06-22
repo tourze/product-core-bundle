@@ -140,11 +140,11 @@ class Tag implements \Stringable, Itemable
 
     public function __toString(): string
     {
-        if (!$this->getId()) {
+        if ($this->getId() === null || $this->getId() === 0) {
             return '';
         }
 
-        if ($this->getCategory()) {
+        if (!empty($this->getCategory())) {
             return "[{$this->getCategory()}]{$this->getName()}";
         }
 

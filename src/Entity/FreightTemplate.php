@@ -10,7 +10,6 @@ use Doctrine\ORM\Mapping as ORM;
 use ProductBundle\Enum\DeliveryType;
 use ProductBundle\Enum\FreightValuationType;
 use ProductBundle\Repository\FreightTemplateRepository;
-use StoreBundle\Entity\Store;
 use Symfony\Component\Serializer\Attribute\Groups;
 use Tourze\Arrayable\AdminArrayInterface;
 use Tourze\Arrayable\ApiArrayInterface;
@@ -21,14 +20,11 @@ use Tourze\DoctrineTrackBundle\Attribute\TrackColumn;
 use Tourze\DoctrineUserBundle\Attribute\CreatedByColumn;
 use Tourze\DoctrineUserBundle\Attribute\UpdatedByColumn;
 use Tourze\DoctrineUserBundle\Traits\BlameableAware;
-use Tourze\EasyAdmin\Attribute\Action\Listable;
-use Tourze\EasyAdmin\Attribute\Field\SelectField;
 use Tourze\TrainCourseBundle\Trait\SortableTrait;
 
 /**
  * @see https://developers.weixin.qq.com/miniprogram/dev/platform-capabilities/business-capabilities/ministore/minishopopencomponent/API/freight/update_freight_template.html
  */
-#[Listable]
 #[ORM\Entity(repositoryClass: FreightTemplateRepository::class)]
 #[ORM\Table(name: 'product_freight_template', options: ['comment' => '运费模板'])]
 class FreightTemplate implements \Stringable, ApiArrayInterface, AdminArrayInterface
@@ -37,9 +33,8 @@ class FreightTemplate implements \Stringable, ApiArrayInterface, AdminArrayInter
     use TimestampableAware;
 
 
-    #[Groups(['restful_read', 'admin_curd', 'restful_read'])]
-    #[ORM\Column(type: Types::DATETIME_IMMUTABLE, nullable: true, options: ['comment' => '创建时间'])]
     #[ORM\Id]
+    #[ORM\Column(type: Types::BIGINT, options: ['comment' => '主键'])]
     #[ORM\GeneratedValue(strategy: 'CUSTOM')]
     #[ORM\CustomIdGenerator(SnowflakeIdGenerator::class)]
     private ?string $id = null;
@@ -63,7 +58,6 @@ class FreightTemplate implements \Stringable, ApiArrayInterface, AdminArrayInter
     #[Groups(['admin_curd'])]
     #[ORM\Column(length: 40, enumType: FreightValuationType::class, options: ['comment' => '计费方式'])]
     private ?FreightValuationType $valuationType = null;
-    #[SelectField(targetEntity: CurrencyManager::class)]
     #[ORM\Column(type: Types::STRING, length: 10, options: ['default' => 'CNY', 'comment' => '币种'])]
     private ?string $currency = null;
     #[PrecisionColumn]
@@ -71,18 +65,16 @@ class FreightTemplate implements \Stringable, ApiArrayInterface, AdminArrayInter
     private ?string $fee = null;
     #[ORM\ManyToMany(targetEntity: Spu::class, mappedBy: 'freightTemplates', fetch: 'EXTRA_LAZY')]
     private Collection $spus;
-    #[ORM\ManyToMany(targetEntity: Store::class, fetch: 'EXTRA_LAZY')]
-    private Collection $stores;
+    // Store relationship removed - StoreBundle not available
 
     public function __construct()
     {
         $this->spus = new ArrayCollection();
-        $this->stores = new ArrayCollection();
     }
 
     public function __toString(): string
     {
-        if (!$this->getId()) {
+        if ($this->getId() === null || $this->getId() === '') {
             return '';
         }
 
@@ -188,9 +180,7 @@ class FreightTemplate implements \Stringable, ApiArrayInterface, AdminArrayInter
     public function retrieveApiArray(): array
     {
         $stores = [];
-        foreach ($this->getStores() as $store) {
-            $stores[] = $store->retrieveApiArray();
-        }
+        // Store functionality removed - StoreBundle not available
 
         return [
             'id' => $this->getId(),
@@ -203,11 +193,12 @@ class FreightTemplate implements \Stringable, ApiArrayInterface, AdminArrayInter
     }
 
     /**
-     * @return Collection<int, Store>
+     * @return Collection<int, mixed>
      */
     public function getStores(): Collection
     {
-        return $this->stores;
+        // Store functionality removed - StoreBundle not available
+        return new ArrayCollection();
     }
 
     public function getDeliveryType(): ?DeliveryType

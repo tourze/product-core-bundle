@@ -2,22 +2,14 @@
 
 namespace ProductBundle\Entity;
 
-use AntdCpBundle\Builder\Action\ModalFormAction;
-use AntdCpBundle\Builder\Field\DynamicFieldSet;
-use AntdCpBundle\Builder\Field\InputNumberField;
-use AntdCpBundle\Builder\Field\LongTextField;
-use App\Kernel;
-use AppBundle\Service\CurrencyManager;
-use Carbon\Carbon;
+use Carbon\CarbonImmutable;
 use Carbon\CarbonInterface;
 use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Collections\Collection;
 use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
 use ProductBundle\Enum\PriceType;
-use ProductBundle\Enum\StockChange;
 use ProductBundle\Repository\SkuRepository;
-use ProductBundle\Service\StockService;
 use Symfony\Component\Serializer\Attribute\Groups;
 use Symfony\Component\Serializer\Attribute\Ignore;
 use Tourze\Arrayable\AdminArrayInterface;
@@ -28,15 +20,6 @@ use Tourze\DoctrineTimestampBundle\Traits\TimestampableAware;
 use Tourze\DoctrineTrackBundle\Attribute\TrackColumn;
 use Tourze\DoctrineUserBundle\Attribute\UpdatedByColumn;
 use Tourze\DoctrineUserBundle\Traits\BlameableAware;
-use Tourze\EasyAdmin\Attribute\Action\Creatable;
-use Tourze\EasyAdmin\Attribute\Action\CurdAction;
-use Tourze\EasyAdmin\Attribute\Action\Editable;
-use Tourze\EasyAdmin\Attribute\Action\Exportable;
-use Tourze\EasyAdmin\Attribute\Action\Listable;
-use Tourze\EasyAdmin\Attribute\Action\ListAction;
-use Tourze\EasyAdmin\Attribute\Event\BeforeCreate;
-use Tourze\EasyAdmin\Attribute\Event\BeforeEdit;
-use Tourze\EasyAdmin\Attribute\Field\ImagePickerField;
 use Tourze\EnumExtra\Itemable;
 use Tourze\LockServiceBundle\Model\LockEntity;
 use Yiisoft\Arrays\ArraySorter;
@@ -57,10 +40,6 @@ use Yiisoft\Arrays\ArraySorter;
  * @see https://documentation.b2c.commercecloud.salesforce.com/DOC2/topic/com.demandware.dochelp/OCAPI/current/shop/Documents/Variant.html
  * @see https://learnku.com/articles/21461
  */
-#[Exportable(label: '导出')]
-#[Listable]
-#[Editable(drawerWidth: 850)]
-#[Creatable(drawerWidth: 850)]
 #[ORM\Table(name: 'product_sku', options: ['comment' => '产品SKU'])]
 #[ORM\Entity(repositoryClass: SkuRepository::class)]
 class Sku implements \Stringable, Itemable, AdminArrayInterface, LockEntity
@@ -70,7 +49,7 @@ class Sku implements \Stringable, Itemable, AdminArrayInterface, LockEntity
 
 
     #[Groups(['restful_read', 'admin_curd', 'restful_read'])]
-    #[ORM\Column(type: Types::DATETIME_IMMUTABLE, nullable: true, options: ['comment' => '创建时间'])]
+    #[ORM\Column(nullable: true, options: ['comment' => '创建人'])]
     private ?string $createdBy = null;
     #[UpdatedByColumn]
     #[ORM\Column(nullable: true, options: ['comment' => '更新人'])]
@@ -86,16 +65,10 @@ class Sku implements \Stringable, Itemable, AdminArrayInterface, LockEntity
     #[ORM\JoinColumn(nullable: false, onDelete: 'CASCADE')]
     private ?Spu $spu = null;
     use StockValueAware;
-    /**
-     * 全球唯一编码，可以是UPC、EAN、69码等等.
-     */
     #[TrackColumn]
     #[SnowflakeColumn(prefix: 'SKU')]
     #[ORM\Column(type: Types::STRING, length: 40, nullable: true, options: ['comment' => '全球唯一编码'])]
     private ?string $gtin = '';
-    /**
-     * 制造商部件号，一般可以理解为型号，或其他自编码
-     */
     #[ORM\Column(type: Types::STRING, length: 60, nullable: true, options: ['comment' => '厂商型号码'])]
     private ?string $mpn = null;
     #[ORM\Column(type: Types::STRING, length: 10, options: ['default' => '个', 'comment' => '单位'])]
@@ -105,11 +78,9 @@ class Sku implements \Stringable, Itemable, AdminArrayInterface, LockEntity
     /**
      * @var Collection<Price>
      */
-    #[CurdAction(label: '定价', drawerWidth: 1300)]
     #[Groups(['admin_curd'])]
     #[ORM\OneToMany(mappedBy: 'sku', targetEntity: Price::class, cascade: ['persist'], fetch: 'EXTRA_LAZY', orphanRemoval: true)]
     private Collection $prices;
-    #[ImagePickerField(limit: 9)]
     #[ORM\Column(type: Types::JSON, nullable: true, options: ['comment' => '图片'])]
     private ?array $thumbs = [];
     /**
@@ -120,27 +91,23 @@ class Sku implements \Stringable, Itemable, AdminArrayInterface, LockEntity
     #[ORM\OneToMany(mappedBy: 'sku', targetEntity: SkuAttribute::class, cascade: ['persist'], fetch: 'EXTRA_LAZY', orphanRemoval: true)]
     private Collection $attributes;
     /**
-     * @DynamicFieldSet()
-     *
      * @var Collection<SkuPackage>
      */
     #[ORM\OneToMany(mappedBy: 'sku', targetEntity: SkuPackage::class, cascade: ['persist'], fetch: 'EXTRA_LAZY', orphanRemoval: true)]
     private Collection $packages;
     /**
-     * @var Collection<int, Stock>|Stock[]
+     * @var Collection<int, Stock>
      */
     #[ORM\OneToMany(mappedBy: 'sku', targetEntity: Stock::class, fetch: 'EXTRA_LAZY', orphanRemoval: true)]
     private Collection $stocks;
     #[ORM\Column(type: Types::STRING, length: 255, nullable: true, options: ['comment' => '备注'])]
     private ?string $remark = null;
     /**
-     * @var Collection<int, StockLog>|StockLog[]
+     * @var Collection<int, StockLog>
      */
     #[ORM\OneToMany(mappedBy: 'sku', targetEntity: StockLog::class)]
     private Collection $stockLogs;
     /**
-     * @DynamicFieldSet()
-     *
      * @var Collection<SkuLimitRule>
      */
     #[ORM\OneToMany(mappedBy: 'sku', targetEntity: SkuLimitRule::class, cascade: ['persist'], fetch: 'EXTRA_LAZY', orphanRemoval: true)]
@@ -173,7 +140,7 @@ class Sku implements \Stringable, Itemable, AdminArrayInterface, LockEntity
 
     public function __toString(): string
     {
-        if (!$this->getId()) {
+        if ($this->getId() === null || $this->getId() === 0) {
             return '';
         }
 
@@ -268,14 +235,14 @@ class Sku implements \Stringable, Itemable, AdminArrayInterface, LockEntity
      */
     public function getSortedPrices(): array
     {
-        $now = Carbon::now();
+        $now = CarbonImmutable::now();
 
         $list = $this->getPrices()
             ->filter(function (Price $price) use ($now): bool {
-                if ($price->getEffectTime() && $now->lessThan($price->getEffectTime())) {
+                if ($price->getEffectTime() !== null && $now->lessThan($price->getEffectTime())) {
                     return false;
                 }
-                if ($price->getExpireTime() && $now->greaterThan($price->getExpireTime())) {
+                if ($price->getExpireTime() !== null && $now->greaterThan($price->getExpireTime())) {
                     return false;
                 }
 
@@ -321,8 +288,6 @@ class Sku implements \Stringable, Itemable, AdminArrayInterface, LockEntity
         return $this;
     }
 
-    #[BeforeCreate]
-    #[BeforeEdit]
     public function beforeCurdSaveCheck(array $form): void
     {
         // TODO 同一SPU下的SKU不允许销售属性一模一样
@@ -504,9 +469,11 @@ class Sku implements \Stringable, Itemable, AdminArrayInterface, LockEntity
         return $this;
     }
 
-    #[ListAction(title: '入库', showExpression: '!hasEnv("FIXED_PRODUCT_STOCK_NUMBER")')]
-    public function renderPushStockButton(): ModalFormAction
+    public function renderPushStockButton(): array
     {
+        // ModalFormAction functionality removed - AntdCpBundle not available
+        return [];
+        /*
         return ModalFormAction::gen()
             ->setFormTitle('入库')
             ->setLabel('入库')
@@ -542,6 +509,7 @@ class Sku implements \Stringable, Itemable, AdminArrayInterface, LockEntity
                     'record' => $record,
                 ];
             });
+        */
     }
 
     public function isBundle(): bool
@@ -726,7 +694,8 @@ class Sku implements \Stringable, Itemable, AdminArrayInterface, LockEntity
             if (!isset($result[$price->getCurrency()])) {
                 $result[$price->getCurrency()] = [];
             }
-            $result[$price->getCurrency()][] = Kernel::container()->get(CurrencyManager::class)->getDisplayPrice($price->getCurrency(), $price->getPrice());
+            // CurrencyManager integration removed - AppBundle not available
+            $result[$price->getCurrency()][] = $price->getCurrency() . ' ' . $price->getPrice();
         }
         foreach ($result as $k => $v) {
             // 因为可能多种类型价格，所以使用 / 来分割
@@ -760,7 +729,8 @@ class Sku implements \Stringable, Itemable, AdminArrayInterface, LockEntity
             if (!isset($result[$price->getCurrency()])) {
                 $result[$price->getCurrency()] = [];
             }
-            $result[$price->getCurrency()][] = Kernel::container()->get(CurrencyManager::class)->getDisplayPrice($price->getCurrency(), $price->getTaxPrice());
+            // CurrencyManager integration removed - AppBundle not available
+            $result[$price->getCurrency()][] = $price->getCurrency() . ' ' . number_format($price->getTaxPrice(), 2);
         }
         foreach ($result as $k => $v) {
             // 因为可能多种类型价格，所以使用 / 来分割
@@ -782,7 +752,8 @@ class Sku implements \Stringable, Itemable, AdminArrayInterface, LockEntity
             if (!isset($result[$price->getCurrency()])) {
                 $result[$price->getCurrency()] = [];
             }
-            $result[$price->getCurrency()][] = Kernel::container()->get(CurrencyManager::class)->getDisplayPrice($price->getCurrency(), $price->getTax());
+            // CurrencyManager integration removed - AppBundle not available
+            $result[$price->getCurrency()][] = $price->getCurrency() . ' ' . number_format($price->getTax(), 2);
         }
         foreach ($result as $k => $v) {
             $result[$k] = implode('/', $v);
@@ -814,7 +785,7 @@ class Sku implements \Stringable, Itemable, AdminArrayInterface, LockEntity
     #[Groups(['restful_read'])]
     public function getMainThumb(): string
     {
-        if (!$this->getThumbs()) {
+        if (empty($this->getThumbs())) {
             return $this->getSpu()->getMainThumb();
         }
 

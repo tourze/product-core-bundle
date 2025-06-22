@@ -2,18 +2,11 @@
 
 namespace ProductBundle\Entity;
 
-use AntdCpBundle\Builder\Field\BraftEditor;
-use AntdCpBundle\Builder\Field\DynamicFieldSet;
-use AntdCpBundle\Builder\Field\TreeSelectField;
-use App\Kernel;
-use AppBundle\Entity\Supplier;
-use AppBundle\Service\CurrencyManager;
 use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Collections\Collection;
 use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
 use ProductBundle\Enum\SpuState;
-use ProductBundle\ProductTypeFetcher;
 use ProductBundle\Repository\SpuRepository;
 use Symfony\Bundle\SecurityBundle\Security;
 use Symfony\Component\Serializer\Attribute\Groups;
@@ -26,11 +19,6 @@ use Tourze\DoctrineTimestampBundle\Traits\TimestampableAware;
 use Tourze\DoctrineTrackBundle\Attribute\TrackColumn;
 use Tourze\DoctrineUserBundle\Attribute\UpdatedByColumn;
 use Tourze\DoctrineUserBundle\Traits\BlameableAware;
-use Tourze\EasyAdmin\Attribute\Column\PictureColumn;
-use Tourze\EasyAdmin\Attribute\Event\BeforeCreate;
-use Tourze\EasyAdmin\Attribute\Field\ImagePickerField;
-use Tourze\EasyAdmin\Attribute\Field\RichTextField;
-use Tourze\EasyAdmin\Attribute\Field\SelectField;
 use Tourze\EnumExtra\Itemable;
 use Tourze\ResourceManageBundle\Model\ResourceIdentity;
 use Tourze\TrainCourseBundle\Trait\SortableTrait;
@@ -50,7 +38,7 @@ class Spu implements \Stringable, Itemable, AdminArrayInterface, ResourceIdentit
 
 
     #[Groups(['restful_read', 'admin_curd', 'restful_read'])]
-    #[ORM\Column(type: Types::DATETIME_IMMUTABLE, nullable: true, options: ['comment' => '创建时间'])]
+    #[ORM\Column(nullable: true, options: ['comment' => '创建人'])]
     private ?string $createdBy = null;
     #[UpdatedByColumn]
     #[ORM\Column(nullable: true, options: ['comment' => '更新人'])]
@@ -59,9 +47,10 @@ class Spu implements \Stringable, Itemable, AdminArrayInterface, ResourceIdentit
     #[ORM\GeneratedValue]
     #[ORM\Column(type: Types::INTEGER, options: ['comment' => 'SpuID'])]
     private ?int $id = 0;
-    #[ORM\ManyToOne]
-    #[ORM\JoinColumn(onDelete: 'SET NULL')]
-    private ?Supplier $supplier = null;
+    // Supplier relationship removed - AppBundle not available
+    // #[ORM\ManyToOne]
+    // #[ORM\JoinColumn(onDelete: 'SET NULL')]
+    // private ?Supplier $supplier = null;
     use SortableTrait;
     /**
      * 全球唯一编码，可以是UPC、EAN、69码等等.
@@ -72,7 +61,6 @@ class Spu implements \Stringable, Itemable, AdminArrayInterface, ResourceIdentit
     private ?string $gtin = '';
     #[ORM\Column(type: Types::STRING, length: 120, options: ['comment' => '标题'])]
     private string $title = '';
-    #[SelectField(targetEntity: ProductTypeFetcher::class)]
     #[ORM\Column(type: Types::STRING, length: 60, nullable: true, options: ['default' => 'normal', 'comment' => '类型'])]
     private ?string $type = null;
     #[Groups(['admin_curd'])]
@@ -100,33 +88,22 @@ class Spu implements \Stringable, Itemable, AdminArrayInterface, ResourceIdentit
     private Collection $tags;
     #[ORM\Column(type: Types::STRING, length: 40, nullable: true, enumType: SpuState::class, options: ['comment' => '状态'])]
     private ?SpuState $state;
-    #[ImagePickerField]
-    #[PictureColumn]
     #[ORM\Column(type: Types::STRING, length: 1000, nullable: true, options: ['comment' => '主图'])]
     private ?string $mainPic = null;
-    #[ImagePickerField(limit: 9)]
     #[ORM\Column(type: Types::JSON, nullable: true, options: ['comment' => '轮播图'])]
     private ?array $thumbs = [];
     /**
      * 有些地方也叫核心属性.
-     *
-     * @DynamicFieldSet
      *
      * @var Collection<SpuAttribute>
      */
     #[ORM\OneToMany(mappedBy: 'spu', targetEntity: SpuAttribute::class, cascade: ['persist'], fetch: 'EXTRA_LAZY', orphanRemoval: true)]
     private Collection $attributes;
     /**
-     * @DynamicFieldSet
-     *
      * @var Collection<SpuDescriptionAttribute>
      */
     #[ORM\OneToMany(mappedBy: 'spu', targetEntity: SpuDescriptionAttribute::class, cascade: ['persist'], fetch: 'EXTRA_LAZY', orphanRemoval: true)]
     private Collection $descriptionAttribute;
-    /**
-     * @BraftEditor
-     */
-    #[RichTextField]
     #[ORM\Column(type: Types::TEXT, nullable: true, options: ['comment' => '描述'])]
     private ?string $content = null;
     #[ORM\Column(type: Types::TEXT, nullable: true, options: ['comment' => '备注'])]
@@ -138,7 +115,6 @@ class Spu implements \Stringable, Itemable, AdminArrayInterface, ResourceIdentit
      */
     #[ORM\OneToMany(mappedBy: 'spu', targetEntity: SpuLimitRule::class, cascade: ['persist'], fetch: 'EXTRA_LAZY', orphanRemoval: true)]
     private Collection $limitRules;
-    #[SelectField(targetEntity: 'product.tag.fetcher', mode: 'multiple')]
     #[ORM\Column(type: Types::JSON, nullable: true, options: ['comment' => '显示标签'])]
     private ?array $showTags = [];
     #[Ignore]
@@ -430,7 +406,6 @@ class Spu implements \Stringable, Itemable, AdminArrayInterface, ResourceIdentit
         return $this;
     }
 
-    #[BeforeCreate]
     public function autoAssignSupplier(Security $security): void
     {
         $user = $security->getUser();
@@ -663,7 +638,7 @@ class Spu implements \Stringable, Itemable, AdminArrayInterface, ResourceIdentit
 
         return [
             'id' => $this->getId(),
-            'supplier' => $this->getSupplier()?->retrievePlainArray(),
+            'supplier' => null, // Supplier functionality removed
             'gtin' => $this->getGtin(),
             'title' => $this->getTitle(),
             'subtitle' => $this->getSubtitle(),
@@ -775,7 +750,7 @@ class Spu implements \Stringable, Itemable, AdminArrayInterface, ResourceIdentit
     public function getSalePrices(): array
     {
         $result = [];
-        $cm = Kernel::container()->get(CurrencyManager::class);
+        // CurrencyManager integration removed - AppBundle not available
 
         foreach ($this->getSkus() as $sku) {
             foreach ($sku->getSalePrices() as $price) {
@@ -791,18 +766,7 @@ class Spu implements \Stringable, Itemable, AdminArrayInterface, ResourceIdentit
                         'maxTaxRate' => 0,
                     ];
 
-                    if ($cm->getCurrencyByCode($price->getCurrency())) {
-                        $result[$price->getCurrency()] = [
-                            'currency' => $price->getCurrency(),
-                            'name' => $cm->getCurrencyName($price->getCurrency()),
-                            'minSalePrice' => 0,
-                            'maxSalePrice' => 0,
-                            'minTaxPrice' => 0,
-                            'maxTaxPrice' => 0,
-                            'minTaxRate' => 0,
-                            'maxTaxRate' => 0,
-                        ];
-                    }
+                    // Currency name lookup removed - CurrencyManager not available
                 }
 
                 $current = floatval($price->getPrice());
@@ -890,7 +854,7 @@ class Spu implements \Stringable, Itemable, AdminArrayInterface, ResourceIdentit
 
         return [
             'id' => $this->getId(),
-            'supplier' => $this->getSupplier()?->retrievePlainArray(),
+            'supplier' => null, // Supplier functionality removed
             'gtin' => $this->getGtin(),
             'title' => $this->getTitle(),
             'subtitle' => $this->getSubtitle(),

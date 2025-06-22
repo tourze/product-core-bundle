@@ -2,9 +2,9 @@
 
 namespace ProductBundle\Entity;
 
-use AntdCpBundle\Builder\Column\UserColumn;
 use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
+use Symfony\Component\Serializer\Attribute\Groups;
 use Tourze\DoctrineTimestampBundle\Traits\TimestampableAware;
 
 /**
@@ -27,9 +27,6 @@ class SpuSubscribe implements \Stringable
     #[Groups(['restful_read', 'admin_curd', 'restful_read'])]
     #[ORM\Column(type: Types::DATETIME_IMMUTABLE, nullable: true, options: ['comment' => '创建时间'])]
     private int $goodsId;
-    /**
-     * @UserColumn
-     */
     #[ORM\Column(type: Types::INTEGER, nullable: false, options: ['comment' => '用户'])]
     private int $memberId;
     #[ORM\Column(type: Types::BOOLEAN, nullable: false, options: ['default' => '0', 'comment' => '状态'])]

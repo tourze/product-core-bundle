@@ -11,7 +11,6 @@ use Tourze\DoctrinePrecisionBundle\Attribute\PrecisionColumn;
 use Tourze\DoctrineTimestampBundle\Traits\TimestampableAware;
 use Tourze\DoctrineUserBundle\Attribute\UpdatedByColumn;
 use Tourze\DoctrineUserBundle\Traits\BlameableAware;
-use Tourze\EasyAdmin\Attribute\Action\Creatable;
 
 /**
  * 这个表可能很巨大
@@ -20,7 +19,6 @@ use Tourze\EasyAdmin\Attribute\Action\Creatable;
  * @see https://www.woshipm.com/pd/615772.html
  * @see https://vip.kingdee.com/knowledge/specialDetail/188692783110897152?productLineId=2&category=229269976182821632&id=263954613324586496
  */
-#[Creatable(title: '单件入库')]
 #[ORM\Entity(repositoryClass: StockRepository::class)]
 #[ORM\Table(name: 'product_stock', options: ['comment' => '产品库存详情'])]
 class Stock implements \Stringable
@@ -36,7 +34,7 @@ class Stock implements \Stringable
 
 
     #[Groups(['restful_read', 'admin_curd', 'restful_read'])]
-    #[ORM\Column(type: Types::DATETIME_IMMUTABLE, nullable: true, options: ['comment' => '创建时间'])]
+    #[ORM\Column(nullable: true, options: ['comment' => '创建人'])]
     private ?string $createdBy = null;
     #[UpdatedByColumn]
     #[ORM\Column(nullable: true, options: ['comment' => '更新人'])]
@@ -58,7 +56,7 @@ class Stock implements \Stringable
     #[ORM\Column(type: Types::INTEGER, nullable: true, options: ['default' => 1, 'comment' => '乐观锁版本号'])]
     private ?int $lockVersion = null;public function __toString(): string
     {
-        if (!$this->getId()) {
+        if ($this->getId() === null || $this->getId() === 0) {
             return '';
         }
 
@@ -168,6 +166,6 @@ class Stock implements \Stringable
 
     public function renderSkuColumn(): string
     {
-        return $this->getSku() ? $this->getSku()->getFullName() : '';
+        return $this->getSku() !== null ? $this->getSku()->getFullName() : '';
     }
 }

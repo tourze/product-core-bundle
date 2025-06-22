@@ -2,7 +2,7 @@
 
 namespace ProductBundle\Command;
 
-use Carbon\Carbon;
+use Carbon\CarbonImmutable;
 use Doctrine\ORM\EntityManagerInterface;
 use HttpClientBundle\Service\SmartHttpClient;
 use ProductBundle\Entity\Price;
@@ -24,7 +24,7 @@ use Symfony\Component\Console\Output\OutputInterface;
 use Symfony\Component\VarExporter\VarExporter;
 use Yiisoft\Json\Json;
 
-#[AsCommand(name: 'product:cib-mall:crawl-spu', description: '采集兴业银行商城SPU数据')]
+#[AsCommand(name: self::NAME, description: '采集兴业银行商城SPU数据')]
 class CibMallCrawlSpuCommand extends Command
 {
     public const NAME = 'product:cib-mall:crawl-spu';
@@ -175,8 +175,8 @@ class CibMallCrawlSpuCommand extends Command
 
                 $price->setCurrency('CNY');
                 $price->setPrice((string) ($item['price'] / 100));
-                $price->setEffectTime(Carbon::now());
-                $price->setExpireTime(Carbon::now()->addYears(100));
+                $price->setEffectTime(CarbonImmutable::now());
+                $price->setExpireTime(CarbonImmutable::now()->addYears(100));
                 $this->entityManager->persist($price);
 
                 // 属性

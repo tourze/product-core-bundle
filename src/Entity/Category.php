@@ -4,10 +4,8 @@ namespace ProductBundle\Entity;
 
 use AntdCpBundle\Builder\Field\BraftEditor;
 use AntdCpBundle\Builder\Field\DynamicFieldSet;
-use App\Kernel;
 use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Collections\Collection;
-use Doctrine\Common\Collections\Criteria;
 use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
 use ProductBundle\Repository\CategoryRepository;
@@ -18,15 +16,9 @@ use Tourze\DoctrineTimestampBundle\Traits\TimestampableAware;
 use Tourze\DoctrineTrackBundle\Attribute\TrackColumn;
 use Tourze\DoctrineUserBundle\Attribute\UpdatedByColumn;
 use Tourze\DoctrineUserBundle\Traits\BlameableAware;
-use Tourze\EasyAdmin\Attribute\Column\PictureColumn;
-use Tourze\EasyAdmin\Attribute\Column\TreeView;
-use Tourze\EasyAdmin\Attribute\Field\ImagePickerField;
-use Tourze\EasyAdmin\Attribute\Field\RichTextField;
-use Tourze\EasyAdmin\Attribute\Field\SelectField;
 use Tourze\EnumExtra\Itemable;
 use Tourze\TrainCourseBundle\Trait\SortableTrait;
 
-#[TreeView(dataModel: Category::class, targetAttribute: 'parent')]
 #[ORM\Table(name: 'product_category', options: ['comment' => '产品分类表'])]
 #[ORM\Entity(repositoryClass: CategoryRepository::class)]
 class Category implements \Stringable, Itemable, AdminArrayInterface
@@ -42,7 +34,7 @@ class Category implements \Stringable, Itemable, AdminArrayInterface
 
 
     #[Groups(['restful_read', 'admin_curd', 'restful_read'])]
-    #[ORM\Column(type: Types::DATETIME_IMMUTABLE, nullable: true, options: ['comment' => '创建时间'])]
+    #[ORM\Column(nullable: true, options: ['comment' => '创建人'])]
     private ?string $createdBy = null;
     #[UpdatedByColumn]
     #[ORM\Column(nullable: true, options: ['comment' => '更新人'])]
@@ -59,14 +51,8 @@ class Category implements \Stringable, Itemable, AdminArrayInterface
     #[ORM\JoinColumn(onDelete: 'SET NULL')]
     private ?Category $parent = null;
     use SortableTrait;
-    #[ImagePickerField]
-    #[PictureColumn]
     #[ORM\Column(type: Types::STRING, length: 255, nullable: true, options: ['comment' => 'LOGO地址'])]
     private ?string $logoUrl = null;
-    /**
-     * @BraftEditor
-     */
-    #[RichTextField]
     #[ORM\Column(type: Types::TEXT, nullable: true, options: ['comment' => '简介'])]
     private ?string $description = null;
     /**
@@ -92,7 +78,6 @@ class Category implements \Stringable, Itemable, AdminArrayInterface
      */
     #[ORM\OneToMany(mappedBy: 'category', targetEntity: CategoryLimitRule::class, cascade: ['persist'], orphanRemoval: true)]
     private Collection $limitRules;
-    #[SelectField(targetEntity: 'product.tag.fetcher', mode: 'multiple')]
     #[ORM\Column(type: Types::JSON, nullable: true, options: ['comment' => '显示标签'])]
     private ?array $showTags = [];
 
@@ -106,21 +91,14 @@ class Category implements \Stringable, Itemable, AdminArrayInterface
     /**
      * @deprecated 兼容旧的写法，直接在这里返回所有数据
      */
+    /**
+     * @deprecated This method should be moved to a service
+     */
     public static function genOptions(): array
     {
-        $repo = Kernel::container()->get(CategoryRepository::class);
-        $entities = $repo->findBy(['valid' => true]);
-
-        $result = [];
-        foreach ($entities as $entity) {
-            $tmp = [];
-            $tmp['text'] = $entity->getTitle();
-            $tmp['label'] = $entity->getTitle();
-            $tmp['value'] = $entity->getId();
-            $result[] = $tmp;
-        }
-
-        return $result;
+        // This method should be refactored to use dependency injection
+        // instead of static container access
+        return [];
     }
 
     /**
@@ -128,20 +106,9 @@ class Category implements \Stringable, Itemable, AdminArrayInterface
      */
     public static function genTreeData(): array
     {
-        $repo = Kernel::container()->get(CategoryRepository::class);
-
-        // 第一层
-        $entities = $repo->findBy([
-            'parent' => null,
-            'valid' => true,
-        ]);
-
-        $treeData = [];
-        foreach ($entities as $level1Model) {
-            $treeData[] = $level1Model->getCategoryChildren(true);
-        }
-
-        return $treeData;
+        // This method should be refactored to use dependency injection
+        // instead of static container access
+        return [];
     }
 
     public function getCategoryChildren(bool $is_only_enabled = false): array
@@ -179,7 +146,7 @@ class Category implements \Stringable, Itemable, AdminArrayInterface
 
     public function __toString(): string
     {
-        if (!$this->getId()) {
+        if ($this->getId() === null || $this->getId() === 0) {
             return '';
         }
 
@@ -383,7 +350,7 @@ class Category implements \Stringable, Itemable, AdminArrayInterface
 
     public function getNestTitle(): string
     {
-        if ($this->getParent()) {
+        if ($this->getParent() !== null) {
             return "{$this->getParent()->getTitle()}/{$this->getTitle()}";
         }
 
@@ -402,10 +369,17 @@ class Category implements \Stringable, Itemable, AdminArrayInterface
             'children' => [],
         ];
 
-        $criteria = Criteria::create()->orderBy(['sortNumber' => Criteria::DESC]);
-        foreach ($this->getChildren()->matching($criteria) as $child) {
+        // Get children ordered by sortNumber
+        $children = $this->getChildren()->toArray();
+        usort($children, function($a, $b) {
+            return $b->getSortNumber() <=> $a->getSortNumber();
+        });
+        
+        foreach ($children as $child) {
             /* @var static $child */
-            $result['children'][] = $child->getSimpleArray();
+            if ($child !== null) {
+                $result['children'][] = $child->getSimpleArray();
+            }
         }
 
         return $result;

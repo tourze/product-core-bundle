@@ -40,8 +40,7 @@ class ProductBundle extends Bundle implements BundleDependencyInterface
             \Tourze\DoctrineSnowflakeBundle\DoctrineSnowflakeBundle::class => ['all' => true],
             \Tourze\DoctrineIndexedBundle\DoctrineIndexedBundle::class => ['all' => true],
             \Tourze\Symfony\CronJob\CronJobBundle::class => ['all' => true],
-            \AntdCpBundle\AntdCpBundle::class => ['all' => true],
-            \StoreBundle\StoreBundle::class => ['all' => true],
+            // AntdCpBundle and StoreBundle dependencies removed - not available
         ];
     }
 }

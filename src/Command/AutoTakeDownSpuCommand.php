@@ -2,7 +2,7 @@
 
 namespace ProductBundle\Command;
 
-use Carbon\Carbon;
+use Carbon\CarbonImmutable;
 use Doctrine\ORM\EntityManagerInterface;
 use ProductBundle\Entity\Spu;
 use ProductBundle\Repository\SpuRepository;
@@ -14,7 +14,7 @@ use Symfony\Component\Console\Output\OutputInterface;
 use Tourze\Symfony\CronJob\Attribute\AsCronTask;
 
 #[AsCronTask('* * * * *')]
-#[AsCommand(name: 'product:auto-take-down-spu', description: '自动下架商品')]
+#[AsCommand(name: self::NAME, description: '自动下架商品')]
 class AutoTakeDownSpuCommand extends Command
 {
     public const NAME = 'product:auto-take-down-spu';
@@ -34,7 +34,7 @@ class AutoTakeDownSpuCommand extends Command
             ->andWhere('s.autoTakeDownTime IS NOT NULL')
             ->andWhere('s.autoTakeDownTime < :now')
             ->setParameter('valid', true)
-            ->setParameter('now', Carbon::now()->format('Y-m-d H:i:s'))
+            ->setParameter('now', CarbonImmutable::now()->format('Y-m-d H:i:s'))
             ->getQuery()
             ->toIterable();
         /** @var Spu $spu */

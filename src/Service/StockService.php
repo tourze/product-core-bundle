@@ -45,7 +45,7 @@ class StockService
             return;
         }
 
-        if (!$log->getSkuName() && $log->getSku()) {
+        if (empty($log->getSkuName()) && $log->getSku() !== null) {
             $log->setSkuName((string) $log->getSku());
         }
 

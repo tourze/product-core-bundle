@@ -2,11 +2,11 @@
 
 namespace ProductBundle\Service;
 
-use BizUserBundle\Entity\BizUser;
 use Carbon\CarbonInterface;
 use ProductBundle\Entity\Price;
 use ProductBundle\Entity\Sku;
 use ProductBundle\Enum\PriceType;
+use Symfony\Component\Security\Core\User\UserInterface;
 
 /**
  * 价格服务
@@ -38,13 +38,13 @@ class PriceService
     /**
      * 获取销售价格
      */
-    public function getSalePrices(BizUser $user, Sku $sku, CarbonInterface $time): array
+    public function getSalePrices(UserInterface $user, Sku $sku, CarbonInterface $time): array
     {
         $result = [];
 
         $skuPrices = $sku->determineOnTimeSalePrice($time); // 计算当前这个时刻的价格
         foreach ($skuPrices as $skuPrice) {
-            if (!$skuPrice->getPrice()) {
+            if (empty($skuPrice->getPrice())) {
                 continue;
             }
             if (PriceType::SALE !== $skuPrice->getType()) {

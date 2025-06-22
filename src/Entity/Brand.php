@@ -14,12 +14,10 @@ use Tourze\DoctrineTrackBundle\Attribute\TrackColumn;
 use Tourze\DoctrineUserBundle\Attribute\CreatedByColumn;
 use Tourze\DoctrineUserBundle\Attribute\UpdatedByColumn;
 use Tourze\DoctrineUserBundle\Traits\BlameableAware;
-use Tourze\EasyAdmin\Attribute\Action\Listable;
 
 /**
  * @see https://blog.csdn.net/zhichaosong/article/details/120316738
  */
-#[Listable]
 #[ORM\Table(name: 'product_brand', options: ['comment' => '品牌管理表'])]
 #[ORM\Entity(repositoryClass: BrandRepository::class)]
 class Brand implements \Stringable
@@ -29,8 +27,8 @@ class Brand implements \Stringable
 
 
     #[Groups(['restful_read', 'admin_curd', 'restful_read'])]
-    #[ORM\Column(type: Types::DATETIME_IMMUTABLE, nullable: true, options: ['comment' => '创建时间'])]
     #[ORM\Id]
+    #[ORM\Column(type: Types::BIGINT, options: ['comment' => '主键'])]
     #[ORM\GeneratedValue(strategy: 'CUSTOM')]
     #[ORM\CustomIdGenerator(SnowflakeIdGenerator::class)]
     private ?string $id = null;

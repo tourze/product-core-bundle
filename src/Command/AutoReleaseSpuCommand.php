@@ -2,7 +2,7 @@
 
 namespace ProductBundle\Command;
 
-use Carbon\Carbon;
+use Carbon\CarbonImmutable;
 use Doctrine\ORM\EntityManagerInterface;
 use ProductBundle\Entity\Spu;
 use ProductBundle\Repository\SpuRepository;
@@ -14,7 +14,7 @@ use Symfony\Component\Console\Output\OutputInterface;
 use Tourze\Symfony\CronJob\Attribute\AsCronTask;
 
 #[AsCronTask('* * * * *')]
-#[AsCommand(name: 'product:auto-release-spu', description: '自动上架商品')]
+#[AsCommand(name: self::NAME, description: '自动上架商品')]
 class AutoReleaseSpuCommand extends Command
 {
     public const NAME = 'product:auto-release-spu';
@@ -29,7 +29,7 @@ class AutoReleaseSpuCommand extends Command
 
     protected function execute(InputInterface $input, OutputInterface $output): int
     {
-        $now = Carbon::now()->format('Y-m-d H:i:s');
+        $now = CarbonImmutable::now()->format('Y-m-d H:i:s');
         $query = $this->spuRepository->createQueryBuilder('s')
             ->where('(s.valid =:valid OR s.valid IS NULL)')
             ->andWhere('s.autoReleaseTime < :now')

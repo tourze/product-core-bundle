@@ -12,6 +12,7 @@ class QuerySpuListByTagsEvent extends Event
     // use QueryBuilderAware; // Trait not found
 
     private array $tags;
+    private ?\Doctrine\ORM\QueryBuilder $queryBuilder = null;
 
     public function getTags(): array
     {
@@ -21,5 +22,15 @@ class QuerySpuListByTagsEvent extends Event
     public function setTags(array $tags): void
     {
         $this->tags = $tags;
+    }
+
+    public function getQueryBuilder(): ?\Doctrine\ORM\QueryBuilder
+    {
+        return $this->queryBuilder;
+    }
+
+    public function setQueryBuilder(?\Doctrine\ORM\QueryBuilder $queryBuilder): void
+    {
+        $this->queryBuilder = $queryBuilder;
     }
 }

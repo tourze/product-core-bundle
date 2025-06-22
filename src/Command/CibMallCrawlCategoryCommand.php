@@ -2,6 +2,7 @@
 
 namespace ProductBundle\Command;
 
+use Doctrine\ORM\EntityManagerInterface;
 use HttpClientBundle\Service\SmartHttpClient;
 use ProductBundle\Entity\Category;
 use ProductBundle\Repository\CategoryRepository;
@@ -11,13 +12,14 @@ use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Output\OutputInterface;
 use Yiisoft\Json\Json;
 
-#[AsCommand(name: 'product:cib-mall:crawl-category', description: '采集兴业银行商城分类数据')]
+#[AsCommand(name: self::NAME, description: '采集兴业银行商城分类数据')]
 class CibMallCrawlCategoryCommand extends Command
 {
     public const NAME = 'product:cib-mall:crawl-category';
     public function __construct(
         private readonly SmartHttpClient $httpClient,
         private readonly CategoryRepository $categoryRepository,
+        private readonly EntityManagerInterface $entityManager,
         ?string $name = null,
     ) {
         parent::__construct($name);
