@@ -1,6 +1,6 @@
 <?php
 
-namespace ProductBundle\Entity;
+namespace ProductCoreBundle\Entity;
 
 use AntdCpBundle\Builder\Field\BraftEditor;
 use AntdCpBundle\Builder\Field\DynamicFieldSet;
@@ -8,7 +8,7 @@ use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Collections\Collection;
 use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
-use ProductBundle\Repository\CategoryRepository;
+use ProductCoreBundle\Repository\CategoryRepository;
 use Symfony\Component\Serializer\Attribute\Groups;
 use Symfony\Component\Serializer\Attribute\Ignore;
 use Tourze\Arrayable\AdminArrayInterface;
@@ -23,7 +23,7 @@ use Tourze\TrainCourseBundle\Trait\SortableTrait;
 #[ORM\Entity(repositoryClass: CategoryRepository::class)]
 class Category implements \Stringable, Itemable, AdminArrayInterface
 {
-        use BlameableAware;
+    use BlameableAware;
     use TimestampableAware;
 
     #[Groups(['restful_read', 'api_tree', 'admin_curd', 'api_list'])]
@@ -51,6 +51,7 @@ class Category implements \Stringable, Itemable, AdminArrayInterface
     #[ORM\JoinColumn(onDelete: 'SET NULL')]
     private ?Category $parent = null;
     use SortableTrait;
+
     #[ORM\Column(type: Types::STRING, length: 255, nullable: true, options: ['comment' => 'LOGO地址'])]
     private ?string $logoUrl = null;
     #[ORM\Column(type: Types::TEXT, nullable: true, options: ['comment' => '简介'])]
@@ -371,10 +372,10 @@ class Category implements \Stringable, Itemable, AdminArrayInterface
 
         // Get children ordered by sortNumber
         $children = $this->getChildren()->toArray();
-        usort($children, function($a, $b) {
+        usort($children, function ($a, $b) {
             return $b->getSortNumber() <=> $a->getSortNumber();
         });
-        
+
         foreach ($children as $child) {
             /* @var static $child */
             if ($child !== null) {
@@ -407,7 +408,9 @@ class Category implements \Stringable, Itemable, AdminArrayInterface
         $this->logoUrl = $logoUrl;
 
         return $this;
-    }public function retrieveAdminArray(): array
+    }
+
+    public function retrieveAdminArray(): array
     {
         return [
             'id' => $this->getId(),
@@ -419,4 +422,5 @@ class Category implements \Stringable, Itemable, AdminArrayInterface
             'createTime' => $this->getCreateTime()?->format('Y-m-d H:i:s'),
             'updateTime' => $this->getUpdateTime()?->format('Y-m-d H:i:s'),
         ];
-    }}
+    }
+}

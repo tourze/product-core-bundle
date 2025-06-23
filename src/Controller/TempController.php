@@ -1,6 +1,6 @@
 <?php
 
-namespace ProductBundle\Controller;
+namespace ProductCoreBundle\Controller;
 
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\Routing\Attribute\Route;

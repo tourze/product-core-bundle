@@ -1,10 +1,10 @@
 <?php
 
-namespace ProductBundle\Entity;
+namespace ProductCoreBundle\Entity;
 
 use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
-use ProductBundle\Repository\SpuAttributeRepository;
+use ProductCoreBundle\Repository\SpuAttributeRepository;
 use Symfony\Component\Serializer\Attribute\Groups;
 use Symfony\Component\Serializer\Attribute\Ignore;
 use Tourze\Arrayable\AdminArrayInterface;

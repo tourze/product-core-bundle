@@ -1,11 +1,11 @@
 <?php
 
-namespace ProductBundle\Command;
+namespace ProductCoreBundle\Command;
 
 use Carbon\CarbonImmutable;
 use Doctrine\ORM\EntityManagerInterface;
-use ProductBundle\Entity\Spu;
-use ProductBundle\Repository\SpuRepository;
+use ProductCoreBundle\Entity\Spu;
+use ProductCoreBundle\Repository\SpuRepository;
 use Psr\Log\LoggerInterface;
 use Symfony\Component\Console\Attribute\AsCommand;
 use Symfony\Component\Console\Command\Command;

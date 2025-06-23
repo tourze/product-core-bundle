@@ -1,14 +1,13 @@
 <?php
 
-namespace ProductBundle\Entity;
+namespace ProductCoreBundle\Entity;
 
 use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Collections\Collection;
 use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
-use ProductBundle\Enum\SpuState;
-use ProductBundle\Repository\SpuRepository;
-use Symfony\Bundle\SecurityBundle\Security;
+use ProductCoreBundle\Enum\SpuState;
+use ProductCoreBundle\Repository\SpuRepository;
 use Symfony\Component\Serializer\Attribute\Groups;
 use Symfony\Component\Serializer\Attribute\Ignore;
 use Tourze\Arrayable\AdminArrayInterface;
@@ -52,9 +51,6 @@ class Spu implements \Stringable, Itemable, AdminArrayInterface, ResourceIdentit
     // #[ORM\JoinColumn(onDelete: 'SET NULL')]
     // private ?Supplier $supplier = null;
     use SortableTrait;
-    /**
-     * 全球唯一编码，可以是UPC、EAN、69码等等.
-     */
     #[TrackColumn]
     #[SnowflakeColumn(prefix: 'SPU')]
     #[ORM\Column(type: Types::STRING, length: 40, unique: true, nullable: true, options: ['comment' => '唯一编码'])]
@@ -406,28 +402,29 @@ class Spu implements \Stringable, Itemable, AdminArrayInterface, ResourceIdentit
         return $this;
     }
 
-    public function autoAssignSupplier(Security $security): void
-    {
-        $user = $security->getUser();
-        if (!$user->getSupplier()) {
-            return;
-        }
-        if (!$this->getSupplier()) {
-            $this->setSupplier($user->getSupplier());
-        }
-    }
+    // Supplier methods removed - AppBundle not available
+    // public function autoAssignSupplier(Security $security): void
+    // {
+    //     $user = $security->getUser();
+    //     if (!$user->getSupplier()) {
+    //         return;
+    //     }
+    //     if (!$this->getSupplier()) {
+    //         $this->setSupplier($user->getSupplier());
+    //     }
+    // }
 
-    public function getSupplier(): ?Supplier
-    {
-        return $this->supplier;
-    }
+    // public function getSupplier(): ?Supplier
+    // {
+    //     return $this->supplier;
+    // }
 
-    public function setSupplier(?Supplier $supplier): self
-    {
-        $this->supplier = $supplier;
+    // public function setSupplier(?Supplier $supplier): self
+    // {
+    //     $this->supplier = $supplier;
 
-        return $this;
-    }
+    //     return $this;
+    // }
 
     public function getCreatedFromIp(): ?string
     {
@@ -709,8 +706,9 @@ class Spu implements \Stringable, Itemable, AdminArrayInterface, ResourceIdentit
     public function getMainThumb(): string
     {
         // 有主图我们就用主图
-        if ($this->getMainPic()) {
-            return $this->getMainPic();
+        $mainPic = $this->getMainPic();
+        if ($mainPic !== null && $mainPic !== '') {
+            return $mainPic;
         }
 
         if (empty($this->getThumbs())) {
@@ -807,10 +805,12 @@ class Spu implements \Stringable, Itemable, AdminArrayInterface, ResourceIdentit
         $result = [];
         foreach ($this->getSalePrices() as $price) {
             if (0 === $price['minSalePrice']) {
-                $money = Kernel::container()->get(CurrencyManager::class)->getPriceNumber($price['maxSalePrice']);
+                // CurrencyManager removed - using direct formatting
+                $money = number_format($price['maxSalePrice'], 2);
             } else {
-                $minSalePrice = Kernel::container()->get(CurrencyManager::class)->getPriceNumber($price['minSalePrice']);
-                $maxSalePrice = Kernel::container()->get(CurrencyManager::class)->getPriceNumber($price['maxSalePrice']);
+                // CurrencyManager removed - using direct formatting
+                $minSalePrice = number_format($price['minSalePrice'], 2);
+                $maxSalePrice = number_format($price['maxSalePrice'], 2);
                 $money = $price['minSalePrice'] == $price['maxSalePrice']
                     ? $minSalePrice
                     : "{$minSalePrice}~{$maxSalePrice}";
@@ -830,10 +830,12 @@ class Spu implements \Stringable, Itemable, AdminArrayInterface, ResourceIdentit
         $result = [];
         foreach ($this->getSalePrices() as $price) {
             if (0 === $price['minTaxPrice']) {
-                $money = Kernel::container()->get(CurrencyManager::class)->getPriceNumber($price['maxTaxPrice']);
+                // CurrencyManager removed - using direct formatting
+                $money = number_format($price['maxTaxPrice'], 2);
             } else {
-                $minTaxPrice = Kernel::container()->get(CurrencyManager::class)->getPriceNumber($price['minTaxPrice']);
-                $maxTaxPrice = Kernel::container()->get(CurrencyManager::class)->getPriceNumber($price['maxTaxPrice']);
+                // CurrencyManager removed - using direct formatting
+                $minTaxPrice = number_format($price['minTaxPrice'], 2);
+                $maxTaxPrice = number_format($price['maxTaxPrice'], 2);
                 $money = $price['minTaxPrice'] == $price['maxTaxPrice']
                     ? $minTaxPrice
                     : "{$minTaxPrice}~{$maxTaxPrice}";

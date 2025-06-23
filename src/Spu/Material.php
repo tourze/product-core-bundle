@@ -1,6 +1,6 @@
 <?php
 
-namespace ProductBundle\Spu;
+namespace ProductCoreBundle\Spu;
 
 /**
  * 实物商品

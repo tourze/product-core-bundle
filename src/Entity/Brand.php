@@ -1,10 +1,10 @@
 <?php
 
-namespace ProductBundle\Entity;
+namespace ProductCoreBundle\Entity;
 
 use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
-use ProductBundle\Repository\BrandRepository;
+use ProductCoreBundle\Repository\BrandRepository;
 use Symfony\Component\Serializer\Attribute\Groups;
 use Tourze\DoctrineIpBundle\Attribute\CreateIpColumn;
 use Tourze\DoctrineIpBundle\Attribute\UpdateIpColumn;

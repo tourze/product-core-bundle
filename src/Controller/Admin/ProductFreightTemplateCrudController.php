@@ -1,8 +1,8 @@
 <?php
 
-namespace ProductBundle\Controller\Admin;
+namespace ProductCoreBundle\Controller\Admin;
 
-use ProductBundle\Entity\FreightTemplate;
+use ProductCoreBundle\Entity\FreightTemplate;
 use Tourze\EasyAdminExtraBundle\Controller\AbstractCrudController;
 
 class ProductFreightTemplateCrudController extends AbstractCrudController

@@ -1,15 +1,15 @@
 <?php
 
-namespace ProductBundle\DataFixtures;
+namespace ProductCoreBundle\DataFixtures;
 
 use Carbon\CarbonImmutable;
 use Doctrine\Bundle\FixturesBundle\Fixture;
 use Doctrine\Persistence\ObjectManager;
-use ProductBundle\Entity\Sku;
-use ProductBundle\Entity\Spu;
-use ProductBundle\Enum\SpuState;
-use ProductBundle\Repository\SkuRepository;
-use ProductBundle\Repository\SpuRepository;
+use ProductCoreBundle\Entity\Sku;
+use ProductCoreBundle\Entity\Spu;
+use ProductCoreBundle\Enum\SpuState;
+use ProductCoreBundle\Repository\SkuRepository;
+use ProductCoreBundle\Repository\SpuRepository;
 
 class BasicSpuFixture extends Fixture
 {

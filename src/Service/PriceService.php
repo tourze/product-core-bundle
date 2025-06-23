@@ -1,11 +1,11 @@
 <?php
 
-namespace ProductBundle\Service;
+namespace ProductCoreBundle\Service;
 
 use Carbon\CarbonInterface;
-use ProductBundle\Entity\Price;
-use ProductBundle\Entity\Sku;
-use ProductBundle\Enum\PriceType;
+use ProductCoreBundle\Entity\Price;
+use ProductCoreBundle\Entity\Sku;
+use ProductCoreBundle\Enum\PriceType;
 use Symfony\Component\Security\Core\User\UserInterface;
 
 /**

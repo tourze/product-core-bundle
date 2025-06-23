@@ -1,15 +1,15 @@
 <?php
 
-namespace ProductBundle;
+namespace ProductCoreBundle;
 
 use Knp\Menu\ItemInterface;
-use ProductBundle\Entity\Brand;
-use ProductBundle\Entity\Category;
-use ProductBundle\Entity\FreightTemplate;
-use ProductBundle\Entity\Sku;
-use ProductBundle\Entity\Spu;
-use ProductBundle\Entity\StockLog;
-use ProductBundle\Entity\Tag;
+use ProductCoreBundle\Entity\Brand;
+use ProductCoreBundle\Entity\Category;
+use ProductCoreBundle\Entity\FreightTemplate;
+use ProductCoreBundle\Entity\Sku;
+use ProductCoreBundle\Entity\Spu;
+use ProductCoreBundle\Entity\StockLog;
+use ProductCoreBundle\Entity\Tag;
 use Tourze\EasyAdminMenuBundle\Attribute\MenuProvider;
 use Tourze\EasyAdminMenuBundle\Service\LinkGeneratorInterface;
 

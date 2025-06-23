@@ -1,11 +1,11 @@
 <?php
 
-namespace ProductBundle\Entity;
+namespace ProductCoreBundle\Entity;
 
 use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
-use ProductBundle\Enum\CategoryLimitType;
-use ProductBundle\Repository\CategoryLimitRuleRepository;
+use ProductCoreBundle\Enum\CategoryLimitType;
+use ProductCoreBundle\Repository\CategoryLimitRuleRepository;
 use Symfony\Component\Serializer\Attribute\Groups;
 use Symfony\Component\Serializer\Attribute\Ignore;
 use Tourze\DoctrineIpBundle\Attribute\CreateIpColumn;

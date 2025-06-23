@@ -1,11 +1,11 @@
 <?php
 
-namespace ProductBundle\Entity;
+namespace ProductCoreBundle\Entity;
 
 use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
-use ProductBundle\Enum\StockChange;
-use ProductBundle\Repository\StockLogRepository;
+use ProductCoreBundle\Enum\StockChange;
+use ProductCoreBundle\Repository\StockLogRepository;
 use Symfony\Component\Serializer\Attribute\Groups;
 use Tourze\Arrayable\AdminArrayInterface;
 use Tourze\DoctrineIpBundle\Attribute\CreateIpColumn;

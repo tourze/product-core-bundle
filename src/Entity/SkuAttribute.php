@@ -1,10 +1,10 @@
 <?php
 
-namespace ProductBundle\Entity;
+namespace ProductCoreBundle\Entity;
 
 use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
-use ProductBundle\Repository\SkuAttributeRepository;
+use ProductCoreBundle\Repository\SkuAttributeRepository;
 use Symfony\Component\Serializer\Attribute\Groups;
 use Symfony\Component\Serializer\Attribute\Ignore;
 use Tourze\Arrayable\AdminArrayInterface;
@@ -45,7 +45,7 @@ class SkuAttribute implements \Stringable, AdminArrayInterface
     #[ORM\Column(type: Types::STRING, length: 1000, nullable: true, options: ['comment' => '备注'])]
     private ?string $remark = null;
     #[ORM\Column(type: Types::BOOLEAN, nullable: true, options: ['comment' => '允许定制'])]
-    private ?bool $allowCustomized = false;
+    private bool $allowCustomized = false;
     #[CreateIpColumn]
     #[ORM\Column(length: 128, nullable: true, options: ['comment' => '创建时IP'])]
     private ?string $createdFromIp = null;
@@ -55,7 +55,7 @@ class SkuAttribute implements \Stringable, AdminArrayInterface
 
     public function __toString(): string
     {
-        if (!$this->getId()) {
+        if ($this->getId() === null || $this->getId() === 0) {
             return '';
         }
 

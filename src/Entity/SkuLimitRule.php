@@ -1,11 +1,11 @@
 <?php
 
-namespace ProductBundle\Entity;
+namespace ProductCoreBundle\Entity;
 
 use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
-use ProductBundle\Enum\SkuLimitType;
-use ProductBundle\Repository\SkuLimitRuleRepository;
+use ProductCoreBundle\Enum\SkuLimitType;
+use ProductCoreBundle\Repository\SkuLimitRuleRepository;
 use Symfony\Component\Serializer\Attribute\Groups;
 use Symfony\Component\Serializer\Attribute\Ignore;
 use Tourze\Arrayable\AdminArrayInterface;
@@ -56,7 +56,7 @@ class SkuLimitRule implements \Stringable, AdminArrayInterface
 
     public function __toString(): string
     {
-        if (!$this->getId()) {
+        if ($this->getId() === null || $this->getId() === '') {
             return '';
         }
 

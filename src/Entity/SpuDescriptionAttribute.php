@@ -1,10 +1,10 @@
 <?php
 
-namespace ProductBundle\Entity;
+namespace ProductCoreBundle\Entity;
 
 use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
-use ProductBundle\Repository\SpuDescriptionAttributeRepository;
+use ProductCoreBundle\Repository\SpuDescriptionAttributeRepository;
 use Symfony\Component\Serializer\Attribute\Groups;
 use Symfony\Component\Serializer\Attribute\Ignore;
 use Tourze\Arrayable\AdminArrayInterface;
@@ -45,7 +45,7 @@ class SpuDescriptionAttribute implements \Stringable, AdminArrayInterface
 
     public function __toString(): string
     {
-        if (!$this->getId()) {
+        if ($this->getId() === null || $this->getId() === 0) {
             return '';
         }
 
@@ -110,7 +110,7 @@ class SpuDescriptionAttribute implements \Stringable, AdminArrayInterface
         return $this->spu;
     }
 
-    public function setSpu(Spu $spu): self
+    public function setSpu(?Spu $spu): self
     {
         $this->spu = $spu;
 

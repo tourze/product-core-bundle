@@ -5,7 +5,7 @@ services:
     autoconfigure: true # Automatically registers your services as commands, event subscribers, etc.
     public: true
 
-  ProductBundle\:
+  ProductCoreBundle\:
     resource: '../../'
     exclude:
       - '../../DependencyInjection/'
@@ -19,14 +19,14 @@ services:
       - '../../Tests/'
       - '../../LegacyProcedure/'
 
-  ProductBundle\Repository\SkuRepository:
+  ProductCoreBundle\Repository\SkuRepository:
     autowire: true
     public: true
-  ProductBundle\Repository\StockRepository:
+  ProductCoreBundle\Repository\StockRepository:
     autowire: true
     public: true
 
   # 自动读取标签相关配置
   product.tag.fetcher:
-    class: ProductBundle\ProductTagFetcher
+    class: ProductCoreBundle\ProductTagFetcher
     public: true

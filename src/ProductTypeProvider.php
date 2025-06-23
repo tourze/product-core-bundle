@@ -1,6 +1,6 @@
 <?php
 
-namespace ProductBundle;
+namespace ProductCoreBundle;
 
 use Symfony\Component\DependencyInjection\Attribute\AutoconfigureTag;
 use Tourze\EnumExtra\SelectDataFetcher;

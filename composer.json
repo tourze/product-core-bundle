@@ -1,5 +1,5 @@
 {
-  "name": "tourze/product-bundle",
+  "name": "tourze/product-core-bundle",
   "description": "产品模块",
   "type": "symfony-bundle",
   "license": "MIT",
@@ -62,7 +62,7 @@
   },
   "autoload": {
     "psr-4": {
-      "ProductBundle\\": "src"
+      "ProductCoreBundle\\": "src"
     }
   }
 }

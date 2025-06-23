@@ -1,6 +1,6 @@
 <?php
 
-namespace ProductBundle\Exception;
+namespace ProductCoreBundle\Exception;
 
 /**
  * 库存超载异常

@@ -1,10 +1,10 @@
 <?php
 
-namespace ProductBundle\Repository;
+namespace ProductCoreBundle\Repository;
 
 use Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository;
 use Doctrine\Persistence\ManagerRegistry;
-use ProductBundle\Entity\SpuAttribute;
+use ProductCoreBundle\Entity\SpuAttribute;
 use Tourze\TrainCourseBundle\Trait\CommonRepositoryAware;
 
 /**

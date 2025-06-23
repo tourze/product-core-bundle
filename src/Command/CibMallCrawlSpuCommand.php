@@ -1,22 +1,22 @@
 <?php
 
-namespace ProductBundle\Command;
+namespace ProductCoreBundle\Command;
 
 use Carbon\CarbonImmutable;
 use Doctrine\ORM\EntityManagerInterface;
 use HttpClientBundle\Service\SmartHttpClient;
-use ProductBundle\Entity\Price;
-use ProductBundle\Entity\Sku;
-use ProductBundle\Entity\SkuAttribute;
-use ProductBundle\Entity\Spu;
-use ProductBundle\Entity\SpuAttribute;
-use ProductBundle\Enum\PriceType;
-use ProductBundle\Enum\SpuState;
-use ProductBundle\Repository\PriceRepository;
-use ProductBundle\Repository\SkuAttributeRepository;
-use ProductBundle\Repository\SkuRepository;
-use ProductBundle\Repository\SpuAttributeRepository;
-use ProductBundle\Repository\SpuRepository;
+use ProductCoreBundle\Entity\Price;
+use ProductCoreBundle\Entity\Sku;
+use ProductCoreBundle\Entity\SkuAttribute;
+use ProductCoreBundle\Entity\Spu;
+use ProductCoreBundle\Entity\SpuAttribute;
+use ProductCoreBundle\Enum\PriceType;
+use ProductCoreBundle\Enum\SpuState;
+use ProductCoreBundle\Repository\PriceRepository;
+use ProductCoreBundle\Repository\SkuAttributeRepository;
+use ProductCoreBundle\Repository\SkuRepository;
+use ProductCoreBundle\Repository\SpuAttributeRepository;
+use ProductCoreBundle\Repository\SpuRepository;
 use Symfony\Component\Console\Attribute\AsCommand;
 use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Input\InputInterface;

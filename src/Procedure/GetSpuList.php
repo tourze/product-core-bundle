@@ -1,13 +1,13 @@
 <?php
 
-namespace ProductBundle\Procedure;
+namespace ProductCoreBundle\Procedure;
 
 use Doctrine\Common\Collections\Criteria;
 use Doctrine\ORM\EntityManagerInterface;
-use ProductBundle\Entity\Spu;
-use ProductBundle\Event\QuerySpuListByTagsEvent;
-use ProductBundle\Service\CategoryService;
-use ProductBundle\Service\TagService;
+use ProductCoreBundle\Entity\Spu;
+use ProductCoreBundle\Event\QuerySpuListByTagsEvent;
+use ProductCoreBundle\Service\CategoryService;
+use ProductCoreBundle\Service\TagService;
 use Psr\Log\LoggerInterface;
 use Symfony\Bundle\SecurityBundle\Security;
 use Symfony\Contracts\EventDispatcher\EventDispatcherInterface;
@@ -157,11 +157,7 @@ class GetSpuList extends BaseProcedure
         ];
         if ($this->security->getUser() !== null) {
             // UserTagService integration removed - AppBundle not available
-            $tagIds = [];
-            foreach ($tagIds as $k => $tagId) {
-                $whereList[] = "JSON_SEARCH(a.showTags, 'one', :keyword_{$k}) IS NOT NULL";
-                $qb->setParameter("keyword_{$k}", $tagId);
-            }
+            // Tag-based filtering disabled
         }
         $whereList = implode(' OR ', $whereList);
         $qb->andWhere($whereList);

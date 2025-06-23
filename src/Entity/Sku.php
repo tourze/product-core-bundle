@@ -1,6 +1,6 @@
 <?php
 
-namespace ProductBundle\Entity;
+namespace ProductCoreBundle\Entity;
 
 use Carbon\CarbonImmutable;
 use Carbon\CarbonInterface;
@@ -8,8 +8,8 @@ use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Collections\Collection;
 use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
-use ProductBundle\Enum\PriceType;
-use ProductBundle\Repository\SkuRepository;
+use ProductCoreBundle\Enum\PriceType;
+use ProductCoreBundle\Repository\SkuRepository;
 use Symfony\Component\Serializer\Attribute\Groups;
 use Symfony\Component\Serializer\Attribute\Ignore;
 use Tourze\Arrayable\AdminArrayInterface;
@@ -388,7 +388,7 @@ class Sku implements \Stringable, Itemable, AdminArrayInterface, LockEntity
 
     public function renderCurrentPrice(): array
     {
-        $prices = $this->determineOnTimeSalePrice(Carbon::now());
+        $prices = $this->determineOnTimeSalePrice(CarbonImmutable::now());
         $rs = [];
         foreach ($prices as $price) {
             $currency = $price->renderCurrency();
@@ -697,12 +697,14 @@ class Sku implements \Stringable, Itemable, AdminArrayInterface, LockEntity
             // CurrencyManager integration removed - AppBundle not available
             $result[$price->getCurrency()][] = $price->getCurrency() . ' ' . $price->getPrice();
         }
-        foreach ($result as $k => $v) {
+        
+        $formattedPrices = [];
+        foreach ($result as $currency => $prices) {
             // 因为可能多种类型价格，所以使用 / 来分割
-            $result[$k] = implode('/', $v);
+            $formattedPrices[] = implode('/', $prices);
         }
 
-        return implode('+', $result);
+        return implode('+', $formattedPrices);
     }
 
     /**
@@ -732,12 +734,14 @@ class Sku implements \Stringable, Itemable, AdminArrayInterface, LockEntity
             // CurrencyManager integration removed - AppBundle not available
             $result[$price->getCurrency()][] = $price->getCurrency() . ' ' . number_format($price->getTaxPrice(), 2);
         }
-        foreach ($result as $k => $v) {
+        
+        $formattedPrices = [];
+        foreach ($result as $currency => $prices) {
             // 因为可能多种类型价格，所以使用 / 来分割
-            $result[$k] = implode('/', $v);
+            $formattedPrices[] = implode('/', $prices);
         }
 
-        return implode('+', $result);
+        return implode('+', $formattedPrices);
     }
 
     /**
@@ -755,11 +759,13 @@ class Sku implements \Stringable, Itemable, AdminArrayInterface, LockEntity
             // CurrencyManager integration removed - AppBundle not available
             $result[$price->getCurrency()][] = $price->getCurrency() . ' ' . number_format($price->getTax(), 2);
         }
-        foreach ($result as $k => $v) {
-            $result[$k] = implode('/', $v);
+        
+        $formattedPrices = [];
+        foreach ($result as $currency => $prices) {
+            $formattedPrices[] = implode('/', $prices);
         }
 
-        return implode('+', $result);
+        return implode('+', $formattedPrices);
     }
 
     /**

@@ -1,13 +1,13 @@
 <?php
 
-namespace ProductBundle\Entity;
+namespace ProductCoreBundle\Entity;
 
 use Carbon\CarbonImmutable;
 use Carbon\CarbonInterface;
 use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
-use ProductBundle\Enum\PriceType;
-use ProductBundle\Repository\PriceRepository;
+use ProductCoreBundle\Enum\PriceType;
+use ProductCoreBundle\Repository\PriceRepository;
 use Symfony\Component\Serializer\Attribute\Groups;
 use Symfony\Component\Serializer\Attribute\Ignore;
 use Symfony\Component\Validator\Constraints as Assert;

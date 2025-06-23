@@ -1,6 +1,6 @@
 <?php
 
-namespace ProductBundle\Event;
+namespace ProductCoreBundle\Event;
 
 // use DoctrineEnhanceBundle\Traits\QueryBuilderAware; // Trait not found
 use Symfony\Contracts\EventDispatcher\Event;

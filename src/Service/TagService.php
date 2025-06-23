@@ -1,9 +1,9 @@
 <?php
 
-namespace ProductBundle\Service;
+namespace ProductCoreBundle\Service;
 
-use ProductBundle\Entity\Tag;
-use ProductBundle\Repository\TagRepository;
+use ProductCoreBundle\Entity\Tag;
+use ProductCoreBundle\Repository\TagRepository;
 use Tourze\Symfony\AopCacheBundle\Attribute\Cacheble;
 
 class TagService

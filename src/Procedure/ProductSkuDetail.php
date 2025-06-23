@@ -1,8 +1,8 @@
 <?php
 
-namespace ProductBundle\Procedure;
+namespace ProductCoreBundle\Procedure;
 
-use ProductBundle\Repository\SkuRepository;
+use ProductCoreBundle\Repository\SkuRepository;
 use Tourze\JsonRPC\Core\Attribute\MethodDoc;
 use Tourze\JsonRPC\Core\Attribute\MethodExpose;
 use Tourze\JsonRPC\Core\Attribute\MethodParam;

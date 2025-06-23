@@ -1,11 +1,11 @@
 <?php
 
-namespace ProductBundle\Entity;
+namespace ProductCoreBundle\Entity;
 
 use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
-use ProductBundle\Enum\PackageType;
-use ProductBundle\Repository\SkuPackageRepository;
+use ProductCoreBundle\Enum\PackageType;
+use ProductCoreBundle\Repository\SkuPackageRepository;
 use Symfony\Component\Serializer\Attribute\Groups;
 use Symfony\Component\Serializer\Attribute\Ignore;
 use Tourze\Arrayable\AdminArrayInterface;
@@ -59,7 +59,7 @@ class SkuPackage implements \Stringable, AdminArrayInterface
 
     public function __toString(): string
     {
-        if (!$this->getId()) {
+        if ($this->getId() === null || $this->getId() === '') {
             return '';
         }
 

@@ -1,6 +1,6 @@
 <?php
 
-namespace ProductBundle\Exception;
+namespace ProductCoreBundle\Exception;
 
 /**
  * 限购规则触发

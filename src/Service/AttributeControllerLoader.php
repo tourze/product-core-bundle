@@ -1,6 +1,6 @@
 <?php
 
-namespace ProductBundle\Service;
+namespace ProductCoreBundle\Service;
 
 use Symfony\Component\DependencyInjection\Attribute\AutoconfigureTag;
 use Symfony\Component\Routing\Loader\AnnotationClassLoader;
@@ -22,7 +22,7 @@ class AttributeControllerLoader
         $collection = new RouteCollection();
         
         $controllers = [
-            \ProductBundle\Controller\TempController::class,
+            \ProductCoreBundle\Controller\TempController::class,
         ];
         
         foreach ($controllers as $controller) {

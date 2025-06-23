@@ -1,9 +1,9 @@
 <?php
 
-namespace ProductBundle\Service;
+namespace ProductCoreBundle\Service;
 
-use ProductBundle\Entity\Category;
-use ProductBundle\Repository\CategoryRepository;
+use ProductCoreBundle\Entity\Category;
+use ProductCoreBundle\Repository\CategoryRepository;
 use Tourze\Symfony\AopCacheBundle\Attribute\Cacheble;
 
 class CategoryService

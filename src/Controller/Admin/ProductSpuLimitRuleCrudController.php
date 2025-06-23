@@ -1,8 +1,8 @@
 <?php
 
-namespace ProductBundle\Controller\Admin;
+namespace ProductCoreBundle\Controller\Admin;
 
-use ProductBundle\Entity\SpuLimitRule;
+use ProductCoreBundle\Entity\SpuLimitRule;
 use Tourze\EasyAdminExtraBundle\Controller\AbstractCrudController;
 
 class ProductSpuLimitRuleCrudController extends AbstractCrudController

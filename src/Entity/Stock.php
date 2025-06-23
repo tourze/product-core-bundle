@@ -1,11 +1,11 @@
 <?php
 
-namespace ProductBundle\Entity;
+namespace ProductCoreBundle\Entity;
 
 use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
-use ProductBundle\Enum\StockState;
-use ProductBundle\Repository\StockRepository;
+use ProductCoreBundle\Enum\StockState;
+use ProductCoreBundle\Repository\StockRepository;
 use Symfony\Component\Serializer\Attribute\Groups;
 use Tourze\DoctrinePrecisionBundle\Attribute\PrecisionColumn;
 use Tourze\DoctrineTimestampBundle\Traits\TimestampableAware;

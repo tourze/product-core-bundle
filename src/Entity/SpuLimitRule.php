@@ -1,11 +1,11 @@
 <?php
 
-namespace ProductBundle\Entity;
+namespace ProductCoreBundle\Entity;
 
 use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
-use ProductBundle\Enum\SpuLimitType;
-use ProductBundle\Repository\SpuLimitRuleRepository;
+use ProductCoreBundle\Enum\SpuLimitType;
+use ProductCoreBundle\Repository\SpuLimitRuleRepository;
 use Symfony\Component\Serializer\Attribute\Groups;
 use Symfony\Component\Serializer\Attribute\Ignore;
 use Tourze\Arrayable\AdminArrayInterface;
@@ -56,7 +56,7 @@ class SpuLimitRule implements \Stringable, AdminArrayInterface
 
     public function __toString(): string
     {
-        if (!$this->getId()) {
+        if ($this->getId() === null || $this->getId() === '') {
             return '';
         }
 

@@ -1,11 +1,11 @@
 <?php
 
-namespace ProductBundle\Command;
+namespace ProductCoreBundle\Command;
 
 use Doctrine\ORM\EntityManagerInterface;
 use HttpClientBundle\Service\SmartHttpClient;
-use ProductBundle\Entity\Category;
-use ProductBundle\Repository\CategoryRepository;
+use ProductCoreBundle\Entity\Category;
+use ProductCoreBundle\Repository\CategoryRepository;
 use Symfony\Component\Console\Attribute\AsCommand;
 use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Input\InputInterface;

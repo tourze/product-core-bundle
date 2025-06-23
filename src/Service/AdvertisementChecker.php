@@ -1,8 +1,8 @@
 <?php
 
-namespace ProductBundle\Service;
+namespace ProductCoreBundle\Service;
 
-use ProductBundle\Exception\AdvertisementLimitException;
+use ProductCoreBundle\Exception\AdvertisementLimitException;
 
 /**
  * 广告法

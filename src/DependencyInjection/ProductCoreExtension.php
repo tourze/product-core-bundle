@@ -1,13 +1,13 @@
 <?php
 
-namespace ProductBundle\DependencyInjection;
+namespace ProductCoreBundle\DependencyInjection;
 
 use Symfony\Component\Config\FileLocator;
 use Symfony\Component\DependencyInjection\ContainerBuilder;
 use Symfony\Component\DependencyInjection\Extension\Extension;
 use Symfony\Component\DependencyInjection\Loader\YamlFileLoader;
 
-class ProductExtension extends Extension
+class ProductCoreExtension extends Extension
 {
     public function load(array $configs, ContainerBuilder $container): void
     {

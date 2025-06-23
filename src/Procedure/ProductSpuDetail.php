@@ -1,11 +1,11 @@
 <?php
 
-namespace ProductBundle\Procedure;
+namespace ProductCoreBundle\Procedure;
 
-use ProductBundle\Entity\Sku;
-use ProductBundle\Entity\Spu;
-use ProductBundle\Event\SpuDetailEvent;
-use ProductBundle\Repository\SpuRepository;
+use ProductCoreBundle\Entity\Sku;
+use ProductCoreBundle\Entity\Spu;
+use ProductCoreBundle\Event\SpuDetailEvent;
+use ProductCoreBundle\Repository\SpuRepository;
 use Symfony\Bundle\SecurityBundle\Security;
 use Symfony\Contracts\EventDispatcher\EventDispatcherInterface;
 use Tourze\DoctrineHelper\CacheHelper;
@@ -59,7 +59,7 @@ class ProductSpuDetail extends CacheableProcedure
         $event = new SpuDetailEvent();
         $event->setSpu($spu);
         $event->setResult($result);
-        $event->setSender($this->security->getUser() ?? SystemUser::instance());
+        $event->setSender($this->security->getUser());
         $event->setReceiver(SystemUser::instance());
         $this->eventDispatcher->dispatch($event);
 

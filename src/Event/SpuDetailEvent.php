@@ -1,8 +1,8 @@
 <?php
 
-namespace ProductBundle\Event;
+namespace ProductCoreBundle\Event;
 
-use ProductBundle\Entity\Spu;
+use ProductCoreBundle\Entity\Spu;
 use Tourze\UserEventBundle\Event\UserInteractionEvent;
 
 class SpuDetailEvent extends UserInteractionEvent

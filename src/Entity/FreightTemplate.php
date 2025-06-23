@@ -1,15 +1,14 @@
 <?php
 
-namespace ProductBundle\Entity;
+namespace ProductCoreBundle\Entity;
 
-use AppBundle\Service\CurrencyManager;
 use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Collections\Collection;
 use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
-use ProductBundle\Enum\DeliveryType;
-use ProductBundle\Enum\FreightValuationType;
-use ProductBundle\Repository\FreightTemplateRepository;
+use ProductCoreBundle\Enum\DeliveryType;
+use ProductCoreBundle\Enum\FreightValuationType;
+use ProductCoreBundle\Repository\FreightTemplateRepository;
 use Symfony\Component\Serializer\Attribute\Groups;
 use Tourze\Arrayable\AdminArrayInterface;
 use Tourze\Arrayable\ApiArrayInterface;

@@ -1,6 +1,6 @@
 <?php
 
-namespace ProductBundle;
+namespace ProductCoreBundle;
 
 use Symfony\Component\HttpKernel\Bundle\Bundle;
 use Tourze\BundleDependency\BundleDependencyInterface;
@@ -32,7 +32,7 @@ use Tourze\BundleDependency\BundleDependencyInterface;
  * @see https://xie.infoq.cn/article/d70abaebdc1db54681a741729
  * @see https://learnku.com/articles/21623
  */
-class ProductBundle extends Bundle implements BundleDependencyInterface
+class ProductCoreBundle extends Bundle implements BundleDependencyInterface
 {
     public static function getBundleDependencies(): array
     {

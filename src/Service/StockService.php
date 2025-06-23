@@ -1,12 +1,12 @@
 <?php
 
-namespace ProductBundle\Service;
+namespace ProductCoreBundle\Service;
 
 use Doctrine\ORM\EntityManagerInterface;
-use ProductBundle\Entity\Sku;
-use ProductBundle\Entity\StockLog;
-use ProductBundle\Enum\StockChange;
-use ProductBundle\Exception\StockOverloadException;
+use ProductCoreBundle\Entity\Sku;
+use ProductCoreBundle\Entity\StockLog;
+use ProductCoreBundle\Enum\StockChange;
+use ProductCoreBundle\Exception\StockOverloadException;
 use Symfony\Component\DependencyInjection\Attribute\Autoconfigure;
 use Tourze\DoctrineEntityLockBundle\Service\EntityLockService;
 

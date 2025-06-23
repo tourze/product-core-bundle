@@ -1,10 +1,10 @@
 <?php
 
-namespace ProductBundle\Procedure;
+namespace ProductCoreBundle\Procedure;
 
 use Doctrine\Common\Collections\Criteria;
 use Doctrine\ORM\EntityManagerInterface;
-use ProductBundle\Entity\Category;
+use ProductCoreBundle\Entity\Category;
 use Symfony\Bundle\SecurityBundle\Security;
 use Tourze\JsonRPC\Core\Attribute\MethodDoc;
 use Tourze\JsonRPC\Core\Attribute\MethodExpose;
@@ -67,11 +67,7 @@ class GetProductCategoryList extends CacheableProcedure
         ];
         if ($this->security->getUser() !== null) {
             // UserTagService integration removed - AppBundle not available
-            $tagIds = [];
-            foreach ($tagIds as $k => $tagId) {
-                $whereList[] = "JSON_SEARCH(a.showTags, 'one', :keyword_{$k}) IS NOT NULL";
-                $qb->setParameter("keyword_{$k}", $tagId);
-            }
+            // Tag-based filtering disabled
         }
         $whereList = implode(' OR ', $whereList);
         $qb->andWhere($whereList);

@@ -1,10 +1,10 @@
 <?php
 
-namespace ProductBundle\Repository;
+namespace ProductCoreBundle\Repository;
 
 use Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository;
 use Doctrine\Persistence\ManagerRegistry;
-use ProductBundle\Entity\Category;
+use ProductCoreBundle\Entity\Category;
 use Symfony\Component\DependencyInjection\Attribute\Autoconfigure;
 use Tourze\TrainCourseBundle\Trait\CommonRepositoryAware;
 

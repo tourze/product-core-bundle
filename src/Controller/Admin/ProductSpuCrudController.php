@@ -1,8 +1,8 @@
 <?php
 
-namespace ProductBundle\Controller\Admin;
+namespace ProductCoreBundle\Controller\Admin;
 
-use ProductBundle\Entity\Spu;
+use ProductCoreBundle\Entity\Spu;
 use Tourze\EasyAdminExtraBundle\Controller\AbstractCrudController;
 
 class ProductSpuCrudController extends AbstractCrudController

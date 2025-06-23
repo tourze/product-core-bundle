@@ -1,8 +1,8 @@
 <?php
 
-namespace ProductBundle\Controller\Admin;
+namespace ProductCoreBundle\Controller\Admin;
 
-use ProductBundle\Entity\CategoryLimitRule;
+use ProductCoreBundle\Entity\CategoryLimitRule;
 use Tourze\EasyAdminExtraBundle\Controller\AbstractCrudController;
 
 class ProductCategoryLimitRuleCrudController extends AbstractCrudController

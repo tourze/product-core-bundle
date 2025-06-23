@@ -1,11 +1,11 @@
-# product-bundle
+# product-core-bundle
 
 产品模块
 
 ## 安装
 
 ```bash
-composer require tourze/product-bundle
+composer require tourze/product-core-bundle
 ```
 
 ## 使用方法

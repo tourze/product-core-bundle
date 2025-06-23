@@ -1,6 +1,6 @@
 <?php
 
-namespace ProductBundle\Exception;
+namespace ProductCoreBundle\Exception;
 
 /**
  * 广告法极限词异常
