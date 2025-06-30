@@ -1,6 +1,6 @@
 <?php
 
-namespace ProductCoreBundle\Enum;
+namespace Tourze\ProductCoreBundle\Enum;
 
 use Tourze\EnumExtra\Itemable;
 use Tourze\EnumExtra\ItemTrait;

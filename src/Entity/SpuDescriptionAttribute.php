@@ -1,10 +1,9 @@
 <?php
 
-namespace ProductCoreBundle\Entity;
+namespace Tourze\ProductCoreBundle\Entity;
 
 use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
-use ProductCoreBundle\Repository\SpuDescriptionAttributeRepository;
 use Symfony\Component\Serializer\Attribute\Groups;
 use Symfony\Component\Serializer\Attribute\Ignore;
 use Tourze\Arrayable\AdminArrayInterface;
@@ -12,6 +11,7 @@ use Tourze\DoctrineTimestampBundle\Traits\TimestampableAware;
 use Tourze\DoctrineTrackBundle\Attribute\TrackColumn;
 use Tourze\DoctrineUserBundle\Attribute\UpdatedByColumn;
 use Tourze\DoctrineUserBundle\Traits\BlameableAware;
+use Tourze\ProductCoreBundle\Repository\SpuDescriptionAttributeRepository;
 
 #[ORM\Table(name: 'product_sku_description_attribute', options: ['comment' => '产品SPU描述属性'])]
 #[ORM\Entity(repositoryClass: SpuDescriptionAttributeRepository::class)]
@@ -20,14 +20,14 @@ class SpuDescriptionAttribute implements \Stringable, AdminArrayInterface
         use BlameableAware;
     use TimestampableAware;
 
-    #[Groups(['restful_read', 'api_tree', 'admin_curd', 'api_list'])]
+    #[Groups(groups: ['restful_read', 'api_tree', 'admin_curd', 'api_list'])]
     #[ORM\Id]
     #[ORM\GeneratedValue]
     #[ORM\Column(type: Types::INTEGER, options: ['comment' => 'ID'])]
     private ?int $id = 0;
 
 
-    #[Groups(['restful_read', 'admin_curd', 'restful_read'])]
+    #[Groups(groups: ['restful_read', 'admin_curd', 'restful_read'])]
     #[ORM\Column(type: Types::DATETIME_IMMUTABLE, nullable: true, options: ['comment' => '创建时间'])]
     private ?string $createdBy = null;
     #[UpdatedByColumn]

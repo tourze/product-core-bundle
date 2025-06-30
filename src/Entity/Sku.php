@@ -1,6 +1,6 @@
 <?php
 
-namespace ProductCoreBundle\Entity;
+namespace Tourze\ProductCoreBundle\Entity;
 
 use Carbon\CarbonImmutable;
 use Carbon\CarbonInterface;
@@ -8,8 +8,6 @@ use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Collections\Collection;
 use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
-use ProductCoreBundle\Enum\PriceType;
-use ProductCoreBundle\Repository\SkuRepository;
 use Symfony\Component\Serializer\Attribute\Groups;
 use Symfony\Component\Serializer\Attribute\Ignore;
 use Tourze\Arrayable\AdminArrayInterface;
@@ -22,6 +20,8 @@ use Tourze\DoctrineUserBundle\Attribute\UpdatedByColumn;
 use Tourze\DoctrineUserBundle\Traits\BlameableAware;
 use Tourze\EnumExtra\Itemable;
 use Tourze\LockServiceBundle\Model\LockEntity;
+use Tourze\ProductCoreBundle\Enum\PriceType;
+use Tourze\ProductCoreBundle\Repository\SkuRepository;
 use Yiisoft\Arrays\ArraySorter;
 
 /**
@@ -48,13 +48,13 @@ class Sku implements \Stringable, Itemable, AdminArrayInterface, LockEntity
     use TimestampableAware;
 
 
-    #[Groups(['restful_read', 'admin_curd', 'restful_read'])]
+    #[Groups(groups: ['restful_read', 'admin_curd', 'restful_read'])]
     #[ORM\Column(nullable: true, options: ['comment' => '创建人'])]
     private ?string $createdBy = null;
     #[UpdatedByColumn]
     #[ORM\Column(nullable: true, options: ['comment' => '更新人'])]
     private ?string $updatedBy = null;
-    #[Groups(['restful_read', 'admin_curd'])]
+    #[Groups(groups: ['restful_read', 'admin_curd'])]
     #[ORM\Id]
     #[ORM\GeneratedValue]
     #[ORM\Column(type: Types::INTEGER, options: ['comment' => 'SkuID'])]
@@ -78,7 +78,7 @@ class Sku implements \Stringable, Itemable, AdminArrayInterface, LockEntity
     /**
      * @var Collection<Price>
      */
-    #[Groups(['admin_curd'])]
+    #[Groups(groups: ['admin_curd'])]
     #[ORM\OneToMany(mappedBy: 'sku', targetEntity: Price::class, cascade: ['persist'], fetch: 'EXTRA_LAZY', orphanRemoval: true)]
     private Collection $prices;
     #[ORM\Column(type: Types::JSON, nullable: true, options: ['comment' => '图片'])]
@@ -116,7 +116,7 @@ class Sku implements \Stringable, Itemable, AdminArrayInterface, LockEntity
     private int $salesReal = 0;
     #[ORM\Column(type: Types::INTEGER, nullable: false, options: ['default' => '0', 'comment' => '虚拟销量'])]
     private int $salesVirtual = 0;
-    #[Groups(['admin_curd', 'restful_read'])]
+    #[Groups(groups: ['admin_curd', 'restful_read'])]
     #[ORM\Column(nullable: true, options: ['comment' => '发货期限'])]
     private ?int $dispatchPeriod = null;
     #[ORM\Column(type: Types::BOOLEAN, nullable: true, options: ['comment' => '上架', 'default' => 1])]
@@ -333,7 +333,7 @@ class Sku implements \Stringable, Itemable, AdminArrayInterface, LockEntity
             ->filter(fn (Price $price) => PriceType::COST === $price->getType())
             ->first();
 
-        return $price ?: null;
+        return $price !== false ? $price : null;
     }
 
     public function addPackage(SkuPackage $package): self
@@ -710,7 +710,7 @@ class Sku implements \Stringable, Itemable, AdminArrayInterface, LockEntity
     /**
      * @return Price[]|array
      */
-    #[Groups(['restful_read'])]
+    #[Groups(groups: ['restful_read'])]
     public function getSalePrices(): array
     {
         // 只看销售价格
@@ -788,7 +788,7 @@ class Sku implements \Stringable, Itemable, AdminArrayInterface, LockEntity
     /**
      * 返回缩略图.
      */
-    #[Groups(['restful_read'])]
+    #[Groups(groups: ['restful_read'])]
     public function getMainThumb(): string
     {
         if (empty($this->getThumbs())) {
@@ -801,7 +801,7 @@ class Sku implements \Stringable, Itemable, AdminArrayInterface, LockEntity
     /**
      * 获取库存数量，这里返回的是真实+虚拟库存.
      */
-    #[Groups(['restful_read'])]
+    #[Groups(groups: ['restful_read'])]
     public function getStockCount(): int
     {
         if (isset($_ENV['FIXED_PRODUCT_STOCK_NUMBER'])) {
@@ -814,13 +814,13 @@ class Sku implements \Stringable, Itemable, AdminArrayInterface, LockEntity
     /**
      * 获取销量 ，真实+虚拟
      */
-    #[Groups(['restful_read'])]
+    #[Groups(groups: ['restful_read'])]
     public function getSalesCount(): int
     {
         return $this->getSalesReal() + $this->getSalesVirtual();
     }
 
-    #[Groups(['restful_read'])]
+    #[Groups(groups: ['restful_read'])]
     public function getLimitConfig(): ?array
     {
         if ($this->getLimitRules()->isEmpty()) {
@@ -843,7 +843,7 @@ class Sku implements \Stringable, Itemable, AdminArrayInterface, LockEntity
         return $this->limitRules;
     }
 
-    #[Groups(['restful_read', 'admin_curd'])]
+    #[Groups(groups: ['restful_read', 'admin_curd'])]
     public function getTotalSale(): int
     {
         return $this->getSalesReal() + $this->getSalesVirtual();

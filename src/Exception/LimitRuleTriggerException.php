@@ -1,6 +1,6 @@
 <?php
 
-namespace ProductCoreBundle\Exception;
+namespace Tourze\ProductCoreBundle\Exception;
 
 /**
  * 限购规则触发

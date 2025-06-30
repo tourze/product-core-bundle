@@ -1,6 +1,6 @@
 <?php
 
-namespace ProductCoreBundle\Entity;
+namespace Tourze\ProductCoreBundle\Entity;
 
 use AntdCpBundle\Builder\Field\BraftEditor;
 use AntdCpBundle\Builder\Field\DynamicFieldSet;
@@ -8,7 +8,6 @@ use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Collections\Collection;
 use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
-use ProductCoreBundle\Repository\CategoryRepository;
 use Symfony\Component\Serializer\Attribute\Groups;
 use Symfony\Component\Serializer\Attribute\Ignore;
 use Tourze\Arrayable\AdminArrayInterface;
@@ -17,6 +16,7 @@ use Tourze\DoctrineTrackBundle\Attribute\TrackColumn;
 use Tourze\DoctrineUserBundle\Attribute\UpdatedByColumn;
 use Tourze\DoctrineUserBundle\Traits\BlameableAware;
 use Tourze\EnumExtra\Itemable;
+use Tourze\ProductCoreBundle\Repository\CategoryRepository;
 use Tourze\TrainCourseBundle\Trait\SortableTrait;
 
 #[ORM\Table(name: 'product_category', options: ['comment' => '产品分类表'])]
@@ -26,24 +26,24 @@ class Category implements \Stringable, Itemable, AdminArrayInterface
     use BlameableAware;
     use TimestampableAware;
 
-    #[Groups(['restful_read', 'api_tree', 'admin_curd', 'api_list'])]
+    #[Groups(groups: ['restful_read', 'api_tree', 'admin_curd', 'api_list'])]
     #[ORM\Id]
     #[ORM\GeneratedValue]
     #[ORM\Column(type: Types::INTEGER, options: ['comment' => 'ID'])]
     private ?int $id = 0;
 
 
-    #[Groups(['restful_read', 'admin_curd', 'restful_read'])]
+    #[Groups(groups: ['restful_read', 'admin_curd', 'restful_read'])]
     #[ORM\Column(nullable: true, options: ['comment' => '创建人'])]
     private ?string $createdBy = null;
     #[UpdatedByColumn]
     #[ORM\Column(nullable: true, options: ['comment' => '更新人'])]
     private ?string $updatedBy = null;
     #[TrackColumn]
-    #[Groups(['admin_curd', 'restful_read', 'restful_read', 'restful_write'])]
+    #[Groups(groups: ['admin_curd', 'restful_read', 'restful_read', 'restful_write'])]
     #[ORM\Column(type: Types::BOOLEAN, nullable: true, options: ['comment' => '有效', 'default' => 0])]
     private ?bool $valid = false;
-    #[Groups(['restful_read', 'api_tree'])]
+    #[Groups(groups: ['restful_read', 'api_tree'])]
     #[ORM\Column(type: Types::STRING, length: 60, options: ['comment' => '分类名'])]
     private ?string $title = null;
     #[Ignore]

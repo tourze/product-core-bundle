@@ -1,8 +1,8 @@
 <?php
 
-namespace ProductCoreBundle\Service;
+namespace Tourze\ProductCoreBundle\Service;
 
-use ProductCoreBundle\Exception\AdvertisementLimitException;
+use Tourze\ProductCoreBundle\Exception\AdvertisementLimitException;
 
 /**
  * 广告法

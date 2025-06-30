@@ -1,9 +1,9 @@
 <?php
 
-namespace ProductCoreBundle\Controller\Admin;
+namespace Tourze\ProductCoreBundle\Controller\Admin;
 
-use ProductCoreBundle\Entity\StockLog;
 use Tourze\EasyAdminExtraBundle\Controller\AbstractCrudController;
+use Tourze\ProductCoreBundle\Entity\StockLog;
 
 class ProductStockLogCrudController extends AbstractCrudController
 {

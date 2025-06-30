@@ -1,9 +1,12 @@
 <?php
 
-namespace ProductCoreBundle;
+namespace Tourze\ProductCoreBundle;
 
 use Symfony\Component\HttpKernel\Bundle\Bundle;
 use Tourze\BundleDependency\BundleDependencyInterface;
+use Tourze\DoctrineIndexedBundle\DoctrineIndexedBundle;
+use Tourze\DoctrineSnowflakeBundle\DoctrineSnowflakeBundle;
+use Tourze\Symfony\CronJob\CronJobBundle;
 
 /**
  * 商品模块
@@ -37,10 +40,9 @@ class ProductCoreBundle extends Bundle implements BundleDependencyInterface
     public static function getBundleDependencies(): array
     {
         return [
-            \Tourze\DoctrineSnowflakeBundle\DoctrineSnowflakeBundle::class => ['all' => true],
-            \Tourze\DoctrineIndexedBundle\DoctrineIndexedBundle::class => ['all' => true],
-            \Tourze\Symfony\CronJob\CronJobBundle::class => ['all' => true],
-            // AntdCpBundle and StoreBundle dependencies removed - not available
+            DoctrineSnowflakeBundle::class => ['all' => true],
+            DoctrineIndexedBundle::class => ['all' => true],
+            CronJobBundle::class => ['all' => true],
         ];
     }
 }

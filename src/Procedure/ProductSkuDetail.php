@@ -1,21 +1,21 @@
 <?php
 
-namespace ProductCoreBundle\Procedure;
+namespace Tourze\ProductCoreBundle\Procedure;
 
-use ProductCoreBundle\Repository\SkuRepository;
 use Tourze\JsonRPC\Core\Attribute\MethodDoc;
 use Tourze\JsonRPC\Core\Attribute\MethodExpose;
 use Tourze\JsonRPC\Core\Attribute\MethodParam;
 use Tourze\JsonRPC\Core\Attribute\MethodTag;
 use Tourze\JsonRPC\Core\Exception\ApiException;
 use Tourze\JsonRPC\Core\Procedure\BaseProcedure;
+use Tourze\ProductCoreBundle\Repository\SkuRepository;
 
-#[MethodTag('产品模块')]
-#[MethodDoc('获取sku详情')]
-#[MethodExpose('ProductSkuDetail')]
+#[MethodTag(name: '产品模块')]
+#[MethodDoc(summary: '获取sku详情')]
+#[MethodExpose(method: 'ProductSkuDetail')]
 class ProductSkuDetail extends BaseProcedure
 {
-    #[MethodParam('SKU ID')]
+    #[MethodParam(description: 'SKU ID')]
     public string $skuId;
 
     public function __construct(

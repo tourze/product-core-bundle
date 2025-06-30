@@ -1,6 +1,6 @@
 <?php
 
-namespace ProductCoreBundle\Event;
+namespace Tourze\ProductCoreBundle\Event;
 
 // use DoctrineEnhanceBundle\Traits\QueryBuilderAware; // Trait not found
 use Symfony\Contracts\EventDispatcher\Event;

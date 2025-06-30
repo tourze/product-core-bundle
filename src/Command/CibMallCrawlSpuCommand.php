@@ -1,27 +1,27 @@
 <?php
 
-namespace ProductCoreBundle\Command;
+namespace Tourze\ProductCoreBundle\Command;
 
 use Carbon\CarbonImmutable;
 use Doctrine\ORM\EntityManagerInterface;
 use HttpClientBundle\Service\SmartHttpClient;
-use ProductCoreBundle\Entity\Price;
-use ProductCoreBundle\Entity\Sku;
-use ProductCoreBundle\Entity\SkuAttribute;
-use ProductCoreBundle\Entity\Spu;
-use ProductCoreBundle\Entity\SpuAttribute;
-use ProductCoreBundle\Enum\PriceType;
-use ProductCoreBundle\Enum\SpuState;
-use ProductCoreBundle\Repository\PriceRepository;
-use ProductCoreBundle\Repository\SkuAttributeRepository;
-use ProductCoreBundle\Repository\SkuRepository;
-use ProductCoreBundle\Repository\SpuAttributeRepository;
-use ProductCoreBundle\Repository\SpuRepository;
 use Symfony\Component\Console\Attribute\AsCommand;
 use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Output\OutputInterface;
 use Symfony\Component\VarExporter\VarExporter;
+use Tourze\ProductCoreBundle\Entity\Price;
+use Tourze\ProductCoreBundle\Entity\Sku;
+use Tourze\ProductCoreBundle\Entity\SkuAttribute;
+use Tourze\ProductCoreBundle\Entity\Spu;
+use Tourze\ProductCoreBundle\Entity\SpuAttribute;
+use Tourze\ProductCoreBundle\Enum\PriceType;
+use Tourze\ProductCoreBundle\Enum\SpuState;
+use Tourze\ProductCoreBundle\Repository\PriceRepository;
+use Tourze\ProductCoreBundle\Repository\SkuAttributeRepository;
+use Tourze\ProductCoreBundle\Repository\SkuRepository;
+use Tourze\ProductCoreBundle\Repository\SpuAttributeRepository;
+use Tourze\ProductCoreBundle\Repository\SpuRepository;
 use Yiisoft\Json\Json;
 
 #[AsCommand(name: self::NAME, description: '采集兴业银行商城SPU数据')]
@@ -159,7 +159,7 @@ class CibMallCrawlSpuCommand extends Command
                     ];
                 }
 
-                $sku->setThumbs($thumbs ?: null);
+                $sku->setThumbs($thumbs !== [] ? $thumbs : null);
                 $this->entityManager->persist($sku);
 
                 // 价格

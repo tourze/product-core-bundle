@@ -1,18 +1,18 @@
 <?php
 
-namespace ProductCoreBundle\Entity;
+namespace Tourze\ProductCoreBundle\Entity;
 
 use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Collections\Collection;
 use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
-use ProductCoreBundle\Repository\TagRepository;
 use Symfony\Component\Serializer\Attribute\Groups;
 use Symfony\Component\Serializer\Attribute\Ignore;
 use Tourze\DoctrineTimestampBundle\Traits\TimestampableAware;
 use Tourze\DoctrineUserBundle\Attribute\UpdatedByColumn;
 use Tourze\DoctrineUserBundle\Traits\BlameableAware;
 use Tourze\EnumExtra\Itemable;
+use Tourze\ProductCoreBundle\Repository\TagRepository;
 
 #[ORM\Table(name: 'product_tag', options: ['comment' => '产品标签'])]
 #[ORM\Entity(repositoryClass: TagRepository::class)]
@@ -22,7 +22,7 @@ class Tag implements \Stringable, Itemable
     use TimestampableAware;
 
 
-    #[Groups(['restful_read', 'admin_curd', 'restful_read'])]
+    #[Groups(groups: ['restful_read', 'admin_curd', 'restful_read'])]
     #[ORM\Column(type: Types::DATETIME_IMMUTABLE, nullable: true, options: ['comment' => '创建时间'])]
     private ?string $createdBy = null;
     #[UpdatedByColumn]

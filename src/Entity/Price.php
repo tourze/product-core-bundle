@@ -1,13 +1,11 @@
 <?php
 
-namespace ProductCoreBundle\Entity;
+namespace Tourze\ProductCoreBundle\Entity;
 
 use Carbon\CarbonImmutable;
 use Carbon\CarbonInterface;
 use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
-use ProductCoreBundle\Enum\PriceType;
-use ProductCoreBundle\Repository\PriceRepository;
 use Symfony\Component\Serializer\Attribute\Groups;
 use Symfony\Component\Serializer\Attribute\Ignore;
 use Symfony\Component\Validator\Constraints as Assert;
@@ -19,6 +17,8 @@ use Tourze\DoctrineTimestampBundle\Traits\TimestampableAware;
 use Tourze\DoctrineTrackBundle\Attribute\TrackColumn;
 use Tourze\DoctrineUserBundle\Attribute\UpdatedByColumn;
 use Tourze\DoctrineUserBundle\Traits\BlameableAware;
+use Tourze\ProductCoreBundle\Enum\PriceType;
+use Tourze\ProductCoreBundle\Repository\PriceRepository;
 
 /**
  * 价格
@@ -40,13 +40,13 @@ class Price implements \Stringable, AdminArrayInterface
     use TimestampableAware;
 
 
-    #[Groups(['restful_read', 'admin_curd', 'restful_read'])]
+    #[Groups(groups: ['restful_read', 'admin_curd', 'restful_read'])]
     #[ORM\Column(nullable: true, options: ['comment' => '创建人'])]
     private ?string $createdBy = null;
     #[UpdatedByColumn]
     #[ORM\Column(nullable: true, options: ['comment' => '更新人'])]
     private ?string $updatedBy = null;
-    #[Groups(['admin_curd'])]
+    #[Groups(groups: ['admin_curd'])]
     #[ORM\Id]
     #[ORM\GeneratedValue]
     #[ORM\Column(type: Types::INTEGER, options: ['comment' => '价格ID'])]
@@ -58,7 +58,7 @@ class Price implements \Stringable, AdminArrayInterface
     #[TrackColumn]
     #[ORM\Column(type: Types::STRING, length: 60, enumType: PriceType::class, options: ['default' => 'sale', 'comment' => '类型'])]
     private PriceType $type;
-    #[Groups(['restful_read', 'admin_curd'])]
+    #[Groups(groups: ['restful_read', 'admin_curd'])]
     #[ORM\Column(type: Types::STRING, length: 10, options: ['default' => 'CNY', 'comment' => '币种'])]
     private ?string $currency = null;
     /**
@@ -343,7 +343,7 @@ class Price implements \Stringable, AdminArrayInterface
     /**
      * 未含税价格
      */
-    #[Groups(['restful_read', 'admin_curd'])]
+    #[Groups(groups: ['restful_read', 'admin_curd'])]
     public function getDisplayPrice(): string
     {
         // CurrencyManager integration removed - AppBundle not available
@@ -353,7 +353,7 @@ class Price implements \Stringable, AdminArrayInterface
     /**
      * 税费
      */
-    #[Groups(['restful_read', 'admin_curd'])]
+    #[Groups(groups: ['restful_read', 'admin_curd'])]
     public function getTax(): float
     {
         // CurrencyManager integration removed - AppBundle not available
@@ -365,7 +365,7 @@ class Price implements \Stringable, AdminArrayInterface
     /**
      * 税费
      */
-    #[Groups(['restful_read', 'admin_curd'])]
+    #[Groups(groups: ['restful_read', 'admin_curd'])]
     public function getDisplayTax(): string
     {
         // CurrencyManager integration removed - AppBundle not available
@@ -375,7 +375,7 @@ class Price implements \Stringable, AdminArrayInterface
     /**
      * 含税价格
      */
-    #[Groups(['restful_read', 'admin_curd'])]
+    #[Groups(groups: ['restful_read', 'admin_curd'])]
     public function getTaxPrice(): float
     {
         // CurrencyManager integration removed - AppBundle not available
@@ -386,7 +386,7 @@ class Price implements \Stringable, AdminArrayInterface
     /**
      * 含税价格
      */
-    #[Groups(['restful_read', 'admin_curd'])]
+    #[Groups(groups: ['restful_read', 'admin_curd'])]
     public function getDisplayTaxPrice(): string
     {
         // CurrencyManager integration removed - AppBundle not available

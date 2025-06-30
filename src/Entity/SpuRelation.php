@@ -1,16 +1,15 @@
 <?php
 
-namespace ProductCoreBundle\Entity;
+namespace Tourze\ProductCoreBundle\Entity;
 
-use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
-use ProductCoreBundle\Repository\SpuRelationRepository;
 use Symfony\Component\Serializer\Attribute\Groups;
-use Tourze\DoctrineSnowflakeBundle\Service\SnowflakeIdGenerator;
+use Tourze\DoctrineSnowflakeBundle\Traits\SnowflakeKeyAware;
 use Tourze\DoctrineTimestampBundle\Traits\TimestampableAware;
 use Tourze\DoctrineUserBundle\Attribute\CreatedByColumn;
 use Tourze\DoctrineUserBundle\Attribute\UpdatedByColumn;
 use Tourze\DoctrineUserBundle\Traits\BlameableAware;
+use Tourze\ProductCoreBundle\Repository\SpuRelationRepository;
 
 /**
  * SPU关系描述，本质是一个三元组？记录主谓宾关系
@@ -19,18 +18,11 @@ use Tourze\DoctrineUserBundle\Traits\BlameableAware;
 #[ORM\Entity(repositoryClass: SpuRelationRepository::class)]
 class SpuRelation implements \Stringable
 {
-        use BlameableAware;
+    use BlameableAware;
     use TimestampableAware;
-
-
-    #[Groups(['restful_read', 'admin_curd', 'restful_read'])]
-    #[ORM\Column(type: Types::DATETIME_IMMUTABLE, nullable: true, options: ['comment' => '创建时间'])]
-    #[ORM\Id]
-    #[ORM\GeneratedValue(strategy: 'CUSTOM')]
-    #[ORM\CustomIdGenerator(SnowflakeIdGenerator::class)]
-    private ?string $id = null;
+    use SnowflakeKeyAware;
     #[CreatedByColumn]
-    #[Groups(['restful_read'])]
+    #[Groups(groups: ['restful_read'])]
     #[ORM\Column(nullable: true, options: ['comment' => '创建人'])]
     private ?string $createdBy = null;
     #[UpdatedByColumn]
@@ -44,10 +36,6 @@ class SpuRelation implements \Stringable
     #[ORM\Column(length: 30, options: ['comment' => '关系类型'])]
     private ?string $relation = null;
 
-    public function getId(): ?string
-    {
-        return $this->id;
-    }
 
     public function getCreatedBy(): ?string
     {

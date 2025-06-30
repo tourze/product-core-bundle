@@ -1,37 +1,30 @@
 <?php
 
-namespace ProductCoreBundle\Entity;
+namespace Tourze\ProductCoreBundle\Entity;
 
 use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
-use ProductCoreBundle\Enum\CategoryLimitType;
-use ProductCoreBundle\Repository\CategoryLimitRuleRepository;
 use Symfony\Component\Serializer\Attribute\Groups;
 use Symfony\Component\Serializer\Attribute\Ignore;
 use Tourze\DoctrineIpBundle\Attribute\CreateIpColumn;
 use Tourze\DoctrineIpBundle\Attribute\UpdateIpColumn;
-use Tourze\DoctrineSnowflakeBundle\Service\SnowflakeIdGenerator;
+use Tourze\DoctrineSnowflakeBundle\Traits\SnowflakeKeyAware;
 use Tourze\DoctrineTimestampBundle\Traits\TimestampableAware;
 use Tourze\DoctrineUserBundle\Attribute\CreatedByColumn;
 use Tourze\DoctrineUserBundle\Attribute\UpdatedByColumn;
 use Tourze\DoctrineUserBundle\Traits\BlameableAware;
+use Tourze\ProductCoreBundle\Enum\CategoryLimitType;
+use Tourze\ProductCoreBundle\Repository\CategoryLimitRuleRepository;
 
 #[ORM\Entity(repositoryClass: CategoryLimitRuleRepository::class)]
 #[ORM\Table(name: 'product_category_limit_rule', options: ['comment' => '限购限制'])]
 class CategoryLimitRule implements \Stringable
 {
-        use BlameableAware;
+    use BlameableAware;
     use TimestampableAware;
-
-
-    #[Groups(['restful_read', 'admin_curd', 'restful_read'])]
-    #[ORM\Column(type: Types::DATETIME_IMMUTABLE, nullable: true, options: ['comment' => '创建时间'])]
-    #[ORM\Id]
-    #[ORM\GeneratedValue(strategy: 'CUSTOM')]
-    #[ORM\CustomIdGenerator(SnowflakeIdGenerator::class)]
-    private ?string $id = null;
+    use SnowflakeKeyAware;
     #[CreatedByColumn]
-    #[Groups(['restful_read'])]
+    #[Groups(groups: ['restful_read'])]
     #[ORM\Column(nullable: true, options: ['comment' => '创建人'])]
     private ?string $createdBy = null;
     #[UpdatedByColumn]
@@ -59,10 +52,6 @@ class CategoryLimitRule implements \Stringable
         return "{$this->getType()->getLabel()} {$this->getValue()}";
     }
 
-    public function getId(): ?string
-    {
-        return $this->id;
-    }
 
     public function getType(): CategoryLimitType
     {

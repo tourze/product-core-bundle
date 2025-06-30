@@ -1,6 +1,6 @@
 <?php
 
-namespace ProductCoreBundle\Entity;
+namespace Tourze\ProductCoreBundle\Entity;
 
 use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
@@ -17,14 +17,14 @@ class SpuSubscribe implements \Stringable
 {
     use TimestampableAware;
 
-    #[Groups(['restful_read', 'api_tree', 'admin_curd', 'api_list'])]
+    #[Groups(groups: ['restful_read', 'api_tree', 'admin_curd', 'api_list'])]
     #[ORM\Id]
     #[ORM\GeneratedValue]
     #[ORM\Column(type: Types::INTEGER, options: ['comment' => 'ID'])]
     private ?int $id = 0;
 
 
-    #[Groups(['restful_read', 'admin_curd', 'restful_read'])]
+    #[Groups(groups: ['restful_read', 'admin_curd', 'restful_read'])]
     #[ORM\Column(type: Types::DATETIME_IMMUTABLE, nullable: true, options: ['comment' => '创建时间'])]
     private int $goodsId;
     #[ORM\Column(type: Types::INTEGER, nullable: false, options: ['comment' => '用户'])]

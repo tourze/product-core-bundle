@@ -1,13 +1,9 @@
 <?php
 
-namespace ProductCoreBundle\Procedure;
+namespace Tourze\ProductCoreBundle\Procedure;
 
 use Doctrine\Common\Collections\Criteria;
 use Doctrine\ORM\EntityManagerInterface;
-use ProductCoreBundle\Entity\Spu;
-use ProductCoreBundle\Event\QuerySpuListByTagsEvent;
-use ProductCoreBundle\Service\CategoryService;
-use ProductCoreBundle\Service\TagService;
 use Psr\Log\LoggerInterface;
 use Symfony\Bundle\SecurityBundle\Security;
 use Symfony\Contracts\EventDispatcher\EventDispatcherInterface;
@@ -17,36 +13,40 @@ use Tourze\JsonRPC\Core\Attribute\MethodParam;
 use Tourze\JsonRPC\Core\Attribute\MethodTag;
 use Tourze\JsonRPC\Core\Procedure\BaseProcedure;
 use Tourze\JsonRPCPaginatorBundle\Procedure\PaginatorTrait;
+use Tourze\ProductCoreBundle\Entity\Spu;
+use Tourze\ProductCoreBundle\Event\QuerySpuListByTagsEvent;
+use Tourze\ProductCoreBundle\Service\CategoryService;
+use Tourze\ProductCoreBundle\Service\TagService;
 
-#[MethodTag('产品模块')]
-#[MethodDoc('获取SPU列表')]
-#[MethodExpose('GetSpuList')]
+#[MethodTag(name: '产品模块')]
+#[MethodDoc(summary: '获取SPU列表')]
+#[MethodExpose(method: 'GetSpuList')]
 class GetSpuList extends BaseProcedure
 {
     use PaginatorTrait;
 
-    #[MethodParam('查询的目录分类，如[1, 2, 3]')]
+    #[MethodParam(description: '查询的目录分类，如[1, 2, 3]')]
     public array $categoryIds = [];
 
-    #[MethodParam("SPU属性过滤条件 [ { name: '保质期', value: '180天' } ]")]
+    #[MethodParam(description: "SPU属性过滤条件 [ { name: '保质期', value: '180天' } ]")]
     public array $spuAttributes = [];
 
-    #[MethodParam('标签ID')]
+    #[MethodParam(description: '标签ID')]
     public array $tags = [];
 
-    #[MethodParam('扩展字段 (不要使用，计划废弃)')]
+    #[MethodParam(description: '扩展字段 (不要使用，计划废弃)')]
     public string $extend = '';
 
-    #[MethodParam('搜索关键词')]
+    #[MethodParam(description: '搜索关键词')]
     public string $keyword = '';
 
-    #[MethodParam('供应商信息')]
+    #[MethodParam(description: '供应商信息')]
     public string $supplier = '';
 
-    #[MethodParam('商品类型')]
+    #[MethodParam(description: '商品类型')]
     public ?string $type = '';
 
-    #[MethodParam('物料编码')]
+    #[MethodParam(description: '物料编码')]
     public ?string $gtin = '';
 
     public function __construct(

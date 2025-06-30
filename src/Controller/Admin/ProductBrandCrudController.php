@@ -1,9 +1,9 @@
 <?php
 
-namespace ProductCoreBundle\Controller\Admin;
+namespace Tourze\ProductCoreBundle\Controller\Admin;
 
-use ProductCoreBundle\Entity\Brand;
 use Tourze\EasyAdminExtraBundle\Controller\AbstractCrudController;
+use Tourze\ProductCoreBundle\Entity\Brand;
 
 class ProductBrandCrudController extends AbstractCrudController
 {

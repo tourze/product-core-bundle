@@ -1,11 +1,11 @@
 <?php
 
-namespace ProductCoreBundle;
+namespace Tourze\ProductCoreBundle;
 
 use Symfony\Component\DependencyInjection\Attribute\AutoconfigureTag;
 use Tourze\EnumExtra\SelectDataFetcher;
 
-#[AutoconfigureTag('product.type.provider')]
+#[AutoconfigureTag(name: 'product.type.provider')]
 class ProductTypeProvider implements SelectDataFetcher
 {
     public function genSelectData(): iterable

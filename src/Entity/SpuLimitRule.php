@@ -1,39 +1,32 @@
 <?php
 
-namespace ProductCoreBundle\Entity;
+namespace Tourze\ProductCoreBundle\Entity;
 
 use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
-use ProductCoreBundle\Enum\SpuLimitType;
-use ProductCoreBundle\Repository\SpuLimitRuleRepository;
 use Symfony\Component\Serializer\Attribute\Groups;
 use Symfony\Component\Serializer\Attribute\Ignore;
 use Tourze\Arrayable\AdminArrayInterface;
 use Tourze\DoctrineIpBundle\Attribute\CreateIpColumn;
 use Tourze\DoctrineIpBundle\Attribute\UpdateIpColumn;
-use Tourze\DoctrineSnowflakeBundle\Service\SnowflakeIdGenerator;
+use Tourze\DoctrineSnowflakeBundle\Traits\SnowflakeKeyAware;
 use Tourze\DoctrineTimestampBundle\Traits\TimestampableAware;
 use Tourze\DoctrineUserBundle\Attribute\CreatedByColumn;
 use Tourze\DoctrineUserBundle\Attribute\UpdatedByColumn;
 use Tourze\DoctrineUserBundle\Traits\BlameableAware;
+use Tourze\ProductCoreBundle\Enum\SpuLimitType;
+use Tourze\ProductCoreBundle\Repository\SpuLimitRuleRepository;
 
 #[ORM\Entity(repositoryClass: SpuLimitRuleRepository::class)]
 #[ORM\Table(name: 'product_spu_limit_rule', options: ['comment' => '产品SPU限购限制'])]
 #[ORM\UniqueConstraint(name: 'product_spu_limit_rule_idx_unique', columns: ['spu_id', 'type'])]
 class SpuLimitRule implements \Stringable, AdminArrayInterface
 {
-        use BlameableAware;
+    use BlameableAware;
     use TimestampableAware;
-
-
-    #[Groups(['restful_read', 'admin_curd', 'restful_read'])]
-    #[ORM\Column(type: Types::DATETIME_IMMUTABLE, nullable: true, options: ['comment' => '创建时间'])]
-    #[ORM\Id]
-    #[ORM\GeneratedValue(strategy: 'CUSTOM')]
-    #[ORM\CustomIdGenerator(SnowflakeIdGenerator::class)]
-    private ?string $id = null;
+    use SnowflakeKeyAware;
     #[CreatedByColumn]
-    #[Groups(['restful_read'])]
+    #[Groups(groups: ['restful_read'])]
     #[ORM\Column(nullable: true, options: ['comment' => '创建人'])]
     private ?string $createdBy = null;
     #[UpdatedByColumn]
@@ -63,10 +56,6 @@ class SpuLimitRule implements \Stringable, AdminArrayInterface
         return "{$this->getType()->getLabel()} {$this->getValue()}";
     }
 
-    public function getId(): ?string
-    {
-        return $this->id;
-    }
 
     public function getType(): SpuLimitType
     {

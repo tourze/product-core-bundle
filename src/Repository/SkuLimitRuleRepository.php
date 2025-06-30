@@ -1,10 +1,10 @@
 <?php
 
-namespace ProductCoreBundle\Repository;
+namespace Tourze\ProductCoreBundle\Repository;
 
 use Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository;
 use Doctrine\Persistence\ManagerRegistry;
-use ProductCoreBundle\Entity\SkuLimitRule;
+use Tourze\ProductCoreBundle\Entity\SkuLimitRule;
 use Tourze\TrainCourseBundle\Trait\CommonRepositoryAware;
 
 /**

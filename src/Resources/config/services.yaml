@@ -5,7 +5,7 @@ services:
     autoconfigure: true # Automatically registers your services as commands, event subscribers, etc.
     public: true
 
-  ProductCoreBundle\:
+  Tourze\ProductCoreBundle\:
     resource: '../../'
     exclude:
       - '../../DependencyInjection/'
@@ -19,14 +19,14 @@ services:
       - '../../Tests/'
       - '../../LegacyProcedure/'
 
-  ProductCoreBundle\Repository\SkuRepository:
+  Tourze\ProductCoreBundle\Repository\SkuRepository:
     autowire: true
     public: true
-  ProductCoreBundle\Repository\StockRepository:
+  Tourze\ProductCoreBundle\Repository\StockRepository:
     autowire: true
     public: true
 
   # 自动读取标签相关配置
   product.tag.fetcher:
-    class: ProductCoreBundle\ProductTagFetcher
+    class: Tourze\ProductCoreBundle\ProductTagFetcher
     public: true

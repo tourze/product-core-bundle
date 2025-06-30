@@ -1,17 +1,17 @@
 <?php
 
-namespace ProductCoreBundle;
+namespace Tourze\ProductCoreBundle;
 
 use Knp\Menu\ItemInterface;
-use ProductCoreBundle\Entity\Brand;
-use ProductCoreBundle\Entity\Category;
-use ProductCoreBundle\Entity\FreightTemplate;
-use ProductCoreBundle\Entity\Sku;
-use ProductCoreBundle\Entity\Spu;
-use ProductCoreBundle\Entity\StockLog;
-use ProductCoreBundle\Entity\Tag;
 use Tourze\EasyAdminMenuBundle\Attribute\MenuProvider;
 use Tourze\EasyAdminMenuBundle\Service\LinkGeneratorInterface;
+use Tourze\ProductCoreBundle\Entity\Brand;
+use Tourze\ProductCoreBundle\Entity\Category;
+use Tourze\ProductCoreBundle\Entity\FreightTemplate;
+use Tourze\ProductCoreBundle\Entity\Sku;
+use Tourze\ProductCoreBundle\Entity\Spu;
+use Tourze\ProductCoreBundle\Entity\StockLog;
+use Tourze\ProductCoreBundle\Entity\Tag;
 
 #[MenuProvider]
 class AdminMenu

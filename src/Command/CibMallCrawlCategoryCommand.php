@@ -1,15 +1,15 @@
 <?php
 
-namespace ProductCoreBundle\Command;
+namespace Tourze\ProductCoreBundle\Command;
 
 use Doctrine\ORM\EntityManagerInterface;
 use HttpClientBundle\Service\SmartHttpClient;
-use ProductCoreBundle\Entity\Category;
-use ProductCoreBundle\Repository\CategoryRepository;
 use Symfony\Component\Console\Attribute\AsCommand;
 use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Output\OutputInterface;
+use Tourze\ProductCoreBundle\Entity\Category;
+use Tourze\ProductCoreBundle\Repository\CategoryRepository;
 use Yiisoft\Json\Json;
 
 #[AsCommand(name: self::NAME, description: '采集兴业银行商城分类数据')]

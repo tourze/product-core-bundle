@@ -1,24 +1,24 @@
 <?php
 
-namespace ProductCoreBundle\Entity;
+namespace Tourze\ProductCoreBundle\Entity;
 
 use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Collections\Collection;
 use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
-use ProductCoreBundle\Enum\DeliveryType;
-use ProductCoreBundle\Enum\FreightValuationType;
-use ProductCoreBundle\Repository\FreightTemplateRepository;
 use Symfony\Component\Serializer\Attribute\Groups;
 use Tourze\Arrayable\AdminArrayInterface;
 use Tourze\Arrayable\ApiArrayInterface;
 use Tourze\DoctrinePrecisionBundle\Attribute\PrecisionColumn;
-use Tourze\DoctrineSnowflakeBundle\Service\SnowflakeIdGenerator;
+use Tourze\DoctrineSnowflakeBundle\Traits\SnowflakeKeyAware;
 use Tourze\DoctrineTimestampBundle\Traits\TimestampableAware;
 use Tourze\DoctrineTrackBundle\Attribute\TrackColumn;
 use Tourze\DoctrineUserBundle\Attribute\CreatedByColumn;
 use Tourze\DoctrineUserBundle\Attribute\UpdatedByColumn;
 use Tourze\DoctrineUserBundle\Traits\BlameableAware;
+use Tourze\ProductCoreBundle\Enum\DeliveryType;
+use Tourze\ProductCoreBundle\Enum\FreightValuationType;
+use Tourze\ProductCoreBundle\Repository\FreightTemplateRepository;
 use Tourze\TrainCourseBundle\Trait\SortableTrait;
 
 /**
@@ -28,33 +28,27 @@ use Tourze\TrainCourseBundle\Trait\SortableTrait;
 #[ORM\Table(name: 'product_freight_template', options: ['comment' => '运费模板'])]
 class FreightTemplate implements \Stringable, ApiArrayInterface, AdminArrayInterface
 {
-        use BlameableAware;
+    use BlameableAware;
     use TimestampableAware;
-
-
-    #[ORM\Id]
-    #[ORM\Column(type: Types::BIGINT, options: ['comment' => '主键'])]
-    #[ORM\GeneratedValue(strategy: 'CUSTOM')]
-    #[ORM\CustomIdGenerator(SnowflakeIdGenerator::class)]
-    private ?string $id = null;
+    use SnowflakeKeyAware;
     #[CreatedByColumn]
-    #[Groups(['restful_read'])]
+    #[Groups(groups: ['restful_read'])]
     #[ORM\Column(nullable: true, options: ['comment' => '创建人'])]
     private ?string $createdBy = null;
     #[UpdatedByColumn]
     #[ORM\Column(nullable: true, options: ['comment' => '更新人'])]
     private ?string $updatedBy = null;
     #[TrackColumn]
-    #[Groups(['admin_curd', 'restful_read', 'restful_read', 'restful_write'])]
+    #[Groups(groups: ['admin_curd', 'restful_read', 'restful_read', 'restful_write'])]
     #[ORM\Column(type: Types::BOOLEAN, nullable: true, options: ['comment' => '有效', 'default' => 0])]
     private ?bool $valid = false;
     use SortableTrait;
-    #[Groups(['admin_curd', 'restful_read'])]
+    #[Groups(groups: ['admin_curd', 'restful_read'])]
     #[ORM\Column(type: Types::STRING, length: 100, options: ['comment' => '名称'])]
     private string $name;
     #[ORM\Column(length: 40, enumType: DeliveryType::class, options: ['comment' => '配送方式'])]
     private ?DeliveryType $deliveryType = null;
-    #[Groups(['admin_curd'])]
+    #[Groups(groups: ['admin_curd'])]
     #[ORM\Column(length: 40, enumType: FreightValuationType::class, options: ['comment' => '计费方式'])]
     private ?FreightValuationType $valuationType = null;
     #[ORM\Column(type: Types::STRING, length: 10, options: ['default' => 'CNY', 'comment' => '币种'])]
@@ -80,10 +74,6 @@ class FreightTemplate implements \Stringable, ApiArrayInterface, AdminArrayInter
         return "{$this->getName()}";
     }
 
-    public function getId(): ?string
-    {
-        return $this->id;
-    }
 
     public function getName(): string
     {

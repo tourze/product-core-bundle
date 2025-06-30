@@ -1,12 +1,12 @@
 <?php
 
-namespace ProductCoreBundle\Service;
+namespace Tourze\ProductCoreBundle\Service;
 
 use Symfony\Component\DependencyInjection\Attribute\AutoconfigureTag;
 use Symfony\Component\Routing\Loader\AnnotationClassLoader;
 use Symfony\Component\Routing\RouteCollection;
 
-#[AutoconfigureTag('controller.service_arguments')]
+#[AutoconfigureTag(name: 'controller.service_arguments')]
 class AttributeControllerLoader
 {
     public function __construct(
@@ -22,7 +22,7 @@ class AttributeControllerLoader
         $collection = new RouteCollection();
         
         $controllers = [
-            \ProductCoreBundle\Controller\TempController::class,
+            \Tourze\ProductCoreBundle\Controller\TempController::class,
         ];
         
         foreach ($controllers as $controller) {

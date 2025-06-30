@@ -1,19 +1,19 @@
 <?php
 
-namespace ProductCoreBundle\Entity;
+namespace Tourze\ProductCoreBundle\Entity;
 
 use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
-use ProductCoreBundle\Repository\BrandRepository;
 use Symfony\Component\Serializer\Attribute\Groups;
 use Tourze\DoctrineIpBundle\Attribute\CreateIpColumn;
 use Tourze\DoctrineIpBundle\Attribute\UpdateIpColumn;
-use Tourze\DoctrineSnowflakeBundle\Service\SnowflakeIdGenerator;
+use Tourze\DoctrineSnowflakeBundle\Traits\SnowflakeKeyAware;
 use Tourze\DoctrineTimestampBundle\Traits\TimestampableAware;
 use Tourze\DoctrineTrackBundle\Attribute\TrackColumn;
 use Tourze\DoctrineUserBundle\Attribute\CreatedByColumn;
 use Tourze\DoctrineUserBundle\Attribute\UpdatedByColumn;
 use Tourze\DoctrineUserBundle\Traits\BlameableAware;
+use Tourze\ProductCoreBundle\Repository\BrandRepository;
 
 /**
  * @see https://blog.csdn.net/zhichaosong/article/details/120316738
@@ -22,28 +22,21 @@ use Tourze\DoctrineUserBundle\Traits\BlameableAware;
 #[ORM\Entity(repositoryClass: BrandRepository::class)]
 class Brand implements \Stringable
 {
-        use BlameableAware;
+    use BlameableAware;
     use TimestampableAware;
-
-
-    #[Groups(['restful_read', 'admin_curd', 'restful_read'])]
-    #[ORM\Id]
-    #[ORM\Column(type: Types::BIGINT, options: ['comment' => '主键'])]
-    #[ORM\GeneratedValue(strategy: 'CUSTOM')]
-    #[ORM\CustomIdGenerator(SnowflakeIdGenerator::class)]
-    private ?string $id = null;
+    use SnowflakeKeyAware;
     #[CreatedByColumn]
-    #[Groups(['restful_read'])]
+    #[Groups(groups: ['restful_read'])]
     #[ORM\Column(nullable: true, options: ['comment' => '创建人'])]
     private ?string $createdBy = null;
     #[UpdatedByColumn]
     #[ORM\Column(nullable: true, options: ['comment' => '更新人'])]
     private ?string $updatedBy = null;
     #[TrackColumn]
-    #[Groups(['admin_curd', 'restful_read', 'restful_read', 'restful_write'])]
+    #[Groups(groups: ['admin_curd', 'restful_read', 'restful_read', 'restful_write'])]
     #[ORM\Column(type: Types::BOOLEAN, nullable: true, options: ['comment' => '有效', 'default' => 0])]
     private ?bool $valid = false;
-    #[Groups(['admin_curd'])]
+    #[Groups(groups: ['admin_curd'])]
     #[ORM\Column(type: Types::STRING, length: 64, options: ['comment' => '标题'])]
     private ?string $name = null;
     #[ORM\Column(type: Types::STRING, length: 255, nullable: true, options: ['comment' => 'LOGO地址'])]
@@ -62,10 +55,6 @@ class Brand implements \Stringable
         return "{$this->getName()}";
     }
 
-    public function getId(): ?string
-    {
-        return $this->id;
-    }
 
     public function getName(): ?string
     {

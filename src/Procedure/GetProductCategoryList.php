@@ -1,10 +1,9 @@
 <?php
 
-namespace ProductCoreBundle\Procedure;
+namespace Tourze\ProductCoreBundle\Procedure;
 
 use Doctrine\Common\Collections\Criteria;
 use Doctrine\ORM\EntityManagerInterface;
-use ProductCoreBundle\Entity\Category;
 use Symfony\Bundle\SecurityBundle\Security;
 use Tourze\JsonRPC\Core\Attribute\MethodDoc;
 use Tourze\JsonRPC\Core\Attribute\MethodExpose;
@@ -13,13 +12,14 @@ use Tourze\JsonRPC\Core\Attribute\MethodTag;
 use Tourze\JsonRPC\Core\Exception\ApiException;
 use Tourze\JsonRPC\Core\Model\JsonRpcRequest;
 use Tourze\JsonRPCCacheBundle\Procedure\CacheableProcedure;
+use Tourze\ProductCoreBundle\Entity\Category;
 
-#[MethodTag('产品模块')]
-#[MethodDoc('获取所有的商品分类')]
-#[MethodExpose('GetProductCategoryList')]
+#[MethodTag(name: '产品模块')]
+#[MethodDoc(summary: '获取所有的商品分类')]
+#[MethodExpose(method: 'GetProductCategoryList')]
 class GetProductCategoryList extends CacheableProcedure
 {
-    #[MethodParam('上级目录，不传入的话则加载根目录数据')]
+    #[MethodParam(description: '上级目录，不传入的话则加载根目录数据')]
     public ?string $parent = null;
 
     public function __construct(

@@ -1,6 +1,6 @@
 <?php
 
-namespace ProductCoreBundle\Exception;
+namespace Tourze\ProductCoreBundle\Exception;
 
 /**
  * 广告法极限词异常

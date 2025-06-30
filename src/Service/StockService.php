@@ -1,14 +1,14 @@
 <?php
 
-namespace ProductCoreBundle\Service;
+namespace Tourze\ProductCoreBundle\Service;
 
 use Doctrine\ORM\EntityManagerInterface;
-use ProductCoreBundle\Entity\Sku;
-use ProductCoreBundle\Entity\StockLog;
-use ProductCoreBundle\Enum\StockChange;
-use ProductCoreBundle\Exception\StockOverloadException;
 use Symfony\Component\DependencyInjection\Attribute\Autoconfigure;
 use Tourze\DoctrineEntityLockBundle\Service\EntityLockService;
+use Tourze\ProductCoreBundle\Entity\Sku;
+use Tourze\ProductCoreBundle\Entity\StockLog;
+use Tourze\ProductCoreBundle\Enum\StockChange;
+use Tourze\ProductCoreBundle\Exception\StockOverloadException;
 
 /**
  * 库存服务

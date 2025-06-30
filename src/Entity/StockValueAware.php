@@ -1,6 +1,6 @@
 <?php
 
-namespace ProductCoreBundle\Entity;
+namespace Tourze\ProductCoreBundle\Entity;
 
 use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
@@ -11,7 +11,7 @@ use Symfony\Component\Serializer\Attribute\Groups;
  */
 trait StockValueAware
 {
-    #[Groups(['admin_curd'])]
+    #[Groups(groups: ['admin_curd'])]
     #[ORM\Column(type: Types::INTEGER, options: ['comment' => '可用库存', 'default' => 0])]
     private ?int $validStock = 0;
 

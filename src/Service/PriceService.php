@@ -1,12 +1,12 @@
 <?php
 
-namespace ProductCoreBundle\Service;
+namespace Tourze\ProductCoreBundle\Service;
 
 use Carbon\CarbonInterface;
-use ProductCoreBundle\Entity\Price;
-use ProductCoreBundle\Entity\Sku;
-use ProductCoreBundle\Enum\PriceType;
 use Symfony\Component\Security\Core\User\UserInterface;
+use Tourze\ProductCoreBundle\Entity\Price;
+use Tourze\ProductCoreBundle\Entity\Sku;
+use Tourze\ProductCoreBundle\Enum\PriceType;
 
 /**
  * 价格服务

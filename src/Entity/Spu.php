@@ -1,13 +1,11 @@
 <?php
 
-namespace ProductCoreBundle\Entity;
+namespace Tourze\ProductCoreBundle\Entity;
 
 use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Collections\Collection;
 use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
-use ProductCoreBundle\Enum\SpuState;
-use ProductCoreBundle\Repository\SpuRepository;
 use Symfony\Component\Serializer\Attribute\Groups;
 use Symfony\Component\Serializer\Attribute\Ignore;
 use Tourze\Arrayable\AdminArrayInterface;
@@ -19,6 +17,8 @@ use Tourze\DoctrineTrackBundle\Attribute\TrackColumn;
 use Tourze\DoctrineUserBundle\Attribute\UpdatedByColumn;
 use Tourze\DoctrineUserBundle\Traits\BlameableAware;
 use Tourze\EnumExtra\Itemable;
+use Tourze\ProductCoreBundle\Enum\SpuState;
+use Tourze\ProductCoreBundle\Repository\SpuRepository;
 use Tourze\ResourceManageBundle\Model\ResourceIdentity;
 use Tourze\TrainCourseBundle\Trait\SortableTrait;
 use Yiisoft\Arrays\ArrayHelper;
@@ -36,7 +36,7 @@ class Spu implements \Stringable, Itemable, AdminArrayInterface, ResourceIdentit
     use TimestampableAware;
 
 
-    #[Groups(['restful_read', 'admin_curd', 'restful_read'])]
+    #[Groups(groups: ['restful_read', 'admin_curd', 'restful_read'])]
     #[ORM\Column(nullable: true, options: ['comment' => '创建人'])]
     private ?string $createdBy = null;
     #[UpdatedByColumn]
@@ -59,7 +59,7 @@ class Spu implements \Stringable, Itemable, AdminArrayInterface, ResourceIdentit
     private string $title = '';
     #[ORM\Column(type: Types::STRING, length: 60, nullable: true, options: ['default' => 'normal', 'comment' => '类型'])]
     private ?string $type = null;
-    #[Groups(['admin_curd'])]
+    #[Groups(groups: ['admin_curd'])]
     #[ORM\ManyToOne(targetEntity: Brand::class)]
     private ?Brand $brand = null;
     #[ORM\Column(type: Types::STRING, length: 1024, nullable: true, options: ['comment' => '副标题'])]
@@ -116,12 +116,12 @@ class Spu implements \Stringable, Itemable, AdminArrayInterface, ResourceIdentit
     #[Ignore]
     #[ORM\ManyToMany(targetEntity: FreightTemplate::class, inversedBy: 'spus', fetch: 'EXTRA_LAZY')]
     private Collection $freightTemplates;
-    #[Groups(['admin_curd', 'restful_read'])]
+    #[Groups(groups: ['admin_curd', 'restful_read'])]
     #[ORM\Column(type: Types::BOOLEAN, nullable: true, options: ['comment' => '上架'])]
     private ?bool $valid = false;
     #[ORM\Column(type: Types::BOOLEAN, nullable: true, options: ['comment' => '审核状态', 'default' => 1])]
     private ?bool $audited = true;
-    #[Groups(['restful_read', 'admin_curd'])]
+    #[Groups(groups: ['restful_read', 'admin_curd'])]
     #[ORM\Column(type: Types::DATETIME_IMMUTABLE, nullable: true, options: ['comment' => '自动发布时间'])]
     private ?\DateTimeInterface $autoReleaseTime = null;
     #[ORM\Column(type: Types::DATETIME_IMMUTABLE, nullable: true, options: ['comment' => '自动下架时间'])]
@@ -702,7 +702,7 @@ class Spu implements \Stringable, Itemable, AdminArrayInterface, ResourceIdentit
     /**
      * 返回缩略图.
      */
-    #[Groups(['restful_read'])]
+    #[Groups(groups: ['restful_read'])]
     public function getMainThumb(): string
     {
         // 有主图我们就用主图
@@ -718,7 +718,7 @@ class Spu implements \Stringable, Itemable, AdminArrayInterface, ResourceIdentit
         return $this->getThumbs()[0]['url'];
     }
 
-    #[Groups(['restful_read'])]
+    #[Groups(groups: ['restful_read'])]
     public function getLimitConfig(): ?array
     {
         if ($this->getLimitRules()->isEmpty()) {

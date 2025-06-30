@@ -1,6 +1,6 @@
 <?php
 
-namespace ProductCoreBundle\Spu;
+namespace Tourze\ProductCoreBundle\Spu;
 
 /**
  * 实物商品

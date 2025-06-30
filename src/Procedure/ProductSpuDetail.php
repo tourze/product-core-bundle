@@ -1,11 +1,7 @@
 <?php
 
-namespace ProductCoreBundle\Procedure;
+namespace Tourze\ProductCoreBundle\Procedure;
 
-use ProductCoreBundle\Entity\Sku;
-use ProductCoreBundle\Entity\Spu;
-use ProductCoreBundle\Event\SpuDetailEvent;
-use ProductCoreBundle\Repository\SpuRepository;
 use Symfony\Bundle\SecurityBundle\Security;
 use Symfony\Contracts\EventDispatcher\EventDispatcherInterface;
 use Tourze\DoctrineHelper\CacheHelper;
@@ -16,14 +12,18 @@ use Tourze\JsonRPC\Core\Attribute\MethodTag;
 use Tourze\JsonRPC\Core\Exception\ApiException;
 use Tourze\JsonRPC\Core\Model\JsonRpcRequest;
 use Tourze\JsonRPCCacheBundle\Procedure\CacheableProcedure;
+use Tourze\ProductCoreBundle\Entity\Sku;
+use Tourze\ProductCoreBundle\Entity\Spu;
+use Tourze\ProductCoreBundle\Event\SpuDetailEvent;
+use Tourze\ProductCoreBundle\Repository\SpuRepository;
 use Tourze\UserIDBundle\Model\SystemUser;
 
-#[MethodTag('产品模块')]
-#[MethodDoc('获取SPU详情')]
-#[MethodExpose('ProductSpuDetail')]
+#[MethodTag(name: '产品模块')]
+#[MethodDoc(summary: '获取SPU详情')]
+#[MethodExpose(method: 'ProductSpuDetail')]
 class ProductSpuDetail extends CacheableProcedure
 {
-    #[MethodParam('SPU ID')]
+    #[MethodParam(description: 'SPU ID')]
     public string $spuId;
 
     public function __construct(

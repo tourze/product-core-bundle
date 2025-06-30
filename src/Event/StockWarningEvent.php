@@ -1,6 +1,6 @@
 <?php
 
-namespace ProductCoreBundle\Event;
+namespace Tourze\ProductCoreBundle\Event;
 
 use Tourze\UserEventBundle\Event\UserInteractionEvent;
 

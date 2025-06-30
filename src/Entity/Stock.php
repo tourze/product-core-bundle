@@ -1,16 +1,16 @@
 <?php
 
-namespace ProductCoreBundle\Entity;
+namespace Tourze\ProductCoreBundle\Entity;
 
 use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
-use ProductCoreBundle\Enum\StockState;
-use ProductCoreBundle\Repository\StockRepository;
 use Symfony\Component\Serializer\Attribute\Groups;
 use Tourze\DoctrinePrecisionBundle\Attribute\PrecisionColumn;
 use Tourze\DoctrineTimestampBundle\Traits\TimestampableAware;
 use Tourze\DoctrineUserBundle\Attribute\UpdatedByColumn;
 use Tourze\DoctrineUserBundle\Traits\BlameableAware;
+use Tourze\ProductCoreBundle\Enum\StockState;
+use Tourze\ProductCoreBundle\Repository\StockRepository;
 
 /**
  * 这个表可能很巨大
@@ -26,14 +26,14 @@ class Stock implements \Stringable
         use BlameableAware;
     use TimestampableAware;
 
-    #[Groups(['restful_read', 'api_tree', 'admin_curd', 'api_list'])]
+    #[Groups(groups: ['restful_read', 'api_tree', 'admin_curd', 'api_list'])]
     #[ORM\Id]
     #[ORM\GeneratedValue]
     #[ORM\Column(type: Types::INTEGER, options: ['comment' => 'ID'])]
     private ?int $id = 0;
 
 
-    #[Groups(['restful_read', 'admin_curd', 'restful_read'])]
+    #[Groups(groups: ['restful_read', 'admin_curd', 'restful_read'])]
     #[ORM\Column(nullable: true, options: ['comment' => '创建人'])]
     private ?string $createdBy = null;
     #[UpdatedByColumn]

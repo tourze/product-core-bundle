@@ -1,15 +1,16 @@
 <?php
 
-namespace ProductCoreBundle\Controller;
+namespace Tourze\ProductCoreBundle\Controller;
 
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
+use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Attribute\Route;
 
 class TempController extends AbstractController
 {
-    #[Route('/goods/temp/image')]
-    #[Route('/mall/temp/image')]
-    public function __invoke()
+    #[Route(path: '/goods/temp/image')]
+    #[Route(path: '/mall/temp/image')]
+    public function __invoke(): Response
     {
         $images = [
             'https://img20.360buyimg.com/jdcms/s300x300_jfs/t1/109165/10/34331/55262/63ccb8d4Fd3e2422c/0195804b335d3e6d.jpg.webp',

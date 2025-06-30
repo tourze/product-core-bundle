@@ -1,19 +1,19 @@
 <?php
 
-namespace ProductCoreBundle\Command;
+namespace Tourze\ProductCoreBundle\Command;
 
 use Carbon\CarbonImmutable;
 use Doctrine\ORM\EntityManagerInterface;
-use ProductCoreBundle\Entity\Spu;
-use ProductCoreBundle\Repository\SpuRepository;
 use Psr\Log\LoggerInterface;
 use Symfony\Component\Console\Attribute\AsCommand;
 use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Output\OutputInterface;
+use Tourze\ProductCoreBundle\Entity\Spu;
+use Tourze\ProductCoreBundle\Repository\SpuRepository;
 use Tourze\Symfony\CronJob\Attribute\AsCronTask;
 
-#[AsCronTask('* * * * *')]
+#[AsCronTask(expression: '* * * * *')]
 #[AsCommand(name: self::NAME, description: '自动下架商品')]
 class AutoTakeDownSpuCommand extends Command
 {

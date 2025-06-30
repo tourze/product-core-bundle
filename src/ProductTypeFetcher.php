@@ -1,6 +1,6 @@
 <?php
 
-namespace ProductCoreBundle;
+namespace Tourze\ProductCoreBundle;
 
 use Symfony\Component\DependencyInjection\Attribute\TaggedIterator;
 use Tourze\EnumExtra\SelectDataFetcher;
@@ -11,7 +11,7 @@ use Tourze\EnumExtra\SelectDataFetcher;
 class ProductTypeFetcher implements SelectDataFetcher
 {
     public function __construct(
-        #[TaggedIterator('product.type.provider')] private readonly iterable $providers,
+        #[TaggedIterator(tag: 'product.type.provider')] private readonly iterable $providers,
     ) {
     }
 
