@@ -15,13 +15,14 @@ use Tourze\JsonRPCCacheBundle\Procedure\CacheableProcedure;
 use Tourze\ProductCoreBundle\Entity\Sku;
 use Tourze\ProductCoreBundle\Entity\Spu;
 use Tourze\ProductCoreBundle\Event\SpuDetailEvent;
+use Tourze\ProductCoreBundle\Exception\ParameterValidationException;
 use Tourze\ProductCoreBundle\Repository\SpuRepository;
 use Tourze\UserIDBundle\Model\SystemUser;
 
 #[MethodTag(name: '产品模块')]
 #[MethodDoc(summary: '获取SPU详情')]
 #[MethodExpose(method: 'ProductSpuDetail')]
-class ProductSpuDetail extends CacheableProcedure
+final class ProductSpuDetail extends CacheableProcedure
 {
     #[MethodParam(description: 'SPU ID')]
     public string $spuId;
@@ -35,31 +36,61 @@ class ProductSpuDetail extends CacheableProcedure
 
     public function execute(): array
     {
+        $spu = $this->findSpu();
+        $result = $spu->retrieveSpuArray();
+        $result = $this->filterInvalidSkus($result);
+
+        if (null === $this->security->getUser()) {
+            return $result;
+        }
+
+        return $this->dispatchSpuDetailEvent($spu, $result);
+    }
+
+    private function findSpu(): Spu
+    {
         $spu = $this->spuRepository->findOneBy([
-            'id' => $this->spuId,
+            'id' => (int) $this->spuId,
             'valid' => true,
         ]);
-        if ($spu === null) {
+        if (null === $spu) {
             throw new ApiException('找不到产品');
         }
-        $result = $spu->retrieveSpuArray();
-        if (!empty($result['skus'])) {
+
+        return $spu;
+    }
+
+    /**
+     * @param array<string,mixed> $result
+     * @return array<string,mixed>
+     */
+    private function filterInvalidSkus(array $result): array
+    {
+        if (isset($result['skus']) && is_array($result['skus']) && [] !== $result['skus']) {
             foreach ($result['skus'] as $k => $sku) {
-                if (empty($sku['valid'])) {
+                if (is_array($sku) && false === ($sku['valid'] ?? true)) {
                     unset($result['skus'][$k]);
                 }
             }
             $result['skus'] = array_values($result['skus']);
         }
 
-        if ($this->security->getUser() === null) {
-            return $result;
-        }
+        return $result;
+    }
 
+    /**
+     * @param array<string,mixed> $result
+     * @return array<string,mixed>
+     */
+    private function dispatchSpuDetailEvent(Spu $spu, array $result): array
+    {
         $event = new SpuDetailEvent();
         $event->setSpu($spu);
         $event->setResult($result);
-        $event->setSender($this->security->getUser());
+        $user = $this->security->getUser();
+        if (null !== $user) {
+            $event->setSender($user);
+        }
         $event->setReceiver(SystemUser::instance());
         $this->eventDispatcher->dispatch($event);
 
@@ -68,8 +99,13 @@ class ProductSpuDetail extends CacheableProcedure
 
     public function getCacheKey(JsonRpcRequest $request): string
     {
-        $key = static::buildParamCacheKey($request->getParams());
-        if ($this->security->getUser() !== null) {
+        $params = $request->getParams();
+        if (null === $params) {
+            throw new ParameterValidationException('Request params cannot be null');
+        }
+
+        $key = self::buildParamCacheKey($params);
+        if (null !== $this->security->getUser()) {
             $key .= '-' . $this->security->getUser()->getUserIdentifier();
         }
 
@@ -81,6 +117,9 @@ class ProductSpuDetail extends CacheableProcedure
         return 60; // 1 minute
     }
 
+    /**
+     * @return iterable<string>
+     */
     public function getCacheTags(JsonRpcRequest $request): iterable
     {
         yield CacheHelper::getClassTags(Spu::class);

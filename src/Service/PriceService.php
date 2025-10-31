@@ -2,64 +2,89 @@
 
 namespace Tourze\ProductCoreBundle\Service;
 
-use Carbon\CarbonInterface;
-use Symfony\Component\Security\Core\User\UserInterface;
+use Symfony\Component\DependencyInjection\Attribute\Autoconfigure;
 use Tourze\ProductCoreBundle\Entity\Price;
 use Tourze\ProductCoreBundle\Entity\Sku;
 use Tourze\ProductCoreBundle\Enum\PriceType;
+use Tourze\ProductCoreBundle\Repository\PriceRepository;
 
 /**
  * 价格服务
  */
-class PriceService
+#[Autoconfigure(public: true)]
+final class PriceService
 {
-    public function getFinalPrice(Sku $sku, PriceType $type): ?Price
+    public function __construct(
+        private readonly PriceRepository $priceRepository,
+    ) {
+    }
+
+    /**
+     * 获取SKU价格（根据类型）
+     */
+    public function getSkuPrice(Sku $sku, PriceType $type): ?string
     {
-        $result = null;
-
-        /** @var Price $price */
-        foreach ($sku->getSortedPrices() as $price) {
-            if ($price->getType() === $type) {
-                if (null === $result) {
-                    $result = $price;
-                    continue;
-                }
-
-                // 取最低的价格
-                if ($price->getPrice() < $result->getPrice()) {
-                    $result = $price;
-                }
-            }
-        }
-
-        return $result;
+        return match ($type) {
+            PriceType::SALE => $sku->getMarketPrice(),
+            PriceType::COST => $sku->getCostPrice(),
+            PriceType::ORIGINAL_PRICE => $sku->getOriginalPrice(),
+            default => null,
+        };
     }
 
     /**
      * 获取销售价格
      */
-    public function getSalePrices(UserInterface $user, Sku $sku, CarbonInterface $time): array
+    public function getSalePrice(Sku $sku): ?string
     {
-        $result = [];
+        return $sku->getMarketPrice();
+    }
 
-        $skuPrices = $sku->determineOnTimeSalePrice($time); // 计算当前这个时刻的价格
-        foreach ($skuPrices as $skuPrice) {
-            if (empty($skuPrice->getPrice())) {
-                continue;
-            }
-            if (PriceType::SALE !== $skuPrice->getType()) {
-                continue;
-            }
+    /**
+     * 根据运费ID和SKU列表查找运费价格
+     *
+     * @param array<Sku> $skus
+     */
+    public function findFreightPriceBySkus(string $freightId, array $skus): ?Price
+    {
+        return $this->priceRepository->findOneBy([
+            'id' => $freightId,
+            'type' => PriceType::FREIGHT,
+            'sku' => array_values($skus),
+        ]);
+    }
 
-            // 取价格最低的那个
-            if (!isset($result[$skuPrice->getCurrency()])) {
-                $result[$skuPrice->getCurrency()] = $skuPrice;
-            }
-            if ($result[$skuPrice->getCurrency()]->getPrice() > $skuPrice->getPrice()) {
-                $result[$skuPrice->getCurrency()] = $skuPrice;
-            }
-        }
+    /**
+     * 根据ID查找价格
+     */
+    public function findPriceById(string $priceId): ?Price
+    {
+        return $this->priceRepository->find($priceId);
+    }
 
-        return $result;
+    /**
+     * 获取成本价
+     */
+    public function getCostPrice(Sku $sku): ?string
+    {
+        return $sku->getCostPrice();
+    }
+
+    /**
+     * 获取原价
+     */
+    public function getOriginalPrice(Sku $sku): ?string
+    {
+        return $sku->getOriginalPrice();
+    }
+
+    /**
+     * 获取SKU的所有价格记录
+     *
+     * @return array<Price>
+     */
+    public function getPricesBySku(Sku $sku): array
+    {
+        return $this->priceRepository->findBy(['sku' => $sku]);
     }
 }

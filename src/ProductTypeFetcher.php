@@ -2,16 +2,21 @@
 
 namespace Tourze\ProductCoreBundle;
 
-use Symfony\Component\DependencyInjection\Attribute\TaggedIterator;
+use Symfony\Component\DependencyInjection\Attribute\Autoconfigure;
+use Symfony\Component\DependencyInjection\Attribute\AutowireIterator;
 use Tourze\EnumExtra\SelectDataFetcher;
 
 /**
  * 读取产品类型数据
  */
-class ProductTypeFetcher implements SelectDataFetcher
+#[Autoconfigure(public: true)]
+final class ProductTypeFetcher implements SelectDataFetcher
 {
+    /**
+     * @param iterable<SelectDataFetcher> $providers
+     */
     public function __construct(
-        #[TaggedIterator(tag: 'product.type.provider')] private readonly iterable $providers,
+        #[AutowireIterator(tag: 'product.type.provider')] private readonly iterable $providers,
     ) {
     }
 

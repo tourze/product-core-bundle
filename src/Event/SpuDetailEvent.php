@@ -5,16 +5,20 @@ namespace Tourze\ProductCoreBundle\Event;
 use Tourze\ProductCoreBundle\Entity\Spu;
 use Tourze\UserEventBundle\Event\UserInteractionEvent;
 
-class SpuDetailEvent extends UserInteractionEvent
+final class SpuDetailEvent extends UserInteractionEvent
 {
+    /** @var array<mixed> */
     private array $result = [];
+
     private Spu $spu;
 
+    /** @return array<mixed> */
     public function getResult(): array
     {
         return $this->result;
     }
 
+    /** @param array<mixed> $result */
     public function setResult(array $result): void
     {
         $this->result = $result;

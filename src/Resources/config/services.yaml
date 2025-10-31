@@ -5,28 +5,20 @@ services:
     autoconfigure: true # Automatically registers your services as commands, event subscribers, etc.
     public: true
 
-  Tourze\ProductCoreBundle\:
-    resource: '../../'
-    exclude:
-      - '../../DependencyInjection/'
-      - '../../Enum/'
-      - '../../Entity/'
-      - '../../Event/'
-      - '../../Message/'
-      - '../../Model/'
-      - '../../Exception/'
-      - '../../Resources/'
-      - '../../Tests/'
-      - '../../LegacyProcedure/'
+  Tourze\ProductCoreBundle\Controller\:
+    resource: '../../Controller/'
+  Tourze\ProductCoreBundle\Procedure\:
+    resource: '../../Procedure/'
+  Tourze\ProductCoreBundle\Repository\:
+    resource: '../../Repository/'
+  Tourze\ProductCoreBundle\Service\:
+    resource: '../../Service/'
 
-  Tourze\ProductCoreBundle\Repository\SkuRepository:
-    autowire: true
-    public: true
-  Tourze\ProductCoreBundle\Repository\StockRepository:
-    autowire: true
-    public: true
+  # 根级别的类
+  Tourze\ProductCoreBundle\ProductTagFetcher: ~
+  Tourze\ProductCoreBundle\ProductTypeFetcher: ~
+  Tourze\ProductCoreBundle\ProductTypeProvider: ~
 
   # 自动读取标签相关配置
   product.tag.fetcher:
     class: Tourze\ProductCoreBundle\ProductTagFetcher
-    public: true

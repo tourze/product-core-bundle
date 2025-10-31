@@ -4,19 +4,19 @@ namespace Tourze\ProductCoreBundle\Entity;
 
 use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
-use Symfony\Component\Serializer\Attribute\Groups;
 use Symfony\Component\Serializer\Attribute\Ignore;
+use Symfony\Component\Validator\Constraints as Assert;
 use Tourze\Arrayable\AdminArrayInterface;
-use Tourze\DoctrineIpBundle\Attribute\CreateIpColumn;
-use Tourze\DoctrineIpBundle\Attribute\UpdateIpColumn;
+use Tourze\DoctrineIpBundle\Traits\CreatedFromIpAware;
 use Tourze\DoctrineSnowflakeBundle\Traits\SnowflakeKeyAware;
 use Tourze\DoctrineTimestampBundle\Traits\TimestampableAware;
-use Tourze\DoctrineUserBundle\Attribute\CreatedByColumn;
-use Tourze\DoctrineUserBundle\Attribute\UpdatedByColumn;
 use Tourze\DoctrineUserBundle\Traits\BlameableAware;
 use Tourze\ProductCoreBundle\Enum\PackageType;
 use Tourze\ProductCoreBundle\Repository\SkuPackageRepository;
 
+/**
+ * @implements AdminArrayInterface<string, mixed>
+ */
 #[ORM\Table(name: 'product_sku_package', options: ['comment' => '打包属性'])]
 #[ORM\Entity(repositoryClass: SkuPackageRepository::class)]
 class SkuPackage implements \Stringable, AdminArrayInterface
@@ -24,57 +24,52 @@ class SkuPackage implements \Stringable, AdminArrayInterface
     use BlameableAware;
     use TimestampableAware;
     use SnowflakeKeyAware;
-    #[CreatedByColumn]
-    #[Groups(groups: ['restful_read'])]
-    #[ORM\Column(nullable: true, options: ['comment' => '创建人'])]
-    private ?string $createdBy = null;
-    #[UpdatedByColumn]
-    #[ORM\Column(nullable: true, options: ['comment' => '更新人'])]
-    private ?string $updatedBy = null;
+    use CreatedFromIpAware;
+
     #[Ignore]
     #[ORM\ManyToOne(targetEntity: Sku::class, inversedBy: 'packages')]
     #[ORM\JoinColumn(nullable: false)]
     private ?Sku $sku = null;
+
+    #[Assert\Choice(callback: [PackageType::class, 'cases'], message: '请选择正确的打包类型')]
     #[ORM\Column(type: Types::STRING, length: 30, enumType: PackageType::class, options: ['comment' => '打包类型'])]
     private ?PackageType $type = null;
+
+    #[Assert\NotBlank(message: '属性值不能为空')]
+    #[Assert\Length(max: 64, maxMessage: '属性值不能超过 {{ limit }} 个字符')]
     #[ORM\Column(type: Types::STRING, length: 64, options: ['comment' => '属性值'])]
     private ?string $value = null;
+
+    #[Assert\Positive(message: '数量必须为正数')]
     #[ORM\Column(nullable: false, options: ['comment' => '数量', 'default' => 1])]
     private int $quantity = 0;
+
+    #[Assert\Length(max: 100, maxMessage: '备注不能超过 {{ limit }} 个字符')]
     #[ORM\Column(type: Types::STRING, length: 100, nullable: true, options: ['comment' => '备注'])]
     private ?string $remark = null;
-    #[CreateIpColumn]
-    #[ORM\Column(length: 128, nullable: true, options: ['comment' => '创建时IP'])]
-    private ?string $createdFromIp = null;
-    #[UpdateIpColumn]
-    #[ORM\Column(length: 128, nullable: true, options: ['comment' => '更新时IP'])]
-    private ?string $updatedFromIp = null;
 
     public function __toString(): string
     {
-        if ($this->getId() === null || $this->getId() === '') {
+        if (null === $this->getId() || '' === $this->getId()) {
             return '';
         }
 
-        $rs = "{$this->getType()->getLabel()} {$this->getValue()}";
-        if (!empty($this->getRemark())) {
+        $rs = "{$this->getType()?->getLabel()} {$this->getValue()}";
+        if (null !== $this->getRemark() && '' !== $this->getRemark()) {
             $rs = "{$rs}({$this->getRemark()})";
         }
 
         return $rs;
     }
 
-
     public function getType(): ?PackageType
     {
         return $this->type;
     }
 
-    public function setType(PackageType $type): self
+    public function setType(PackageType $type): void
     {
         $this->type = $type;
-
-        return $this;
     }
 
     public function getValue(): ?string
@@ -82,11 +77,9 @@ class SkuPackage implements \Stringable, AdminArrayInterface
         return $this->value;
     }
 
-    public function setValue(string $value): self
+    public function setValue(string $value): void
     {
         $this->value = $value;
-
-        return $this;
     }
 
     public function getRemark(): ?string
@@ -94,35 +87,9 @@ class SkuPackage implements \Stringable, AdminArrayInterface
         return $this->remark;
     }
 
-    public function setRemark(?string $remark): self
+    public function setRemark(?string $remark): void
     {
         $this->remark = $remark;
-
-        return $this;
-    }
-
-    public function getCreatedBy(): ?string
-    {
-        return $this->createdBy;
-    }
-
-    public function setCreatedBy(?string $createdBy): self
-    {
-        $this->createdBy = $createdBy;
-
-        return $this;
-    }
-
-    public function getUpdatedBy(): ?string
-    {
-        return $this->updatedBy;
-    }
-
-    public function setUpdatedBy(?string $updatedBy): self
-    {
-        $this->updatedBy = $updatedBy;
-
-        return $this;
     }
 
     public function getSku(): ?Sku
@@ -130,13 +97,14 @@ class SkuPackage implements \Stringable, AdminArrayInterface
         return $this->sku;
     }
 
-    public function setSku(?Sku $sku): self
+    public function setSku(?Sku $sku): void
     {
         $this->sku = $sku;
-
-        return $this;
     }
 
+    /**
+     * @return array<string, mixed>
+     */
     public function retrieveSpuArray(): array
     {
         return [
@@ -145,6 +113,9 @@ class SkuPackage implements \Stringable, AdminArrayInterface
         ];
     }
 
+    /**
+     * @return array<string, mixed>
+     */
     public function retrieveAdminArray(): array
     {
         return [
@@ -158,37 +129,13 @@ class SkuPackage implements \Stringable, AdminArrayInterface
         ];
     }
 
-    public function getQuantity(): ?int
+    public function getQuantity(): int
     {
         return $this->quantity;
     }
 
-    public function setQuantity(?int $quantity): self
+    public function setQuantity(?int $quantity): void
     {
-        $this->quantity = $quantity;
-
-        return $this;
-    }public function getCreatedFromIp(): ?string
-    {
-        return $this->createdFromIp;
-    }
-
-    public function setCreatedFromIp(?string $createdFromIp): self
-    {
-        $this->createdFromIp = $createdFromIp;
-
-        return $this;
-    }
-
-    public function getUpdatedFromIp(): ?string
-    {
-        return $this->updatedFromIp;
-    }
-
-    public function setUpdatedFromIp(?string $updatedFromIp): self
-    {
-        $this->updatedFromIp = $updatedFromIp;
-
-        return $this;
+        $this->quantity = $quantity ?? 0;
     }
 }

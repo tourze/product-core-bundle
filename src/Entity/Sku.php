@@ -2,27 +2,24 @@
 
 namespace Tourze\ProductCoreBundle\Entity;
 
-use Carbon\CarbonImmutable;
-use Carbon\CarbonInterface;
 use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Collections\Collection;
 use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
 use Symfony\Component\Serializer\Attribute\Groups;
 use Symfony\Component\Serializer\Attribute\Ignore;
+use Symfony\Component\Validator\Constraints as Assert;
 use Tourze\Arrayable\AdminArrayInterface;
-use Tourze\DoctrineIpBundle\Attribute\CreateIpColumn;
-use Tourze\DoctrineIpBundle\Attribute\UpdateIpColumn;
+use Tourze\DoctrineIpBundle\Traits\CreatedFromIpAware;
+use Tourze\DoctrinePrecisionBundle\Attribute\PrecisionColumn;
 use Tourze\DoctrineSnowflakeBundle\Attribute\SnowflakeColumn;
 use Tourze\DoctrineTimestampBundle\Traits\TimestampableAware;
 use Tourze\DoctrineTrackBundle\Attribute\TrackColumn;
-use Tourze\DoctrineUserBundle\Attribute\UpdatedByColumn;
 use Tourze\DoctrineUserBundle\Traits\BlameableAware;
 use Tourze\EnumExtra\Itemable;
 use Tourze\LockServiceBundle\Model\LockEntity;
-use Tourze\ProductCoreBundle\Enum\PriceType;
+use Tourze\ProductAttributeBundle\Entity\SkuAttribute;
 use Tourze\ProductCoreBundle\Repository\SkuRepository;
-use Yiisoft\Arrays\ArraySorter;
 
 /**
  * 在国外的电商系统，SKU 有时候也叫为变体（variant）
@@ -35,6 +32,7 @@ use Yiisoft\Arrays\ArraySorter;
  *
  * TODO 参考电信计费模型，SKU应该也要use LimitAware
  *
+ * @implements AdminArrayInterface<string, mixed>
  * @see https://support.google.com/merchants/answer/160161
  * @see https://support.google.com/merchants/answer/6324351
  * @see https://documentation.b2c.commercecloud.salesforce.com/DOC2/topic/com.demandware.dochelp/OCAPI/current/shop/Documents/Variant.html
@@ -42,121 +40,126 @@ use Yiisoft\Arrays\ArraySorter;
  */
 #[ORM\Table(name: 'product_sku', options: ['comment' => '产品SKU'])]
 #[ORM\Entity(repositoryClass: SkuRepository::class)]
-class Sku implements \Stringable, Itemable, AdminArrayInterface, LockEntity
+class Sku implements \Stringable, Itemable, AdminArrayInterface, LockEntity, \Tourze\ProductServiceContracts\SKU
 {
-        use BlameableAware;
+    use BlameableAware;
     use TimestampableAware;
+    use CreatedFromIpAware;
 
-
-    #[Groups(groups: ['restful_read', 'admin_curd', 'restful_read'])]
-    #[ORM\Column(nullable: true, options: ['comment' => '创建人'])]
-    private ?string $createdBy = null;
-    #[UpdatedByColumn]
-    #[ORM\Column(nullable: true, options: ['comment' => '更新人'])]
-    private ?string $updatedBy = null;
     #[Groups(groups: ['restful_read', 'admin_curd'])]
     #[ORM\Id]
     #[ORM\GeneratedValue]
     #[ORM\Column(type: Types::INTEGER, options: ['comment' => 'SkuID'])]
-    private ?int $id = 0;
+    private int $id = 0;
 
     #[Ignore]
     #[ORM\ManyToOne(targetEntity: Spu::class, cascade: ['persist'], fetch: 'EXTRA_LAZY', inversedBy: 'skus')]
     #[ORM\JoinColumn(nullable: false, onDelete: 'CASCADE')]
     private ?Spu $spu = null;
-    use StockValueAware;
+
     #[TrackColumn]
     #[SnowflakeColumn(prefix: 'SKU')]
+    #[Assert\Length(max: 40, maxMessage: 'GTIN 不能超过 {{ limit }} 个字符')]
     #[ORM\Column(type: Types::STRING, length: 40, nullable: true, options: ['comment' => '全球唯一编码'])]
     private ?string $gtin = '';
+
+    #[Assert\Length(max: 60, maxMessage: 'MPN 不能超过 {{ limit }} 个字符')]
     #[ORM\Column(type: Types::STRING, length: 60, nullable: true, options: ['comment' => '厂商型号码'])]
     private ?string $mpn = null;
+
+    #[Assert\Length(max: 10, maxMessage: '单位不能超过 {{ limit }} 个字符')]
     #[ORM\Column(type: Types::STRING, length: 10, options: ['default' => '个', 'comment' => '单位'])]
     private ?string $unit = null;
+
+    #[Assert\Type(type: 'bool', message: '需要收货必须为布尔值')]
     #[ORM\Column(type: Types::BOOLEAN, nullable: true, options: ['comment' => '需要收货', 'default' => 1])]
     private ?bool $needConsignee = null;
+
     /**
-     * @var Collection<Price>
+     * @var array<mixed>|null
      */
-    #[Groups(groups: ['admin_curd'])]
-    #[ORM\OneToMany(mappedBy: 'sku', targetEntity: Price::class, cascade: ['persist'], fetch: 'EXTRA_LAZY', orphanRemoval: true)]
-    private Collection $prices;
+    #[Assert\Type(type: 'array', message: '图片必须为数组类型')]
     #[ORM\Column(type: Types::JSON, nullable: true, options: ['comment' => '图片'])]
     private ?array $thumbs = [];
+
     /**
-     * @DynamicFieldSet()
-     *
-     * @var Collection<SkuAttribute>
+     * @var Collection<int, SkuAttribute>
      */
-    #[ORM\OneToMany(mappedBy: 'sku', targetEntity: SkuAttribute::class, cascade: ['persist'], fetch: 'EXTRA_LAZY', orphanRemoval: true)]
+    #[ORM\OneToMany(targetEntity: '\Tourze\ProductAttributeBundle\Entity\SkuAttribute', mappedBy: 'sku', cascade: ['persist'], fetch: 'EXTRA_LAZY', orphanRemoval: true)]
     private Collection $attributes;
+
     /**
-     * @var Collection<SkuPackage>
+     * @var Collection<int, SkuPackage>
      */
-    #[ORM\OneToMany(mappedBy: 'sku', targetEntity: SkuPackage::class, cascade: ['persist'], fetch: 'EXTRA_LAZY', orphanRemoval: true)]
+    #[ORM\OneToMany(targetEntity: SkuPackage::class, mappedBy: 'sku', cascade: ['persist'], fetch: 'EXTRA_LAZY', orphanRemoval: true)]
     private Collection $packages;
-    /**
-     * @var Collection<int, Stock>
-     */
-    #[ORM\OneToMany(mappedBy: 'sku', targetEntity: Stock::class, fetch: 'EXTRA_LAZY', orphanRemoval: true)]
-    private Collection $stocks;
+
+    #[Assert\Length(max: 255, maxMessage: '备注不能超过 {{ limit }} 个字符')]
     #[ORM\Column(type: Types::STRING, length: 255, nullable: true, options: ['comment' => '备注'])]
     private ?string $remark = null;
-    /**
-     * @var Collection<int, StockLog>
-     */
-    #[ORM\OneToMany(mappedBy: 'sku', targetEntity: StockLog::class)]
-    private Collection $stockLogs;
-    /**
-     * @var Collection<SkuLimitRule>
-     */
-    #[ORM\OneToMany(mappedBy: 'sku', targetEntity: SkuLimitRule::class, cascade: ['persist'], fetch: 'EXTRA_LAZY', orphanRemoval: true)]
-    private Collection $limitRules;
+
+    #[Groups(groups: ['restful_read', 'admin_curd'])]
+    #[Assert\Length(max: 255, maxMessage: '标题不能超过 {{ limit }} 个字符')]
+    #[ORM\Column(type: Types::STRING, length: 255, nullable: true, options: ['comment' => '规格标题'])]
+    private ?string $title = null;
+
+    #[Assert\PositiveOrZero(message: '真实销量不能为负数')]
     #[ORM\Column(type: Types::INTEGER, nullable: false, options: ['default' => '0', 'comment' => '真实销量'])]
     private int $salesReal = 0;
+
+    #[Assert\PositiveOrZero(message: '虚拟销量不能为负数')]
     #[ORM\Column(type: Types::INTEGER, nullable: false, options: ['default' => '0', 'comment' => '虚拟销量'])]
     private int $salesVirtual = 0;
-    #[Groups(groups: ['admin_curd', 'restful_read'])]
-    #[ORM\Column(nullable: true, options: ['comment' => '发货期限'])]
-    private ?int $dispatchPeriod = null;
+
+    #[Assert\Type(type: 'bool', message: '上架必须为布尔值')]
     #[ORM\Column(type: Types::BOOLEAN, nullable: true, options: ['comment' => '上架', 'default' => 1])]
     private ?bool $valid = true;
-    #[CreateIpColumn]
-    #[ORM\Column(length: 128, nullable: true, options: ['comment' => '创建时IP'])]
-    private ?string $createdFromIp = null;
-    #[UpdateIpColumn]
-    #[ORM\Column(length: 128, nullable: true, options: ['comment' => '更新时IP'])]
-    private ?string $updatedFromIp = null;
+
+    #[PrecisionColumn]
+    #[ORM\Column(type: Types::DECIMAL, precision: 20, scale: 2, nullable: true, options: ['comment' => '市场价'])]
+    #[Assert\PositiveOrZero(message: '市场价必须大于等于0')]
+    private ?string $marketPrice = null;
+
+    #[PrecisionColumn]
+    #[ORM\Column(type: Types::DECIMAL, precision: 20, scale: 2, nullable: true, options: ['comment' => '成本价'])]
+    #[Assert\PositiveOrZero(message: '成本价必须大于等于0')]
+    private ?string $costPrice = null;
+
+    #[PrecisionColumn]
+    #[ORM\Column(type: Types::DECIMAL, precision: 20, scale: 2, nullable: true, options: ['comment' => '原价'])]
+    #[Assert\PositiveOrZero(message: '原价必须大于等于0')]
+    private ?string $originalPrice = null;
 
     public function __construct()
     {
-        $this->prices = new ArrayCollection();
         $this->attributes = new ArrayCollection();
-        $this->stocks = new ArrayCollection();
         $this->packages = new ArrayCollection();
-        $this->stockLogs = new ArrayCollection();
-        $this->limitRules = new ArrayCollection();
     }
 
     public function __toString(): string
     {
-        if ($this->getId() === null || $this->getId() === 0) {
+        if ('0' === $this->getId()) {
             return '';
         }
 
-        // return "{$this->getSpu()->getTitle()} - {$this->getShorName()}";
+        // 优先使用自定义标题
+        if (null !== $this->getTitle() && '' !== $this->getTitle()) {
+            return $this->getTitle();
+        }
+
+        // 回退到自动生成的名称
         return $this->getShorName();
     }
 
-    public function getId(): ?int
+    public function getId(): string
     {
-        return $this->id;
+        return (string) $this->id;
     }
 
     #[Ignore]
     public function getShorName(): string
     {
-        $parts = [];
+        $parts = [$this->getId()];
         foreach ($this->getAttributes() as $attr) {
             $parts[] = $attr->getValue();
         }
@@ -172,104 +175,20 @@ class Sku implements \Stringable, Itemable, AdminArrayInterface, LockEntity
         return $this->attributes;
     }
 
-    public function getCreatedBy(): ?string
-    {
-        return $this->createdBy;
-    }
-
-    public function setCreatedBy(?string $createdBy): self
-    {
-        $this->createdBy = $createdBy;
-
-        return $this;
-    }
-
-    public function getUpdatedBy(): ?string
-    {
-        return $this->updatedBy;
-    }
-
-    public function setUpdatedBy(?string $updatedBy): self
-    {
-        $this->updatedBy = $updatedBy;
-
-        return $this;
-    }
-
     public function getMpn(): ?string
     {
         return $this->mpn;
     }
 
-    public function setMpn(?string $mpn): self
+    public function setMpn(?string $mpn): void
     {
         $this->mpn = $mpn;
-
-        return $this;
-    }
-
-    public function addPrice(Price $price): self
-    {
-        if (!$this->prices->contains($price)) {
-            $this->prices[] = $price;
-            $price->setSku($this);
-        }
-
-        return $this;
-    }
-
-    public function removePrice(Price $price): self
-    {
-        if ($this->prices->removeElement($price)) {
-            // set the owning side to null (unless already changed)
-            if ($price->getSku() === $this) {
-                $price->setSku(null);
-            }
-        }
-
-        return $this;
-    }
-
-    /**
-     * @return array|Price[]
-     */
-    public function getSortedPrices(): array
-    {
-        $now = CarbonImmutable::now();
-
-        $list = $this->getPrices()
-            ->filter(function (Price $price) use ($now): bool {
-                if ($price->getEffectTime() !== null && $now->lessThan($price->getEffectTime())) {
-                    return false;
-                }
-                if ($price->getExpireTime() !== null && $now->greaterThan($price->getExpireTime())) {
-                    return false;
-                }
-
-                return true;
-            })
-            ->toArray();
-        // 先通过序号倒序，再根据ID顺序
-        ArraySorter::multisort($list, [
-            fn (Price $item) => $item->getPriority(),
-            fn (Price $item) => $item->getId(),
-        ], [SORT_DESC, SORT_ASC]);
-
-        return $list;
-    }
-
-    /**
-     * @return Collection<int, Price>
-     */
-    public function getPrices(): Collection
-    {
-        return $this->prices;
     }
 
     public function addAttribute(SkuAttribute $attribute): self
     {
         if (!$this->attributes->contains($attribute)) {
-            $this->attributes[] = $attribute;
+            $this->attributes->add($attribute);
             $attribute->setSku($this);
         }
 
@@ -288,58 +207,18 @@ class Sku implements \Stringable, Itemable, AdminArrayInterface, LockEntity
         return $this;
     }
 
+    /**
+     * @param array<mixed> $form
+     */
     public function beforeCurdSaveCheck(array $form): void
     {
         // TODO 同一SPU下的SKU不允许销售属性一模一样
     }
 
-    /**
-     * @return Collection<int, Stock>
-     */
-    public function getStocks(): Collection
-    {
-        return $this->stocks;
-    }
-
-    public function addStock(Stock $commodity): self
-    {
-        if (!$this->stocks->contains($commodity)) {
-            $this->stocks[] = $commodity;
-            $commodity->setSku($this);
-        }
-
-        return $this;
-    }
-
-    public function removeStock(Stock $commodity): self
-    {
-        if ($this->stocks->removeElement($commodity)) {
-            // set the owning side to null (unless already changed)
-            if ($commodity->getSku() === $this) {
-                $commodity->setSku(null);
-            }
-        }
-
-        return $this;
-    }
-
-    /**
-     * 获取实际成本价格（内部管理啦）.
-     */
-    #[Ignore]
-    public function getCostPrice(): ?Price
-    {
-        $price = $this->getPrices()
-            ->filter(fn (Price $price) => PriceType::COST === $price->getType())
-            ->first();
-
-        return $price !== false ? $price : null;
-    }
-
     public function addPackage(SkuPackage $package): self
     {
         if (!$this->packages->contains($package)) {
-            $this->packages[] = $package;
+            $this->packages->add($package);
             $package->setSku($this);
         }
 
@@ -358,6 +237,9 @@ class Sku implements \Stringable, Itemable, AdminArrayInterface, LockEntity
         return $this;
     }
 
+    /**
+     * @return array<string, mixed>
+     */
     public function toSelectItem(): array
     {
         return [
@@ -370,7 +252,9 @@ class Sku implements \Stringable, Itemable, AdminArrayInterface, LockEntity
     #[Ignore]
     public function getFullName(): string
     {
-        return "{$this->getSpu()->getTitle()} - {$this->getShorName()}";
+        $skuName = (null !== $this->getTitle() && '' !== $this->getTitle()) ? $this->getTitle() : $this->getShorName();
+
+        return "{$this->getSpu()?->getTitle()} - {$skuName}";
     }
 
     public function getSpu(): ?Spu
@@ -378,46 +262,9 @@ class Sku implements \Stringable, Itemable, AdminArrayInterface, LockEntity
         return $this->spu;
     }
 
-    public function setSpu(?Spu $spu): self
+    public function setSpu(?Spu $spu): void
     {
         $this->spu = $spu;
-
-        return $this;
-    }
-
-
-    public function renderCurrentPrice(): array
-    {
-        $prices = $this->determineOnTimeSalePrice(CarbonImmutable::now());
-        $rs = [];
-        foreach ($prices as $price) {
-            $currency = $price->renderCurrency();
-
-            $rs[] = [
-                'text' => trim("{$price->getType()->getLabel()} {$price->getPrice()}{$currency}"),
-                'fontStyle' => ['fontSize' => 13],
-            ];
-        }
-
-        return $rs;
-    }
-
-    /**
-     * 根据指定时间来获取当前有效的价格信息.
-     *
-     * @return array|Price[]
-     */
-    public function determineOnTimeSalePrice(CarbonInterface $now): array
-    {
-        return $this->getPrices()
-            ->filter(function (Price $price) use ($now): bool {
-                if (PriceType::SALE !== $price->getType()) {
-                    return false;
-                }
-
-                return $price->checkByDateTime($now);
-            })
-            ->toArray();
     }
 
     public function getRemark(): ?string
@@ -425,50 +272,29 @@ class Sku implements \Stringable, Itemable, AdminArrayInterface, LockEntity
         return $this->remark;
     }
 
-    public function setRemark(?string $remark): self
+    public function setRemark(?string $remark): void
     {
         $this->remark = $remark;
-
-        return $this;
     }
 
-    public function setNeedConsignee(?bool $needConsignee): self
+    public function getTitle(): ?string
+    {
+        return $this->title;
+    }
+
+    public function setTitle(?string $title): void
+    {
+        $this->title = $title;
+    }
+
+    public function setNeedConsignee(?bool $needConsignee): void
     {
         $this->needConsignee = $needConsignee;
-
-        return $this;
     }
 
     /**
-     * @return Collection<int, StockLog>
+     * @return array<mixed>
      */
-    public function getStockLogs(): Collection
-    {
-        return $this->stockLogs;
-    }
-
-    public function addStockLog(StockLog $stockLog): self
-    {
-        if (!$this->stockLogs->contains($stockLog)) {
-            $this->stockLogs[] = $stockLog;
-            $stockLog->setSku($this);
-        }
-
-        return $this;
-    }
-
-    public function removeStockLog(StockLog $stockLog): self
-    {
-        if ($this->stockLogs->removeElement($stockLog)) {
-            // set the owning side to null (unless already changed)
-            if ($stockLog->getSku() === $this) {
-                $stockLog->setSku(null);
-            }
-        }
-
-        return $this;
-    }
-
     public function renderPushStockButton(): array
     {
         // ModalFormAction functionality removed - AntdCpBundle not available
@@ -486,7 +312,7 @@ class Sku implements \Stringable, Itemable, AdminArrayInterface, LockEntity
                             'width' => '50%',
                         ],
                     ])
-                    ->setRules([['required' => true, 'message' => '请填写数量']]),
+                    ->setRules([['required' => true, 'message' => '请填写数量']),
                 LongTextField::gen()
                     ->setId('stockRemark')
                     ->setLabel('备注'),
@@ -526,73 +352,19 @@ class Sku implements \Stringable, Itemable, AdminArrayInterface, LockEntity
         return $this->packages;
     }
 
-    public function addLimitRule(SkuLimitRule $skuLimitRule): self
-    {
-        if (!$this->limitRules->contains($skuLimitRule)) {
-            $this->limitRules->add($skuLimitRule);
-            $skuLimitRule->setSku($this);
-        }
-
-        return $this;
-    }
-
-    public function removeLimitRule(SkuLimitRule $skuLimitRule): self
-    {
-        if ($this->limitRules->removeElement($skuLimitRule)) {
-            // set the owning side to null (unless already changed)
-            if ($skuLimitRule->getSku() === $this) {
-                $skuLimitRule->setSku(null);
-            }
-        }
-
-        return $this;
-    }
-
-    public function setValid(?bool $valid): self
+    public function setValid(?bool $valid): void
     {
         $this->valid = $valid;
-
-        return $this;
     }
 
-    public function retrieveAdminArray(): array
-    {
-        return [
-            'id' => $this->getId(),
-            'createTime' => $this->getCreateTime()?->format('Y-m-d H:i:s'),
-            'updateTime' => $this->getUpdateTime()?->format('Y-m-d H:i:s'),
-            'gtin' => $this->getGtin(),
-            'unit' => $this->getUnit(),
-            'salesReal' => $this->getSalesReal(),
-            'salesVirtual' => $this->getSalesVirtual(),
-            'valid' => $this->isValid(),
-            'validStock' => $this->getValidStock(),
-            'virtualStock' => $this->getVirtualStock(),
-            'needConsignee' => $this->isNeedConsignee(),
-            'thumbs' => $this->getThumbs(),
-            'dispatchPeriod' => $this->getDispatchPeriod(),
-            'displayAttribute' => $this->getDisplayAttribute(),
-            'displayPrice' => $this->getDisplayPrice(),
-            'displayTaxPrice' => $this->getDisplayTaxPrice(),
-            'displayTax' => $this->getDisplayTax(),
-            'displaySalePrice' => $this->getDisplaySalePrice(),
-            'displayOriginalPrice' => $this->getDisplayOriginalPrice(),
-            'mainThumb' => $this->getMainThumb(),
-            'stockCount' => $this->getStockCount(),
-            'salesCount' => $this->getSalesCount(),
-            'limitConfig' => $this->getLimitConfig(),
-            'totalSale' => $this->getTotalSale(),
-        ];
-    }public function getGtin(): ?string
+    public function getGtin(): ?string
     {
         return $this->gtin;
     }
 
-    public function setGtin(?string $gtin): self
+    public function setGtin(?string $gtin): void
     {
         $this->gtin = $gtin;
-
-        return $this;
     }
 
     public function getUnit(): ?string
@@ -600,11 +372,9 @@ class Sku implements \Stringable, Itemable, AdminArrayInterface, LockEntity
         return $this->unit;
     }
 
-    public function setUnit(string $unit): self
+    public function setUnit(string $unit): void
     {
         $this->unit = $unit;
-
-        return $this;
     }
 
     public function getSalesReal(): int
@@ -637,317 +407,40 @@ class Sku implements \Stringable, Itemable, AdminArrayInterface, LockEntity
         return $this->needConsignee;
     }
 
+    /**
+     * @return array<mixed>|null
+     */
     public function getThumbs(): ?array
     {
         return $this->thumbs;
     }
 
-    public function setThumbs(?array $thumbs): self
+    /**
+     * @param array<mixed>|null $thumbs
+     */
+    public function setThumbs(?array $thumbs): void
     {
         $this->thumbs = $thumbs;
-
-        return $this;
-    }
-
-    public function getDispatchPeriod(): ?int
-    {
-        return $this->dispatchPeriod;
-    }
-
-    public function setDispatchPeriod(?int $dispatchPeriod): static
-    {
-        $this->dispatchPeriod = $dispatchPeriod;
-
-        return $this;
     }
 
     /**
-     * 获取用于最终显示的规格数据.
+     * @return array<string, mixed>
      */
-    public function getDisplayAttribute(): string
+    public function retrieveAdminArray(): array
     {
-        $res = [];
-        foreach ($this->getAttributes() as $attribute) {
-            if (in_array($attribute->getName(), ['itemCode', 'itemID', 'itemTitle', 'shopNick', 'skuTitle', 'storeID'])) {
-                continue;
-            }
-
-            $res[] = "{$attribute->getName()}{$attribute->getValue()}";
-        }
-
-        if (empty($res)) {
-            return (string) $this->getGtin();
-        }
-
-        return implode('+', $res);
-    }
-
-    /**
-     * SKU的 未含税价格
-     */
-    public function getDisplayPrice(): string
-    {
-        $result = [
-            // 币种 => [ 价格1, 价格2 ],
-        ];
-        foreach ($this->getSalePrices() as $price) {
-            if (!isset($result[$price->getCurrency()])) {
-                $result[$price->getCurrency()] = [];
-            }
-            // CurrencyManager integration removed - AppBundle not available
-            $result[$price->getCurrency()][] = $price->getCurrency() . ' ' . $price->getPrice();
-        }
-        
-        $formattedPrices = [];
-        foreach ($result as $currency => $prices) {
-            // 因为可能多种类型价格，所以使用 / 来分割
-            $formattedPrices[] = implode('/', $prices);
-        }
-
-        return implode('+', $formattedPrices);
-    }
-
-    /**
-     * @return Price[]|array
-     */
-    #[Groups(groups: ['restful_read'])]
-    public function getSalePrices(): array
-    {
-        // 只看销售价格
-        return $this->getPrices()
-            ->filter(fn (Price $price) => PriceType::SALE === $price->getType())
-            ->toArray();
-    }
-
-    /**
-     * SKU的 含税价格
-     */
-    public function getDisplayTaxPrice(): string
-    {
-        $result = [
-            // 币种 => [ 价格1, 价格2 ],
-        ];
-        foreach ($this->getSalePrices() as $price) {
-            if (!isset($result[$price->getCurrency()])) {
-                $result[$price->getCurrency()] = [];
-            }
-            // CurrencyManager integration removed - AppBundle not available
-            $result[$price->getCurrency()][] = $price->getCurrency() . ' ' . number_format($price->getTaxPrice(), 2);
-        }
-        
-        $formattedPrices = [];
-        foreach ($result as $currency => $prices) {
-            // 因为可能多种类型价格，所以使用 / 来分割
-            $formattedPrices[] = implode('/', $prices);
-        }
-
-        return implode('+', $formattedPrices);
-    }
-
-    /**
-     * SKU的 含税价格
-     */
-    public function getDisplayTax(): string
-    {
-        $result = [
-            // 币种 => [ 价格1, 价格2 ],
-        ];
-        foreach ($this->getSalePrices() as $price) {
-            if (!isset($result[$price->getCurrency()])) {
-                $result[$price->getCurrency()] = [];
-            }
-            // CurrencyManager integration removed - AppBundle not available
-            $result[$price->getCurrency()][] = $price->getCurrency() . ' ' . number_format($price->getTax(), 2);
-        }
-        
-        $formattedPrices = [];
-        foreach ($result as $currency => $prices) {
-            $formattedPrices[] = implode('/', $prices);
-        }
-
-        return implode('+', $formattedPrices);
-    }
-
-    /**
-     * 后端计算好价格给前端
-     */
-    public function getDisplaySalePrice(): string
-    {
-        return $this->getDisplayPrice();
-    }
-
-    public function getDisplayOriginalPrice(): ?string
-    {
-        $price = $this->getPrices()
-            ->filter(fn (Price $price) => PriceType::ORIGINAL_PRICE === $price->getType())
-            ->first();
-
-        return $price !== null ? $price->getPrice()  : null;
-    }
-
-    /**
-     * 返回缩略图.
-     */
-    #[Groups(groups: ['restful_read'])]
-    public function getMainThumb(): string
-    {
-        if (empty($this->getThumbs())) {
-            return $this->getSpu()->getMainThumb();
-        }
-
-        return $this->getThumbs()[0]['url'];
-    }
-
-    /**
-     * 获取库存数量，这里返回的是真实+虚拟库存.
-     */
-    #[Groups(groups: ['restful_read'])]
-    public function getStockCount(): int
-    {
-        if (isset($_ENV['FIXED_PRODUCT_STOCK_NUMBER'])) {
-            return intval($_ENV['FIXED_PRODUCT_STOCK_NUMBER']);
-        }
-
-        return $this->getVirtualStock() + $this->getValidStock();
-    }
-
-    /**
-     * 获取销量 ，真实+虚拟
-     */
-    #[Groups(groups: ['restful_read'])]
-    public function getSalesCount(): int
-    {
-        return $this->getSalesReal() + $this->getSalesVirtual();
-    }
-
-    #[Groups(groups: ['restful_read'])]
-    public function getLimitConfig(): ?array
-    {
-        if ($this->getLimitRules()->isEmpty()) {
-            return null;
-        }
-
-        $result = [];
-        foreach ($this->getLimitRules() as $limitRule) {
-            $result[$limitRule->getType()->value] = $limitRule->getValue();
-        }
-
-        return $result;
-    }
-
-    /**
-     * @return Collection<int, SkuLimitRule>
-     */
-    public function getLimitRules(): Collection
-    {
-        return $this->limitRules;
-    }
-
-    #[Groups(groups: ['restful_read', 'admin_curd'])]
-    public function getTotalSale(): int
-    {
-        return $this->getSalesReal() + $this->getSalesVirtual();
-    }
-
-    public function retrieveSkuArray(): array
-    {
-        $salePrices = [];
-        foreach ($this->getSalePrices() as $price) {
-            $salePrices[] = $price->retrieveSkuArray();
-        }
-
-        $attributes = [];
-        foreach ($this->getAttributes() as $attribute) {
-            $attributes[] = $attribute->retrieveSkuArray();
-        }
-
         return [
             'id' => $this->getId(),
-            'mainThumb' => $this->getMainThumb(),
-            'thumbs' => $this->getThumbs(),
-            'unit' => $this->getUnit(),
+            'title' => $this->getTitle(),
+            'createTime' => $this->getCreateTime()?->format('Y-m-d H:i:s'),
+            'updateTime' => $this->getUpdateTime()?->format('Y-m-d H:i:s'),
             'gtin' => $this->getGtin(),
-            'dispatchPeriod' => $this->getDispatchPeriod(),
+            'unit' => $this->getUnit(),
+            'salesReal' => $this->getSalesReal(),
+            'salesVirtual' => $this->getSalesVirtual(),
             'valid' => $this->isValid(),
-            'attributes' => $attributes,
-            'displayAttribute' => $this->getDisplayAttribute(),
-            'displayPrice' => $this->getDisplayPrice(),
-            'displayTax' => $this->getDisplayTax(),
-            'displayTaxPrice' => $this->getDisplayTaxPrice(),
-            'displaySalePrice' => $this->getDisplaySalePrice(),
-            'displayOriginalPrice' => $this->getDisplayOriginalPrice(),
-            'stockCount' => $this->getStockCount(),
-            'salesCount' => $this->getSalesCount(),
-            'limitConfig' => $this->getLimitConfig(),
-            'salePrices' => $salePrices,
-        ];
-    }
-
-    public function retrieveCheckoutArray(): array
-    {
-        $attributes = [];
-        foreach ($this->getAttributes() as $attribute) {
-            $attributes[] = $attribute->retrieveSpuArray();
-        }
-
-        $salePrices = [];
-        foreach ($this->getSalePrices() as $price) {
-            $salePrices[] = $price->retrieveSpuArray();
-        }
-
-        return [
-            'id' => $this->getId(),
-            'gtin' => $this->getGtin(),
-            'unit' => $this->getUnit(),
-            'thumbs' => $this->getThumbs(),
-            'attributes' => $attributes,
-            'dispatchPeriod' => $this->getDispatchPeriod(),
-            'valid' => $this->isValid(),
-            'displayAttribute' => $this->getDisplayAttribute(),
-            'salePrices' => $salePrices,
-            'displayPrice' => $this->getDisplayPrice(),
-            'displayTaxPrice' => $this->getDisplayTaxPrice(),
-            'displayTax' => $this->getDisplayTax(),
-            'mainThumb' => $this->getMainThumb(),
-            'stockCount' => $this->getStockCount(),
-            'salesCount' => $this->getSalesCount(),
-            'limitConfig' => $this->getLimitConfig(),
-        ];
-    }
-
-    public function retrieveSpuArray(): array
-    {
-        $salePrices = [];
-        foreach ($this->getSalePrices() as $price) {
-            $salePrices[] = $price->retrieveSpuArray();
-        }
-
-        $attributes = [];
-        foreach ($this->getAttributes() as $attribute) {
-            $attributes[] = $attribute->retrieveSpuArray();
-        }
-
-        return [
-            'id' => $this->getId(),
-            'gtin' => $this->getGtin(),
-            'unit' => $this->getUnit(),
             'needConsignee' => $this->isNeedConsignee(),
             'thumbs' => $this->getThumbs(),
-            'attributes' => $attributes,
-            'dispatchPeriod' => $this->getDispatchPeriod(),
-            'valid' => $this->isValid(),
-            'displayAttribute' => $this->getDisplayAttribute(),
-            'salePrices' => $salePrices,
-            'displayPrice' => $this->getDisplayPrice(),
-            'displayTaxPrice' => $this->getDisplayTaxPrice(),
-            'displayTax' => $this->getDisplayTax(),
-            'displaySalePrice' => $this->getDisplaySalePrice(),
-            'displayOriginalPrice' => $this->getDisplayOriginalPrice(),
-            'mainThumb' => $this->getMainThumb(),
-            'stockCount' => $this->getStockCount(),
-            'salesCount' => $this->getSalesCount(),
-            'limitConfig' => $this->getLimitConfig(),
-            'totalSale' => $this->getTotalSale(),
+            'salesCount' => $this->getSalesReal() + $this->getSalesVirtual(),
         ];
     }
 
@@ -956,27 +449,166 @@ class Sku implements \Stringable, Itemable, AdminArrayInterface, LockEntity
         return 'sku_id_' . $this->getId();
     }
 
-    public function getCreatedFromIp(): ?string
+    public function getMarketPrice(): ?string
     {
-        return $this->createdFromIp;
+        return $this->marketPrice;
     }
 
-    public function setCreatedFromIp(?string $createdFromIp): self
+    public function setMarketPrice(?string $marketPrice): void
     {
-        $this->createdFromIp = $createdFromIp;
-
-        return $this;
+        $this->marketPrice = $marketPrice;
     }
 
-    public function getUpdatedFromIp(): ?string
+    public function getCostPrice(): ?string
     {
-        return $this->updatedFromIp;
+        return $this->costPrice;
     }
 
-    public function setUpdatedFromIp(?string $updatedFromIp): self
+    public function setCostPrice(?string $costPrice): void
     {
-        $this->updatedFromIp = $updatedFromIp;
+        $this->costPrice = $costPrice;
+    }
 
-        return $this;
+    public function getOriginalPrice(): ?string
+    {
+        return $this->originalPrice;
+    }
+
+    public function setOriginalPrice(?string $originalPrice): void
+    {
+        $this->originalPrice = $originalPrice;
+    }
+
+    /**
+     * @return array<string, mixed>
+     */
+    public function retrieveSkuArray(): array
+    {
+        $attributes = [];
+        foreach ($this->getAttributes() as $attribute) {
+            $attributes[] = $attribute->retrieveSkuArray();
+        }
+
+        return [
+            'id' => $this->getId(),
+            'title' => $this->getTitle(),
+            'mainThumb' => $this->getMainThumb(),
+            'thumbs' => $this->getThumbs(),
+            'unit' => $this->getUnit(),
+            'gtin' => $this->getGtin(),
+            'valid' => $this->isValid(),
+            'attributes' => $attributes,
+            'displayAttribute' => $this->getDisplayAttribute(),
+            'salesCount' => $this->getSalesCount(),
+            'marketPrice' => $this->getMarketPrice(),
+            'costPrice' => $this->getCostPrice(),
+            'originalPrice' => $this->getOriginalPrice(),
+        ];
+    }
+
+    /**
+     * 获取主缩略图
+     */
+    public function getMainThumb(): string
+    {
+        // 尝试从自己的缩略图获取
+        $myThumb = $this->getFirstThumbUrl($this->getThumbs());
+        if ('' !== $myThumb) {
+            return $myThumb;
+        }
+
+        // 尝试从SPU获取
+        $spu = $this->getSpu();
+        if (null === $spu) {
+            return '';
+        }
+
+        $mainPic = $spu->getMainPic();
+        if (null !== $mainPic && '' !== $mainPic) {
+            return $mainPic;
+        }
+
+        return $this->getFirstThumbUrl($spu->getThumbs());
+    }
+
+    /**
+     * 从缩略图数组中获取第一个URL
+     * @param array<mixed>|null $thumbs
+     */
+    private function getFirstThumbUrl(?array $thumbs): string
+    {
+        if (null === $thumbs || [] === $thumbs) {
+            return '';
+        }
+
+        $firstThumb = $thumbs[0] ?? null;
+        if (is_array($firstThumb) && isset($firstThumb['url'])) {
+            $url = $firstThumb['url'];
+            if (is_string($url)) {
+                return $url;
+            }
+            if (is_numeric($url)) {
+                return (string) $url;
+            }
+            if (is_bool($url)) {
+                return '';
+            }
+            if (is_object($url) || is_array($url)) {
+                return '';
+            }
+            if (is_resource($url)) {
+                return '';
+            }
+
+            // 对于无法处理的其他类型，返回空字符串
+            return '';
+        }
+
+        return '';
+    }
+
+    /**
+     * 获取显示属性（商品规格）
+     */
+    public function getDisplayAttribute(): string
+    {
+        $res = [];
+        foreach ($this->getAttributes() as $attribute) {
+            if (in_array($attribute->getName(), ['itemCode', 'itemID', 'itemTitle', 'shopNick', 'skuTitle', 'storeID'], true)) {
+                continue;
+            }
+
+            $res[] = "{$attribute->getName()}{$attribute->getValue()}";
+        }
+
+        if ([] === $res) {
+            return (string) $this->getGtin();
+        }
+
+        return implode('+', $res);
+    }
+
+    /**
+     * 获取销量总计
+     */
+    private function getSalesCount(): int
+    {
+        return $this->getSalesReal() + $this->getSalesVirtual();
+    }
+
+    /**
+     * 获取结账用的数组表示
+     *
+     * @return array<string, mixed>
+     */
+    public function retrieveCheckoutArray(): array
+    {
+        return [
+            'id' => $this->getId(),
+            'gtin' => $this->getGtin(),
+            'mpn' => $this->getMpn(),
+            'unit' => $this->getUnit(),
+            'thumbs' => $this->getThumbs(),
+        ];
     }
 }

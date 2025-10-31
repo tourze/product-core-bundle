@@ -8,8 +8,11 @@ use Tourze\ProductCoreBundle\Exception\AdvertisementLimitException;
  * 广告法
  * 确保电商业务符合 https://baike.baidu.com/item/%E4%B8%AD%E5%8D%8E%E4%BA%BA%E6%B0%91%E5%85%B1%E5%92%8C%E5%9B%BD%E5%B9%BF%E5%91%8A%E6%B3%95
  */
-class AdvertisementChecker
+final class AdvertisementChecker
 {
+    /**
+     * @var array<string>
+     */
     public static array $limitWords = [
         '销量第一',
         '销量最高',
@@ -608,16 +611,16 @@ class AdvertisementChecker
      *
      * @throws AdvertisementLimitException
      */
-    public function checkLimitWords(string $content)
+    public function checkLimitWords(string $content): void
     {
         $words = [];
-        foreach (static::$limitWords as $limitWord) {
+        foreach (self::$limitWords as $limitWord) {
             if (false !== mb_strpos($content, $limitWord)) {
                 $words[] = $limitWord;
             }
         }
 
-        if (!empty($words)) {
+        if ([] !== $words) {
             $e = new AdvertisementLimitException('您的输入带有极限词，请检查并确认：' . implode('、', $words));
             $e->words = $words;
             throw $e;

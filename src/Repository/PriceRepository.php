@@ -4,21 +4,67 @@ namespace Tourze\ProductCoreBundle\Repository;
 
 use Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository;
 use Doctrine\Persistence\ManagerRegistry;
+use Tourze\PHPUnitSymfonyKernelTest\Attribute\AsRepository;
 use Tourze\ProductCoreBundle\Entity\Price;
-use Tourze\TrainCourseBundle\Trait\CommonRepositoryAware;
 
 /**
- * @method Price|null find($id, $lockMode = null, $lockVersion = null)
- * @method Price|null findOneBy(array $criteria, array $orderBy = null)
- * @method Price[]    findAll()
- * @method Price[]    findBy(array $criteria, array $orderBy = null, $limit = null, $offset = null)
+ * @extends ServiceEntityRepository<Price>
  */
-class PriceRepository extends ServiceEntityRepository
+#[AsRepository(entityClass: Price::class)]
+final class PriceRepository extends ServiceEntityRepository
 {
-    use CommonRepositoryAware;
-
     public function __construct(ManagerRegistry $registry)
     {
         parent::__construct($registry, Price::class);
+    }
+
+    public function save(Price $entity, bool $flush = true): void
+    {
+        $this->getEntityManager()->persist($entity);
+
+        if ($flush) {
+            $this->getEntityManager()->flush();
+        }
+    }
+
+    public function remove(Price $entity, bool $flush = true): void
+    {
+        $this->getEntityManager()->remove($entity);
+
+        if ($flush) {
+            $this->getEntityManager()->flush();
+        }
+    }
+
+    /**
+     * 批量保存
+     *
+     * @param array<Price> $entities
+     */
+    public function saveAll(array $entities, bool $flush = true): void
+    {
+        foreach ($entities as $entity) {
+            $this->getEntityManager()->persist($entity);
+        }
+
+        if ($flush) {
+            $this->getEntityManager()->flush();
+        }
+    }
+
+    /**
+     * 刷新实体管理器
+     */
+    public function flush(): void
+    {
+        $this->getEntityManager()->flush();
+    }
+
+    /**
+     * 清空实体管理器
+     */
+    public function clear(): void
+    {
+        $this->getEntityManager()->clear();
     }
 }

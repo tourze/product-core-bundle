@@ -2,11 +2,24 @@
 
 namespace Tourze\ProductCoreBundle;
 
+use Doctrine\Bundle\DoctrineBundle\DoctrineBundle;
+use Symfony\Bundle\SecurityBundle\SecurityBundle;
+use Symfony\Component\DependencyInjection\Compiler\PassConfig;
+use Symfony\Component\DependencyInjection\ContainerBuilder;
 use Symfony\Component\HttpKernel\Bundle\Bundle;
 use Tourze\BundleDependency\BundleDependencyInterface;
+use Tourze\CatalogBundle\CatalogBundle;
+use Tourze\DoctrineEntityLockBundle\DoctrineEntityLockBundle;
 use Tourze\DoctrineIndexedBundle\DoctrineIndexedBundle;
+use Tourze\DoctrineResolveTargetEntityBundle\DependencyInjection\Compiler\ResolveTargetEntityPass;
 use Tourze\DoctrineSnowflakeBundle\DoctrineSnowflakeBundle;
+use Tourze\FreightTemplateBundle\FreightTemplateBundle;
+use Tourze\JsonRPCPaginatorBundle\JsonRPCPaginatorBundle;
+use Tourze\ProductAttributeBundle\ProductAttributeBundle;
+use Tourze\ProductServiceContracts\SKU;
+use Tourze\ProductServiceContracts\SPU;
 use Tourze\Symfony\CronJob\CronJobBundle;
+use Tourze\TagManageBundle\TagManageBundle;
 
 /**
  * 商品模块
@@ -35,14 +48,39 @@ use Tourze\Symfony\CronJob\CronJobBundle;
  * @see https://xie.infoq.cn/article/d70abaebdc1db54681a741729
  * @see https://learnku.com/articles/21623
  */
-class ProductCoreBundle extends Bundle implements BundleDependencyInterface
+final class ProductCoreBundle extends Bundle implements BundleDependencyInterface
 {
     public static function getBundleDependencies(): array
     {
         return [
+            DoctrineBundle::class => ['all' => true],
             DoctrineSnowflakeBundle::class => ['all' => true],
             DoctrineIndexedBundle::class => ['all' => true],
             CronJobBundle::class => ['all' => true],
+            SecurityBundle::class => ['all' => true],
+            JsonRPCPaginatorBundle::class => ['all' => true],
+            DoctrineEntityLockBundle::class => ['all' => true],
+            CatalogBundle::class => ['all' => true],
+            FreightTemplateBundle::class => ['all' => true],
+            TagManageBundle::class => ['all' => true],
+            ProductAttributeBundle::class => ['all' => true],
         ];
+    }
+
+    public function build(ContainerBuilder $container): void
+    {
+        parent::build($container);
+
+        $container->addCompilerPass(
+            new ResolveTargetEntityPass(SPU::class, Entity\Spu::class),
+            PassConfig::TYPE_BEFORE_OPTIMIZATION,
+            1000,
+        );
+
+        $container->addCompilerPass(
+            new ResolveTargetEntityPass(SKU::class, Entity\Sku::class),
+            PassConfig::TYPE_BEFORE_OPTIMIZATION,
+            1000,
+        );
     }
 }

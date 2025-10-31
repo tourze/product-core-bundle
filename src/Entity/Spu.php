@@ -7,131 +7,119 @@ use Doctrine\Common\Collections\Collection;
 use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
 use Symfony\Component\Serializer\Attribute\Groups;
-use Symfony\Component\Serializer\Attribute\Ignore;
+use Symfony\Component\Validator\Constraints as Assert;
 use Tourze\Arrayable\AdminArrayInterface;
-use Tourze\DoctrineIpBundle\Attribute\CreateIpColumn;
-use Tourze\DoctrineIpBundle\Attribute\UpdateIpColumn;
+use Tourze\CatalogBundle\Entity\Catalog;
+use Tourze\DoctrineHelper\SortableTrait;
+use Tourze\DoctrineIpBundle\Traits\CreatedFromIpAware;
 use Tourze\DoctrineSnowflakeBundle\Attribute\SnowflakeColumn;
 use Tourze\DoctrineTimestampBundle\Traits\TimestampableAware;
 use Tourze\DoctrineTrackBundle\Attribute\TrackColumn;
-use Tourze\DoctrineUserBundle\Attribute\UpdatedByColumn;
 use Tourze\DoctrineUserBundle\Traits\BlameableAware;
 use Tourze\EnumExtra\Itemable;
+use Tourze\ProductAttributeBundle\Entity\SpuAttribute;
 use Tourze\ProductCoreBundle\Enum\SpuState;
 use Tourze\ProductCoreBundle\Repository\SpuRepository;
 use Tourze\ResourceManageBundle\Model\ResourceIdentity;
-use Tourze\TrainCourseBundle\Trait\SortableTrait;
-use Yiisoft\Arrays\ArrayHelper;
-use Yiisoft\Json\Json;
+use Tourze\TagManageBundle\Entity\Tag;
 
 /**
+ * @implements AdminArrayInterface<string, mixed>
  * @see https://www.duosku.com/tmallyunying/4.html
  * @see https://blog.csdn.net/zhichaosong/article/details/120316738 这种设计很适合多商户体系
  */
 #[ORM\Table(name: 'product_spu', options: ['comment' => '产品SPU'])]
 #[ORM\Entity(repositoryClass: SpuRepository::class)]
-class Spu implements \Stringable, Itemable, AdminArrayInterface, ResourceIdentity
+class Spu implements \Stringable, Itemable, AdminArrayInterface, ResourceIdentity, \Tourze\ProductServiceContracts\SPU
 {
-        use BlameableAware;
+    use BlameableAware;
     use TimestampableAware;
+    use SortableTrait;
+    use CreatedFromIpAware;
 
-
-    #[Groups(groups: ['restful_read', 'admin_curd', 'restful_read'])]
-    #[ORM\Column(nullable: true, options: ['comment' => '创建人'])]
-    private ?string $createdBy = null;
-    #[UpdatedByColumn]
-    #[ORM\Column(nullable: true, options: ['comment' => '更新人'])]
-    private ?string $updatedBy = null;
     #[ORM\Id]
     #[ORM\GeneratedValue]
     #[ORM\Column(type: Types::INTEGER, options: ['comment' => 'SpuID'])]
-    private ?int $id = 0;
-    // Supplier relationship removed - AppBundle not available
-    // #[ORM\ManyToOne]
-    // #[ORM\JoinColumn(onDelete: 'SET NULL')]
-    // private ?Supplier $supplier = null;
-    use SortableTrait;
+    private int $id = 0;
+
     #[TrackColumn]
     #[SnowflakeColumn(prefix: 'SPU')]
+    #[Assert\Length(max: 40, maxMessage: 'GTIN 不能超过 {{ limit }} 个字符')]
     #[ORM\Column(type: Types::STRING, length: 40, unique: true, nullable: true, options: ['comment' => '唯一编码'])]
     private ?string $gtin = '';
+
+    #[Assert\NotBlank(message: '标题不能为空')]
+    #[Assert\Length(max: 120, maxMessage: '标题不能超过 {{ limit }} 个字符')]
     #[ORM\Column(type: Types::STRING, length: 120, options: ['comment' => '标题'])]
     private string $title = '';
+
+    #[Assert\Length(max: 60, maxMessage: '类型不能超过 {{ limit }} 个字符')]
     #[ORM\Column(type: Types::STRING, length: 60, nullable: true, options: ['default' => 'normal', 'comment' => '类型'])]
     private ?string $type = null;
+
     #[Groups(groups: ['admin_curd'])]
     #[ORM\ManyToOne(targetEntity: Brand::class)]
     private ?Brand $brand = null;
+
+    #[Assert\Length(max: 1024, maxMessage: '副标题不能超过 {{ limit }} 个字符')]
     #[ORM\Column(type: Types::STRING, length: 1024, nullable: true, options: ['comment' => '副标题'])]
     private ?string $subtitle = '';
-    /**
-     * @var Collection<Sku>
-     */
-    #[ORM\OneToMany(mappedBy: 'spu', targetEntity: Sku::class, fetch: 'EXTRA_LAZY', orphanRemoval: true)]
-    private Collection $skus;
-    /**
-     * @TreeSelectField(treeModel=Category::class, multiple=true)
-     *
-     * @var Collection<Category>
-     */
 
-    #[ORM\ManyToMany(targetEntity: Category::class, mappedBy: 'spus', fetch: 'EXTRA_LAZY')]
-    private Collection $categories;
     /**
-     * @var Collection<Tag>
+     * @var Collection<int, Sku>
      */
-    #[ORM\ManyToMany(targetEntity: Tag::class, mappedBy: 'spus', fetch: 'EXTRA_LAZY')]
+    #[ORM\OneToMany(targetEntity: Sku::class, mappedBy: 'spu', fetch: 'EXTRA_LAZY', orphanRemoval: true)]
+    private Collection $skus;
+
+    /**
+     * @var Collection<int, Catalog>
+     */
+    #[ORM\ManyToMany(targetEntity: Catalog::class, fetch: 'EXTRA_LAZY')]
+    #[ORM\JoinTable(name: 'spu_catalogs')]
+    private Collection $categories;
+
+    /**
+     * @var Collection<int, Tag>
+     */
+    #[ORM\ManyToMany(targetEntity: Tag::class, fetch: 'EXTRA_LAZY')]
+    #[ORM\JoinTable(name: 'spu_tags')]
     private Collection $tags;
+
+    #[Assert\Choice(callback: [SpuState::class, 'cases'], message: '请选择正确的状态')]
     #[ORM\Column(type: Types::STRING, length: 40, nullable: true, enumType: SpuState::class, options: ['comment' => '状态'])]
     private ?SpuState $state;
+
+    #[Assert\Length(max: 1000, maxMessage: '主图不能超过 {{ limit }} 个字符')]
     #[ORM\Column(type: Types::STRING, length: 1000, nullable: true, options: ['comment' => '主图'])]
     private ?string $mainPic = null;
+
+    /**
+     * @var array<mixed>|null
+     */
+    #[Assert\Type(type: 'array', message: '轮播图必须为数组类型')]
     #[ORM\Column(type: Types::JSON, nullable: true, options: ['comment' => '轮播图'])]
     private ?array $thumbs = [];
+
     /**
      * 有些地方也叫核心属性.
      *
-     * @var Collection<SpuAttribute>
+     * @var Collection<int, SpuAttribute>
      */
-    #[ORM\OneToMany(mappedBy: 'spu', targetEntity: SpuAttribute::class, cascade: ['persist'], fetch: 'EXTRA_LAZY', orphanRemoval: true)]
+    #[ORM\OneToMany(targetEntity: SpuAttribute::class, mappedBy: 'spu', cascade: ['persist'], fetch: 'EXTRA_LAZY', orphanRemoval: true)]
     private Collection $attributes;
-    /**
-     * @var Collection<SpuDescriptionAttribute>
-     */
-    #[ORM\OneToMany(mappedBy: 'spu', targetEntity: SpuDescriptionAttribute::class, cascade: ['persist'], fetch: 'EXTRA_LAZY', orphanRemoval: true)]
-    private Collection $descriptionAttribute;
+
+    #[Assert\Length(max: 65535, maxMessage: '描述不能超过 {{ limit }} 个字符')]
     #[ORM\Column(type: Types::TEXT, nullable: true, options: ['comment' => '描述'])]
     private ?string $content = null;
+
+    #[Assert\Length(max: 65535, maxMessage: '备注不能超过 {{ limit }} 个字符')]
     #[ORM\Column(type: Types::TEXT, nullable: true, options: ['comment' => '备注'])]
     private ?string $remark = null;
-    /**
-     * @DynamicFieldSet()
-     *
-     * @var Collection<SpuLimitRule>
-     */
-    #[ORM\OneToMany(mappedBy: 'spu', targetEntity: SpuLimitRule::class, cascade: ['persist'], fetch: 'EXTRA_LAZY', orphanRemoval: true)]
-    private Collection $limitRules;
-    #[ORM\Column(type: Types::JSON, nullable: true, options: ['comment' => '显示标签'])]
-    private ?array $showTags = [];
-    #[Ignore]
-    #[ORM\ManyToMany(targetEntity: FreightTemplate::class, inversedBy: 'spus', fetch: 'EXTRA_LAZY')]
-    private Collection $freightTemplates;
+
     #[Groups(groups: ['admin_curd', 'restful_read'])]
-    #[ORM\Column(type: Types::BOOLEAN, nullable: true, options: ['comment' => '上架'])]
+    #[Assert\Type(type: 'bool', message: '上架必须为布尔值')]
+    #[ORM\Column(type: Types::BOOLEAN, nullable: true, options: ['comment' => '是否上架'])]
     private ?bool $valid = false;
-    #[ORM\Column(type: Types::BOOLEAN, nullable: true, options: ['comment' => '审核状态', 'default' => 1])]
-    private ?bool $audited = true;
-    #[Groups(groups: ['restful_read', 'admin_curd'])]
-    #[ORM\Column(type: Types::DATETIME_IMMUTABLE, nullable: true, options: ['comment' => '自动发布时间'])]
-    private ?\DateTimeInterface $autoReleaseTime = null;
-    #[ORM\Column(type: Types::DATETIME_IMMUTABLE, nullable: true, options: ['comment' => '自动下架时间'])]
-    private ?\DateTimeInterface $autoTakeDownTime = null;
-    #[CreateIpColumn]
-    #[ORM\Column(length: 128, nullable: true, options: ['comment' => '创建时IP'])]
-    private ?string $createdFromIp = null;
-    #[UpdateIpColumn]
-    #[ORM\Column(length: 128, nullable: true, options: ['comment' => '更新时IP'])]
-    private ?string $updatedFromIp = null;
 
     public function __construct()
     {
@@ -139,17 +127,14 @@ class Spu implements \Stringable, Itemable, AdminArrayInterface, ResourceIdentit
         $this->categories = new ArrayCollection();
         $this->tags = new ArrayCollection();
         $this->attributes = new ArrayCollection();
-        $this->limitRules = new ArrayCollection();
-        $this->descriptionAttribute = new ArrayCollection();
-        $this->freightTemplates = new ArrayCollection();
     }
 
     public function __toString(): string
     {
-        return "#{$this->getId()} {$this->getTitle()}";
+        return $this->getTitle();
     }
 
-    public function getId(): ?int
+    public function getId(): int
     {
         return $this->id;
     }
@@ -159,41 +144,15 @@ class Spu implements \Stringable, Itemable, AdminArrayInterface, ResourceIdentit
         return $this->title;
     }
 
-    public function setTitle(string $title): self
+    public function setTitle(string $title): void
     {
         $this->title = $title;
-
-        return $this;
-    }
-
-    public function getCreatedBy(): ?string
-    {
-        return $this->createdBy;
-    }
-
-    public function setCreatedBy(?string $createdBy): self
-    {
-        $this->createdBy = $createdBy;
-
-        return $this;
-    }
-
-    public function getUpdatedBy(): ?string
-    {
-        return $this->updatedBy;
-    }
-
-    public function setUpdatedBy(?string $updatedBy): self
-    {
-        $this->updatedBy = $updatedBy;
-
-        return $this;
     }
 
     public function addSku(Sku $sku): self
     {
         if (!$this->skus->contains($sku)) {
-            $this->skus[] = $sku;
+            $this->skus->add($sku);
             $sku->setSpu($this);
         }
 
@@ -212,21 +171,18 @@ class Spu implements \Stringable, Itemable, AdminArrayInterface, ResourceIdentit
         return $this;
     }
 
-    public function addCategory(Category $category): self
+    public function addCategory(Catalog $catalog): self
     {
-        if (!$this->categories->contains($category)) {
-            $this->categories[] = $category;
-            $category->addSpu($this);
+        if (!$this->categories->contains($catalog)) {
+            $this->categories->add($catalog);
         }
 
         return $this;
     }
 
-    public function removeCategory(Category $category): self
+    public function removeCategory(Catalog $catalog): self
     {
-        if ($this->categories->removeElement($category)) {
-            $category->removeSpu($this);
-        }
+        $this->categories->removeElement($catalog);
 
         return $this;
     }
@@ -234,8 +190,7 @@ class Spu implements \Stringable, Itemable, AdminArrayInterface, ResourceIdentit
     public function addTag(Tag $tag): self
     {
         if (!$this->tags->contains($tag)) {
-            $this->tags[] = $tag;
-            $tag->addSpu($this);
+            $this->tags->add($tag);
         }
 
         return $this;
@@ -243,9 +198,7 @@ class Spu implements \Stringable, Itemable, AdminArrayInterface, ResourceIdentit
 
     public function removeTag(Tag $tag): self
     {
-        if ($this->tags->removeElement($tag)) {
-            $tag->removeSpu($this);
-        }
+        $this->tags->removeElement($tag);
 
         return $this;
     }
@@ -255,17 +208,15 @@ class Spu implements \Stringable, Itemable, AdminArrayInterface, ResourceIdentit
         return $this->state;
     }
 
-    public function setState(?SpuState $state): self
+    public function setState(?SpuState $state): void
     {
         $this->state = $state;
-
-        return $this;
     }
 
     public function addAttribute(SpuAttribute $attribute): self
     {
         if (!$this->attributes->contains($attribute)) {
-            $this->attributes[] = $attribute;
+            $this->attributes->add($attribute);
             $attribute->setSpu($this);
         }
 
@@ -285,24 +236,7 @@ class Spu implements \Stringable, Itemable, AdminArrayInterface, ResourceIdentit
     }
 
     /**
-     * 获取在售库存.
-     */
-    public function getOnSaleStock(): int
-    {
-        if (isset($_ENV['FIXED_PRODUCT_STOCK_NUMBER'])) {
-            return intval($_ENV['FIXED_PRODUCT_STOCK_NUMBER']);
-        }
-
-        $r = 0;
-        foreach ($this->getSkus() as $sku) {
-            $r += $sku->getValidStock();
-        }
-
-        return $r;
-    }
-
-    /**
-     * @return Collection<Sku>
+     * @return Collection<int, Sku>
      */
     public function getSkus(): Collection
     {
@@ -314,13 +248,14 @@ class Spu implements \Stringable, Itemable, AdminArrayInterface, ResourceIdentit
         return $this->remark;
     }
 
-    public function setRemark(?string $remark): self
+    public function setRemark(?string $remark): void
     {
         $this->remark = $remark;
-
-        return $this;
     }
 
+    /**
+     * @return array<string, mixed>
+     */
     public function toSelectItem(): array
     {
         return [
@@ -330,131 +265,30 @@ class Spu implements \Stringable, Itemable, AdminArrayInterface, ResourceIdentit
         ];
     }
 
-    public function addLimitRule(SpuLimitRule $limitRule): self
+    public function setValid(?bool $valid): void
     {
-        if (!$this->limitRules->contains($limitRule)) {
-            $this->limitRules[] = $limitRule;
-            $limitRule->setSpu($this);
-        }
-
-        return $this;
-    }
-
-    public function removeLimitRule(SpuLimitRule $limitRule): self
-    {
-        if ($this->limitRules->removeElement($limitRule)) {
-            // set the owning side to null (unless already changed)
-            if ($limitRule->getSpu() === $this) {
-                $limitRule->setSpu(null);
-            }
-        }
-
-        return $this;
-    }
-
-    public function removeDescriptionAttribute(SpuDescriptionAttribute $descriptionAttribute): self
-    {
-        if ($this->descriptionAttribute->removeElement($descriptionAttribute)) {
-            // set the owning side to null (unless already changed)
-            if ($descriptionAttribute->getSpu() === $this) {
-                $descriptionAttribute->setSpu(null);
-            }
-        }
-
-        return $this;
+        $this->valid = $valid;
     }
 
     /**
-     * @return Collection<int, FreightTemplate>
+     * @return array<string, mixed>
      */
-    public function getFreightTemplates(): Collection
-    {
-        return $this->freightTemplates;
-    }
-
-    public function addFreightTemplate(FreightTemplate $freightTemplate): self
-    {
-        if (!$this->freightTemplates->contains($freightTemplate)) {
-            $this->freightTemplates->add($freightTemplate);
-        }
-
-        return $this;
-    }
-
-    public function removeFreightTemplate(FreightTemplate $freightTemplate): self
-    {
-        $this->freightTemplates->removeElement($freightTemplate);
-
-        return $this;
-    }
-
-    public function setValid(?bool $valid): self
-    {
-        $this->valid = $valid;
-
-        return $this;
-    }
-
-    public function setAudited(?bool $audited): self
-    {
-        $this->audited = $audited;
-
-        return $this;
-    }
-
-    // Supplier methods removed - AppBundle not available
-    // public function autoAssignSupplier(Security $security): void
-    // {
-    //     $user = $security->getUser();
-    //     if (!$user->getSupplier()) {
-    //         return;
-    //     }
-    //     if (!$this->getSupplier()) {
-    //         $this->setSupplier($user->getSupplier());
-    //     }
-    // }
-
-    // public function getSupplier(): ?Supplier
-    // {
-    //     return $this->supplier;
-    // }
-
-    // public function setSupplier(?Supplier $supplier): self
-    // {
-    //     $this->supplier = $supplier;
-
-    //     return $this;
-    // }
-
-    public function getCreatedFromIp(): ?string
-    {
-        return $this->createdFromIp;
-    }
-
-    public function setCreatedFromIp(?string $createdFromIp): self
-    {
-        $this->createdFromIp = $createdFromIp;
-
-        return $this;
-    }
-
-    public function getUpdatedFromIp(): ?string
-    {
-        return $this->updatedFromIp;
-    }
-
-    public function setUpdatedFromIp(?string $updatedFromIp): self
-    {
-        $this->updatedFromIp = $updatedFromIp;
-
-        return $this;
-    }
-
     public function retrieveAdminArray(): array
     {
         $categories = [];
-        foreach ($this->getCategories() as $category) {
-            $categories[] = $category->retrieveAdminArray();
+        foreach ($this->getCategories() as $catalog) {
+            $categories[] = [
+                'id' => $catalog->getId(),
+                'name' => $catalog->getName(),
+            ];
+        }
+
+        $tags = [];
+        foreach ($this->getTags() as $tag) {
+            $tags[] = [
+                'id' => $tag->getId(),
+                'name' => $tag->getName(),
+            ];
         }
 
         return [
@@ -466,35 +300,40 @@ class Spu implements \Stringable, Itemable, AdminArrayInterface, ResourceIdentit
             'type' => $this->getType(),
             'mainPic' => $this->getMainPic(),
             'valid' => $this->isValid(),
-            'audited' => $this->isAudited(),
             ...$this->retrieveSortableArray(),
             'brand' => $this->getBrand(),
             'subtitle' => $this->getSubtitle(),
             'thumbs' => $this->getThumbs(),
             'content' => $this->getContent(),
-            'showTags' => $this->getShowTags(),
-            'autoReleaseTime' => $this->getAutoReleaseTime(),
-            'autoTakeDownTime' => $this->getAutoTakeDownTime(),
             'categories' => $categories,
+            'tags' => $tags,
         ];
     }
 
     /**
-     * @return Collection<int, Category>
+     * @return Collection<int, Catalog>
      */
     public function getCategories(): Collection
     {
         return $this->categories;
-    }public function getGtin(): ?string
+    }
+
+    /**
+     * @return Collection<int, Tag>
+     */
+    public function getTags(): Collection
+    {
+        return $this->tags;
+    }
+
+    public function getGtin(): ?string
     {
         return $this->gtin;
     }
 
-    public function setGtin(?string $gtin): self
+    public function setGtin(?string $gtin): void
     {
         $this->gtin = $gtin;
-
-        return $this;
     }
 
     public function getType(): ?string
@@ -502,11 +341,9 @@ class Spu implements \Stringable, Itemable, AdminArrayInterface, ResourceIdentit
         return $this->type;
     }
 
-    public function setType(?string $type): self
+    public function setType(?string $type): void
     {
         $this->type = $type;
-
-        return $this;
     }
 
     public function getMainPic(): ?string
@@ -514,11 +351,9 @@ class Spu implements \Stringable, Itemable, AdminArrayInterface, ResourceIdentit
         return $this->mainPic;
     }
 
-    public function setMainPic(?string $mainPic): self
+    public function setMainPic(?string $mainPic): void
     {
         $this->mainPic = $mainPic;
-
-        return $this;
     }
 
     public function isValid(): ?bool
@@ -526,21 +361,14 @@ class Spu implements \Stringable, Itemable, AdminArrayInterface, ResourceIdentit
         return $this->valid;
     }
 
-    public function isAudited(): ?bool
-    {
-        return $this->audited;
-    }
-
     public function getBrand(): ?Brand
     {
         return $this->brand;
     }
 
-    public function setBrand(?Brand $brand): self
+    public function setBrand(?Brand $brand): void
     {
         $this->brand = $brand;
-
-        return $this;
     }
 
     public function getSubtitle(): ?string
@@ -548,23 +376,94 @@ class Spu implements \Stringable, Itemable, AdminArrayInterface, ResourceIdentit
         return $this->subtitle;
     }
 
-    public function setSubtitle(?string $subtitle): self
+    public function setSubtitle(?string $subtitle): void
     {
         $this->subtitle = $subtitle;
-
-        return $this;
     }
 
+    /**
+     * @return array<mixed>|null
+     */
     public function getThumbs(): ?array
     {
         return $this->thumbs;
     }
 
-    public function setThumbs(?array $thumbs): self
+    /**
+     * @param array<mixed>|null $thumbs
+     */
+    public function setThumbs(?array $thumbs): void
     {
         $this->thumbs = $thumbs;
+    }
 
-        return $this;
+    /**
+     * @return array<array{url: string, sort: int}>
+     */
+    public function getImages(): array
+    {
+        if (null === $this->thumbs || [] === $this->thumbs) {
+            return [];
+        }
+
+        $images = $this->processThumbsArray();
+        usort($images, fn (array $a, array $b) => $a['sort'] <=> $b['sort']);
+
+        return $images;
+    }
+
+    /**
+     * @return array<array{url: string, sort: int}>
+     */
+    private function processThumbsArray(): array
+    {
+        $images = [];
+        if (!is_array($this->thumbs)) {
+            return $images;
+        }
+
+        foreach ($this->thumbs as $index => $thumb) {
+            $image = $this->processThumbItem($thumb, $index);
+            // Only include images with valid URLs
+            if ('' !== $image['url']) {
+                $images[] = $image;
+            }
+        }
+
+        return $images;
+    }
+
+    /**
+     * @return array{url: string, sort: int}
+     */
+    private function processThumbItem(mixed $thumb, int $index): array
+    {
+        if (is_array($thumb) && isset($thumb['url'])) {
+            $url = $thumb['url'];
+            $thumbUrl = is_string($url) ? $url : (is_scalar($url) ? (string) $url : '');
+
+            return [
+                'url' => $thumbUrl,
+                'sort' => is_int($thumb['sort'] ?? null) ? $thumb['sort'] : $index,
+            ];
+        }
+
+        if (is_string($thumb)) {
+            return [
+                'url' => $thumb,
+                'sort' => $index,
+            ];
+        }
+
+        return ['url' => '', 'sort' => $index];
+    }
+
+    /**
+     * @param array<array{url: string, sort: int}> $images
+     */
+    public function setImages(array $images): void
+    {
+        $this->thumbs = $images;
     }
 
     public function getContent(): ?string
@@ -572,95 +471,9 @@ class Spu implements \Stringable, Itemable, AdminArrayInterface, ResourceIdentit
         return $this->content;
     }
 
-    public function setContent(?string $content): self
+    public function setContent(?string $content): void
     {
         $this->content = $content;
-
-        return $this;
-    }
-
-    public function getShowTags(): ?array
-    {
-        return $this->showTags;
-    }
-
-    public function setShowTags(?array $showTags): self
-    {
-        $this->showTags = $showTags;
-
-        return $this;
-    }
-
-    public function getAutoReleaseTime(): ?\DateTimeInterface
-    {
-        return $this->autoReleaseTime;
-    }
-
-    public function setAutoReleaseTime(?\DateTimeInterface $autoReleaseTime): void
-    {
-        $this->autoReleaseTime = $autoReleaseTime;
-    }
-
-    public function getAutoTakeDownTime(): ?\DateTimeInterface
-    {
-        return $this->autoTakeDownTime;
-    }
-
-    public function setAutoTakeDownTime(?\DateTimeInterface $autoTakeDownTime): void
-    {
-        $this->autoTakeDownTime = $autoTakeDownTime;
-    }
-
-    public function retrieveSpuArray(): array
-    {
-        $skus = [];
-        foreach ($this->getSkus() as $sku) {
-            $skus[] = $sku->retrieveSpuArray();
-        }
-
-        $tags = [];
-        foreach ($this->getTags() as $tag) {
-            $tags[] = $tag->retrieveSpuArray();
-        }
-
-        $attributes = [];
-        foreach ($this->getAttributes() as $attribute) {
-            $attributes[] = $attribute->retrieveSpuArray();
-        }
-
-        $descriptionAttribute = [];
-        foreach ($this->getDescriptionAttribute() as $item) {
-            $descriptionAttribute[] = $item->retrieveSpuArray();
-        }
-
-        return [
-            'id' => $this->getId(),
-            'supplier' => null, // Supplier functionality removed
-            'gtin' => $this->getGtin(),
-            'title' => $this->getTitle(),
-            'subtitle' => $this->getSubtitle(),
-            'type' => $this->getType(),
-            'skus' => $skus,
-            'tags' => $tags,
-            'mainPic' => $this->getMainPic(),
-            'thumbs' => $this->getThumbs(),
-            'attributes' => $attributes,
-            'descriptionAttribute' => $descriptionAttribute,
-            'content' => $this->getContent(),
-            'mainThumb' => $this->getMainThumb(),
-            'limitConfig' => $this->getLimitConfig(),
-            'salePrices' => $this->getSalePrices(),
-            'displaySalePrice' => $this->getDisplaySalePrice(),
-            'displayTaxPrice' => $this->getDisplayTaxPrice(),
-        ];
-    }
-
-    /**
-     * @return Collection<Tag>
-     */
-    public function getTags(): Collection
-    {
-        return $this->tags;
     }
 
     /**
@@ -671,204 +484,6 @@ class Spu implements \Stringable, Itemable, AdminArrayInterface, ResourceIdentit
         return $this->attributes;
     }
 
-    /**
-     * @return Collection<int, SpuDescriptionAttribute>
-     */
-    public function getDescriptionAttribute(): Collection
-    {
-        if ($this->descriptionAttribute->isEmpty() && isset($_ENV['PRODUCT_SPU_DEFAULT_DESCRIPTION_ATTRIBUTES'])) {
-            $json = Json::decode($_ENV['PRODUCT_SPU_DEFAULT_DESCRIPTION_ATTRIBUTES']);
-            foreach ($json as $item) {
-                $attribute = new SpuDescriptionAttribute();
-                $attribute->setName(ArrayHelper::getValue($item, 'name'));
-                $attribute->setValue(ArrayHelper::getValue($item, 'value'));
-                $this->addDescriptionAttribute($attribute);
-            }
-        }
-
-        return $this->descriptionAttribute;
-    }
-
-    public function addDescriptionAttribute(SpuDescriptionAttribute $descriptionAttribute): self
-    {
-        if (!$this->descriptionAttribute->contains($descriptionAttribute)) {
-            $this->descriptionAttribute->add($descriptionAttribute);
-            $descriptionAttribute->setSpu($this);
-        }
-
-        return $this;
-    }
-
-    /**
-     * 返回缩略图.
-     */
-    #[Groups(groups: ['restful_read'])]
-    public function getMainThumb(): string
-    {
-        // 有主图我们就用主图
-        $mainPic = $this->getMainPic();
-        if ($mainPic !== null && $mainPic !== '') {
-            return $mainPic;
-        }
-
-        if (empty($this->getThumbs())) {
-            return '';
-        }
-
-        return $this->getThumbs()[0]['url'];
-    }
-
-    #[Groups(groups: ['restful_read'])]
-    public function getLimitConfig(): ?array
-    {
-        if ($this->getLimitRules()->isEmpty()) {
-            return null;
-        }
-
-        $result = [];
-        foreach ($this->getLimitRules() as $limitRule) {
-            $result[$limitRule->getType()->value] = $limitRule->getValue();
-        }
-
-        return $result;
-    }
-
-    /**
-     * @return Collection<int, SpuLimitRule>
-     */
-    public function getLimitRules(): Collection
-    {
-        return $this->limitRules;
-    }
-
-    /**
-     * 这里计算所有可能的销售价格
-     * TODO 少了时间段的判断.
-     */
-    public function getSalePrices(): array
-    {
-        $result = [];
-        // CurrencyManager integration removed - AppBundle not available
-
-        foreach ($this->getSkus() as $sku) {
-            foreach ($sku->getSalePrices() as $price) {
-                if (!isset($result[$price->getCurrency()])) {
-                    $result[$price->getCurrency()] = [
-                        'currency' => $price->getCurrency(),
-                        'name' => $price->getCurrency(),
-                        'minSalePrice' => 0,
-                        'maxSalePrice' => 0,
-                        'minTaxPrice' => 0,
-                        'maxTaxPrice' => 0,
-                        'minTaxRate' => 0,
-                        'maxTaxRate' => 0,
-                    ];
-
-                    // Currency name lookup removed - CurrencyManager not available
-                }
-
-                $current = floatval($price->getPrice());
-                if (0 === $result[$price->getCurrency()]['minSalePrice'] || $result[$price->getCurrency()]['minSalePrice'] >= $current) {
-                    $result[$price->getCurrency()]['minSalePrice'] = $current;
-                }
-                if ($result[$price->getCurrency()]['maxSalePrice'] <= $current) {
-                    $result[$price->getCurrency()]['maxSalePrice'] = $current;
-                }
-
-                $current = floatval($price->getTaxRate());
-                if (0 === $result[$price->getCurrency()]['minTaxRate'] || $result[$price->getCurrency()]['minTaxRate'] >= $current) {
-                    $result[$price->getCurrency()]['minTaxRate'] = $current;
-                }
-                if ($result[$price->getCurrency()]['maxTaxRate'] <= $current) {
-                    $result[$price->getCurrency()]['maxTaxRate'] = $current;
-                }
-
-                $current = floatval($price->getTaxPrice());
-                if (0 === $result[$price->getCurrency()]['minTaxPrice'] || $result[$price->getCurrency()]['minTaxPrice'] >= $current) {
-                    $result[$price->getCurrency()]['minTaxPrice'] = $current;
-                }
-                if ($result[$price->getCurrency()]['maxTaxPrice'] <= $current) {
-                    $result[$price->getCurrency()]['maxTaxPrice'] = $current;
-                }
-            }
-        }
-
-        // print_r($result);exit;
-        return array_values($result);
-    }
-
-    /**
-     * 展示的最终销售价格
-     */
-    public function getDisplaySalePrice(): string
-    {
-        $result = [];
-        foreach ($this->getSalePrices() as $price) {
-            if (0 === $price['minSalePrice']) {
-                // CurrencyManager removed - using direct formatting
-                $money = number_format($price['maxSalePrice'], 2);
-            } else {
-                // CurrencyManager removed - using direct formatting
-                $minSalePrice = number_format($price['minSalePrice'], 2);
-                $maxSalePrice = number_format($price['maxSalePrice'], 2);
-                $money = $price['minSalePrice'] == $price['maxSalePrice']
-                    ? $minSalePrice
-                    : "{$minSalePrice}~{$maxSalePrice}";
-            }
-
-            $result[] = "{$money}{$price['name']}";
-        }
-
-        return implode('+', $result);
-    }
-
-    /**
-     * 展示含税价格
-     */
-    public function getDisplayTaxPrice(): string
-    {
-        $result = [];
-        foreach ($this->getSalePrices() as $price) {
-            if (0 === $price['minTaxPrice']) {
-                // CurrencyManager removed - using direct formatting
-                $money = number_format($price['maxTaxPrice'], 2);
-            } else {
-                // CurrencyManager removed - using direct formatting
-                $minTaxPrice = number_format($price['minTaxPrice'], 2);
-                $maxTaxPrice = number_format($price['maxTaxPrice'], 2);
-                $money = $price['minTaxPrice'] == $price['maxTaxPrice']
-                    ? $minTaxPrice
-                    : "{$minTaxPrice}~{$maxTaxPrice}";
-            }
-
-            $result[] = "{$money}{$price['name']}";
-        }
-
-        return implode('+', $result);
-    }
-
-    public function retrieveCheckoutArray(): array
-    {
-        $descriptionAttribute = [];
-        foreach ($this->getDescriptionAttribute() as $item) {
-            $descriptionAttribute[] = $item->retrieveCheckoutArray();
-        }
-
-        return [
-            'id' => $this->getId(),
-            'supplier' => null, // Supplier functionality removed
-            'gtin' => $this->getGtin(),
-            'title' => $this->getTitle(),
-            'subtitle' => $this->getSubtitle(),
-            'type' => $this->getType(),
-            'mainPic' => $this->getMainPic(),
-            'thumbs' => $this->getThumbs(),
-            'descriptionAttribute' => $descriptionAttribute,
-            'content' => $this->getContent(),
-            'mainThumb' => $this->getMainThumb(),
-        ];
-    }
-
     public function getResourceId(): string
     {
         return (string) $this->getId();
@@ -877,5 +492,61 @@ class Spu implements \Stringable, Itemable, AdminArrayInterface, ResourceIdentit
     public function getResourceLabel(): string
     {
         return $this->getTitle();
+    }
+
+    /**
+     * @return array<string, mixed>
+     */
+    public function retrieveSpuArray(): array
+    {
+        $skus = [];
+        foreach ($this->getSkus() as $sku) {
+            $skus[] = $sku->retrieveSkuArray();
+        }
+
+        $attributes = [];
+        foreach ($this->getAttributes() as $attribute) {
+            $attributes[] = $attribute->retrieveSpuArray();
+        }
+
+        return [
+            'id' => $this->getId(),
+            'supplier' => null,
+            'gtin' => $this->getGtin(),
+            'title' => $this->getTitle(),
+            'subtitle' => $this->getSubtitle(),
+            'type' => $this->getType(),
+            'skus' => $skus,
+            'mainPic' => $this->getMainPic(),
+            'thumbs' => $this->getThumbs(),
+            'attributes' => $attributes,
+            'content' => $this->getContent(),
+            'mainThumb' => $this->getMainThumb(),
+        ];
+    }
+
+    /**
+     * 获取主缩略图
+     */
+    private function getMainThumb(): string
+    {
+        $mainPic = $this->getMainPic();
+        if (null !== $mainPic && '' !== $mainPic) {
+            return $mainPic;
+        }
+
+        $thumbs = $this->getThumbs();
+        if (null === $thumbs || [] === $thumbs) {
+            return '';
+        }
+
+        $firstThumb = $thumbs[0] ?? null;
+        if (is_array($firstThumb) && isset($firstThumb['url'])) {
+            $url = $firstThumb['url'];
+
+            return is_string($url) ? $url : (is_scalar($url) ? (string) $url : '');
+        }
+
+        return '';
     }
 }
