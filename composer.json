@@ -39,7 +39,7 @@
     "tourze/bundle-dependency": "1.*",
     "tourze/catalog-bundle": "1.0.*",
     "tourze/doctrine-entity-lock-bundle": "1.0.*",
-    "tourze/doctrine-helper": "0.0.*",
+    "tourze/doctrine-helper": "1.0.*",
     "tourze/doctrine-indexed-bundle": "1.0.*",
     "tourze/doctrine-ip-bundle": "1.0.*",
     "tourze/doctrine-precision-bundle": "1.0.*",

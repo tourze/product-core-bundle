@@ -5,7 +5,6 @@ namespace Tourze\ProductCoreBundle\Service;
 use Symfony\Component\DependencyInjection\Attribute\Autoconfigure;
 use Tourze\ProductAttributeBundle\Entity\SkuAttribute;
 use Tourze\ProductAttributeBundle\Entity\SpuAttribute;
-use Tourze\ProductCoreBundle\Entity\Price;
 use Tourze\ProductCoreBundle\Entity\Sku;
 use Tourze\ProductCoreBundle\Entity\Spu;
 
@@ -241,17 +240,17 @@ final class ProductArrayFormatterService
     /**
      * 格式化SKU属性数组
      *
-     * @return array<mixed>
+     * @param Sku $sku
+     * @param string $method
+     * @return array
      */
     private function formatSkuAttributesArray(Sku $sku, string $method = 'retrieveSkuArray'): array
     {
         $attributes = [];
         foreach ($sku->getAttributes() as $attribute) {
             $attributes[] = match ($method) {
-                'retrieveSkuArray' => $this->formatSkuAttributeArray($attribute, 'sku'),
                 'retrieveSpuArray' => $this->formatSkuAttributeArray($attribute, 'spu'),
                 'retrieveAdminArray' => $this->formatSkuAttributeArray($attribute, 'admin'),
-                'retrieveCheckoutArray' => $this->formatSkuAttributeArray($attribute, 'sku'),
                 default => $this->formatSkuAttributeArray($attribute, 'sku'),
             };
         }
