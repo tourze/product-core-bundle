@@ -7,7 +7,6 @@ use Tourze\CatalogBundle\Entity\Catalog;
 use Tourze\EasyAdminMenuBundle\Attribute\MenuProvider;
 use Tourze\EasyAdminMenuBundle\Service\LinkGeneratorInterface;
 use Tourze\EasyAdminMenuBundle\Service\MenuProviderInterface;
-use Tourze\FreightTemplateBundle\Entity\FreightTemplate;
 use Tourze\ProductCoreBundle\Entity\Brand;
 use Tourze\ProductCoreBundle\Entity\Price;
 use Tourze\ProductCoreBundle\Entity\Sku;
@@ -31,7 +30,6 @@ final readonly class AdminMenu implements MenuProviderInterface
         $ecommerceMenu->addChild('商品规格/SKU')->setUri($this->linkGenerator->getCurdListPage(Sku::class));
         $ecommerceMenu->addChild('分类管理')->setUri($this->linkGenerator->getCurdListPage(Catalog::class));
         $ecommerceMenu->addChild('品牌管理')->setUri($this->linkGenerator->getCurdListPage(Brand::class));
-        $ecommerceMenu->addChild('运费模板')->setUri($this->linkGenerator->getCurdListPage(FreightTemplate::class));
         $ecommerceMenu->addChild('价格管理')->setUri($this->linkGenerator->getCurdListPage(Price::class));
         $ecommerceMenu->addChild('SKU打包')->setUri($this->linkGenerator->getCurdListPage(SkuPackage::class));
     }

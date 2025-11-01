@@ -13,12 +13,10 @@ use Tourze\DoctrineEntityLockBundle\DoctrineEntityLockBundle;
 use Tourze\DoctrineIndexedBundle\DoctrineIndexedBundle;
 use Tourze\DoctrineResolveTargetEntityBundle\DependencyInjection\Compiler\ResolveTargetEntityPass;
 use Tourze\DoctrineSnowflakeBundle\DoctrineSnowflakeBundle;
-use Tourze\FreightTemplateBundle\FreightTemplateBundle;
 use Tourze\JsonRPCPaginatorBundle\JsonRPCPaginatorBundle;
 use Tourze\ProductAttributeBundle\ProductAttributeBundle;
 use Tourze\ProductServiceContracts\SKU;
 use Tourze\ProductServiceContracts\SPU;
-use Tourze\Symfony\CronJob\CronJobBundle;
 use Tourze\TagManageBundle\TagManageBundle;
 
 /**
@@ -56,12 +54,10 @@ final class ProductCoreBundle extends Bundle implements BundleDependencyInterfac
             DoctrineBundle::class => ['all' => true],
             DoctrineSnowflakeBundle::class => ['all' => true],
             DoctrineIndexedBundle::class => ['all' => true],
-            CronJobBundle::class => ['all' => true],
             SecurityBundle::class => ['all' => true],
             JsonRPCPaginatorBundle::class => ['all' => true],
             DoctrineEntityLockBundle::class => ['all' => true],
             CatalogBundle::class => ['all' => true],
-            FreightTemplateBundle::class => ['all' => true],
             TagManageBundle::class => ['all' => true],
             ProductAttributeBundle::class => ['all' => true],
         ];

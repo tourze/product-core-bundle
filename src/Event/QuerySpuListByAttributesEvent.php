@@ -2,9 +2,8 @@
 
 namespace Tourze\ProductCoreBundle\Event;
 
-// use DoctrineEnhanceBundle\Traits\QueryBuilderAware; // Trait not found
 use Symfony\Contracts\EventDispatcher\Event;
-use Tourze\JsonRPCEndpointBundle\Traits\InterruptCallbackTrait;
+use Tourze\JsonRPC\Core\Traits\InterruptCallbackTrait;
 
 final class QuerySpuListByAttributesEvent extends Event
 {
