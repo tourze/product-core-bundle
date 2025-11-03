@@ -13,6 +13,7 @@ use Tourze\DoctrineEntityLockBundle\DoctrineEntityLockBundle;
 use Tourze\DoctrineIndexedBundle\DoctrineIndexedBundle;
 use Tourze\DoctrineResolveTargetEntityBundle\DependencyInjection\Compiler\ResolveTargetEntityPass;
 use Tourze\DoctrineSnowflakeBundle\DoctrineSnowflakeBundle;
+use Tourze\EasyAdminMenuBundle\EasyAdminMenuBundle;
 use Tourze\JsonRPCPaginatorBundle\JsonRPCPaginatorBundle;
 use Tourze\ProductAttributeBundle\ProductAttributeBundle;
 use Tourze\ProductServiceContracts\SKU;
@@ -60,6 +61,7 @@ final class ProductCoreBundle extends Bundle implements BundleDependencyInterfac
             CatalogBundle::class => ['all' => true],
             TagManageBundle::class => ['all' => true],
             ProductAttributeBundle::class => ['all' => true],
+            EasyAdminMenuBundle::class => ['all' => true],
         ];
     }
 
