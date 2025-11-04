@@ -45,7 +45,7 @@ final class AdminMenuTest extends AbstractEasyAdminMenuTestCase
         $mainItem = $this->createMock(ItemInterface::class);
         $childItem = $this->createMock(ItemInterface::class);
 
-        $childItem->expects($this->exactly(6))
+        $childItem->expects($this->exactly(12))
             ->method('addChild')
             ->willReturnCallback(function ($name) use ($childItem) {
                 $expectedNames = [
@@ -55,6 +55,12 @@ final class AdminMenuTest extends AbstractEasyAdminMenuTestCase
                     '品牌管理',
                     '价格管理',
                     'SKU打包',
+                    '商品属性',
+                    '属性值',
+                    '属性分组',
+                    '类目属性关联',
+                    'SPU属性',
+                    'SKU属性',
                 ];
                 $this->assertContains($name, $expectedNames);
 

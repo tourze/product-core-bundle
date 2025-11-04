@@ -18,7 +18,6 @@ use Tourze\DoctrineTrackBundle\Attribute\TrackColumn;
 use Tourze\DoctrineUserBundle\Traits\BlameableAware;
 use Tourze\EnumExtra\Itemable;
 use Tourze\LockServiceBundle\Model\LockEntity;
-use Tourze\ProductAttributeBundle\Entity\SkuAttribute;
 use Tourze\ProductCoreBundle\Repository\SkuRepository;
 
 /**
@@ -85,7 +84,7 @@ class Sku implements \Stringable, Itemable, AdminArrayInterface, LockEntity, \To
     /**
      * @var Collection<int, SkuAttribute>
      */
-    #[ORM\OneToMany(targetEntity: '\Tourze\ProductAttributeBundle\Entity\SkuAttribute', mappedBy: 'sku', cascade: ['persist'], fetch: 'EXTRA_LAZY', orphanRemoval: true)]
+    #[ORM\OneToMany(targetEntity: SkuAttribute::class, mappedBy: 'sku', cascade: ['persist'], fetch: 'EXTRA_LAZY', orphanRemoval: true)]
     private Collection $attributes;
 
     /**

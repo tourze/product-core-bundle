@@ -3,10 +3,10 @@
 namespace Tourze\ProductCoreBundle\Service;
 
 use Symfony\Component\DependencyInjection\Attribute\Autoconfigure;
-use Tourze\ProductAttributeBundle\Entity\SkuAttribute;
-use Tourze\ProductAttributeBundle\Entity\SpuAttribute;
 use Tourze\ProductCoreBundle\Entity\Sku;
+use Tourze\ProductCoreBundle\Entity\SkuAttribute;
 use Tourze\ProductCoreBundle\Entity\Spu;
+use Tourze\ProductCoreBundle\Entity\SpuAttribute;
 
 /**
  * 产品数据格式化服务

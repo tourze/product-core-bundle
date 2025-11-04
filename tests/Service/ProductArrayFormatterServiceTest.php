@@ -5,8 +5,8 @@ namespace Tourze\ProductCoreBundle\Tests\Service;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\RunTestsInSeparateProcesses;
 use Tourze\PHPUnitSymfonyKernelTest\AbstractIntegrationTestCase;
-use Tourze\ProductAttributeBundle\Entity\SkuAttribute;
 use Tourze\ProductCoreBundle\Entity\Sku;
+use Tourze\ProductCoreBundle\Entity\SkuAttribute;
 use Tourze\ProductCoreBundle\Entity\Spu;
 use Tourze\ProductCoreBundle\Service\ProductArrayFormatterService;
 

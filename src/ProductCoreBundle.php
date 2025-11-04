@@ -13,9 +13,10 @@ use Tourze\DoctrineEntityLockBundle\DoctrineEntityLockBundle;
 use Tourze\DoctrineIndexedBundle\DoctrineIndexedBundle;
 use Tourze\DoctrineResolveTargetEntityBundle\DependencyInjection\Compiler\ResolveTargetEntityPass;
 use Tourze\DoctrineSnowflakeBundle\DoctrineSnowflakeBundle;
+use Tourze\DoctrineTimestampBundle\DoctrineTimestampBundle;
+use Tourze\DoctrineUserBundle\DoctrineUserBundle;
 use Tourze\EasyAdminMenuBundle\EasyAdminMenuBundle;
 use Tourze\JsonRPCPaginatorBundle\JsonRPCPaginatorBundle;
-use Tourze\ProductAttributeBundle\ProductAttributeBundle;
 use Tourze\ProductServiceContracts\SKU;
 use Tourze\ProductServiceContracts\SPU;
 use Tourze\TagManageBundle\TagManageBundle;
@@ -60,8 +61,9 @@ final class ProductCoreBundle extends Bundle implements BundleDependencyInterfac
             DoctrineEntityLockBundle::class => ['all' => true],
             CatalogBundle::class => ['all' => true],
             TagManageBundle::class => ['all' => true],
-            ProductAttributeBundle::class => ['all' => true],
             EasyAdminMenuBundle::class => ['all' => true],
+            DoctrineTimestampBundle::class => ['all' => true],
+            DoctrineUserBundle::class => ['all' => true],
         ];
     }
 

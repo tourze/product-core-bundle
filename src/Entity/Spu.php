@@ -17,7 +17,6 @@ use Tourze\DoctrineTimestampBundle\Traits\TimestampableAware;
 use Tourze\DoctrineTrackBundle\Attribute\TrackColumn;
 use Tourze\DoctrineUserBundle\Traits\BlameableAware;
 use Tourze\EnumExtra\Itemable;
-use Tourze\ProductAttributeBundle\Entity\SpuAttribute;
 use Tourze\ProductCoreBundle\Enum\SpuState;
 use Tourze\ProductCoreBundle\Repository\SpuRepository;
 use Tourze\ResourceManageBundle\Model\ResourceIdentity;
