@@ -67,4 +67,18 @@ final readonly class SkuService implements SkuServiceInterface
 
         return $this->skuRepository->findBy(['id' => $ids]);
     }
+
+    public function findByGtin(string $gtin): ?Sku
+    {
+        return $this->skuRepository->findOneBy(['gtin' => $gtin]);
+    }
+
+    public function findByGtins(array $gtins): array
+    {
+        if ([] === $gtins) {
+            return [];
+        }
+
+        return $this->skuRepository->findBy(['gtin' => $gtins]);
+    }
 }

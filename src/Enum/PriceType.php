@@ -19,6 +19,7 @@ enum PriceType: string implements Labelable, Itemable, Selectable
     case FREIGHT = 'freight';
     case MARKETING = 'marketing';
     case ORIGINAL_PRICE = 'original_price';
+    case COUPON_DISCOUNT = 'coupon_discount';
 
     public function getLabel(): string
     {
@@ -29,6 +30,7 @@ enum PriceType: string implements Labelable, Itemable, Selectable
             self::FREIGHT => '物流费用',
             self::MARKETING => '营销费用',
             self::ORIGINAL_PRICE => '原价',
+            self::COUPON_DISCOUNT => '优惠券优惠',
         };
     }
 }

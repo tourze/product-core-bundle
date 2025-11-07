@@ -33,4 +33,17 @@ interface SkuServiceInterface
      * @return Sku[]
      */
     public function findByIds(array $ids): array;
+
+    /**
+     * 根据ID查找SKU
+     */
+    public function findByGtin(string $gtin): ?Sku;
+
+    /**
+     * 根据gtin列表批量查找SKU
+     *
+     * @param string[] $gtins
+     * @return Sku[]
+     */
+    public function findByGtins(array $gtins): array;
 }
