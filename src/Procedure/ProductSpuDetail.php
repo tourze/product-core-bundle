@@ -94,7 +94,9 @@ final class ProductSpuDetail extends CacheableProcedure
         $event->setReceiver(SystemUser::instance());
         $this->eventDispatcher->dispatch($event);
 
-        return $event->getResult();
+        $result = $event->getResult();
+        /** @var array<string, mixed> $result */
+        return $result;
     }
 
     public function getCacheKey(JsonRpcRequest $request): string

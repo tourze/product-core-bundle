@@ -56,7 +56,7 @@ final class ProductSkuPackageCrudController extends AbstractCrudController
                 'class' => PackageType::class,
                 'choice_label' => fn (PackageType $choice) => $choice->getLabel(),
             ])
-            ->formatValue(fn ($value) => $value?->getLabel())
+            ->formatValue(fn ($value) => $value instanceof PackageType ? $value->getLabel() : $value)
         ;
         yield TextField::new('value', '属性值');
         yield IntegerField::new('quantity', '数量');

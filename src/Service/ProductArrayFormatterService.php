@@ -242,7 +242,7 @@ final class ProductArrayFormatterService
      *
      * @param Sku $sku
      * @param string $method
-     * @return array
+     * @return list<array<string, mixed>>
      */
     private function formatSkuAttributesArray(Sku $sku, string $method = 'retrieveSkuArray'): array
     {

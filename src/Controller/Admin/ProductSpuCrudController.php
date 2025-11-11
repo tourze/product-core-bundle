@@ -81,7 +81,7 @@ final class ProductSpuCrudController extends AbstractCrudController
                 'class' => SpuState::class,
                 'choice_label' => fn (SpuState $choice) => $choice->getLabel(),
             ])
-            ->formatValue(fn ($value) => $value?->getLabel())
+            ->formatValue(fn ($value) => $value instanceof SpuState ? $value->getLabel() : $value)
             ->setHelp('商品状态：上架/下架等')
         ;
 

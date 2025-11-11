@@ -106,9 +106,10 @@ final class AttributeValueCrudController extends AbstractCrudController
                 if (is_string($value)) {
                     // 尝试解析JSON，如果失败则直接返回
                     $decoded = json_decode($value, true);
-                    if (json_last_error() === JSON_ERROR_NONE) {
+                    if (JSON_ERROR_NONE === json_last_error()) {
                         return json_encode($decoded, JSON_UNESCAPED_UNICODE | JSON_PRETTY_PRINT);
                     }
+
                     return $value;
                 }
 

@@ -86,7 +86,12 @@ final class SpuService
             ->getResult()
         ;
 
-        return is_array($result) ? array_column($result, 'id') : [];
+        if (!is_array($result)) {
+            return [];
+        }
+        $ids = array_column($result, 'id');
+        /** @var array<string> $ids */
+        return $ids;
     }
 
     /**
