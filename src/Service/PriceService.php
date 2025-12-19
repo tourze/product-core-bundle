@@ -3,10 +3,8 @@
 namespace Tourze\ProductCoreBundle\Service;
 
 use Symfony\Component\DependencyInjection\Attribute\Autoconfigure;
-use Tourze\ProductCoreBundle\Entity\Price;
 use Tourze\ProductCoreBundle\Entity\Sku;
 use Tourze\ProductCoreBundle\Enum\PriceType;
-use Tourze\ProductCoreBundle\Repository\PriceRepository;
 
 /**
  * 价格服务
@@ -14,11 +12,6 @@ use Tourze\ProductCoreBundle\Repository\PriceRepository;
 #[Autoconfigure(public: true)]
 final class PriceService
 {
-    public function __construct(
-        private readonly PriceRepository $priceRepository,
-    ) {
-    }
-
     /**
      * 获取SKU价格（根据类型）
      */
@@ -41,28 +34,6 @@ final class PriceService
     }
 
     /**
-     * 根据运费ID和SKU列表查找运费价格
-     *
-     * @param array<Sku> $skus
-     */
-    public function findFreightPriceBySkus(string $freightId, array $skus): ?Price
-    {
-        return $this->priceRepository->findOneBy([
-            'id' => $freightId,
-            'type' => PriceType::FREIGHT,
-            'sku' => array_values($skus),
-        ]);
-    }
-
-    /**
-     * 根据ID查找价格
-     */
-    public function findPriceById(string $priceId): ?Price
-    {
-        return $this->priceRepository->find($priceId);
-    }
-
-    /**
      * 获取成本价
      */
     public function getCostPrice(Sku $sku): ?string
@@ -79,12 +50,26 @@ final class PriceService
     }
 
     /**
-     * 获取SKU的所有价格记录
-     *
-     * @return array<Price>
+     * 获取积分价格
      */
-    public function getPricesBySku(Sku $sku): array
+    public function getIntegralPrice(Sku $sku): ?int
     {
-        return $this->priceRepository->findBy(['sku' => $sku]);
+        return $sku->getIntegralPrice();
+    }
+
+    /**
+     * 获取币种
+     */
+    public function getCurrency(Sku $sku): string
+    {
+        return $sku->getCurrency();
+    }
+
+    /**
+     * 获取税率
+     */
+    public function getTaxRate(Sku $sku): ?float
+    {
+        return $sku->getTaxRate();
     }
 }

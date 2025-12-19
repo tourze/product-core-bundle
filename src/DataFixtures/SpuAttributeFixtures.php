@@ -10,7 +10,7 @@ use Doctrine\Persistence\ObjectManager;
 use Tourze\ProductCoreBundle\Entity\Spu;
 use Tourze\ProductCoreBundle\Entity\SpuAttribute;
 
-class SpuAttributeFixtures extends Fixture implements DependentFixtureInterface
+final class SpuAttributeFixtures extends Fixture implements DependentFixtureInterface
 {
     public function load(ObjectManager $manager): void
     {

@@ -22,7 +22,7 @@ use Tourze\ProductCoreBundle\Repository\SpuAttributeRepository;
  */
 #[CoversClass(SpuAttributeRepository::class)]
 #[RunTestsInSeparateProcesses]
-class SpuAttributeRepositoryTest extends AbstractRepositoryTestCase
+final class SpuAttributeRepositoryTest extends AbstractRepositoryTestCase
 {
     protected function getRepositoryClass(): string
     {

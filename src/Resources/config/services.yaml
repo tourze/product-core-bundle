@@ -14,11 +14,7 @@ services:
   Tourze\ProductCoreBundle\Service\:
     resource: '../../Service/'
 
-  # 根级别的类
+  # 根级别的类（不在子目录中，需要显式注册）
   Tourze\ProductCoreBundle\ProductTagFetcher: ~
   Tourze\ProductCoreBundle\ProductTypeFetcher: ~
   Tourze\ProductCoreBundle\ProductTypeProvider: ~
-
-  # 自动读取标签相关配置
-  product.tag.fetcher:
-    class: Tourze\ProductCoreBundle\ProductTagFetcher

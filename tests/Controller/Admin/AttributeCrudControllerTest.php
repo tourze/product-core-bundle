@@ -20,7 +20,7 @@ use Tourze\ProductCoreBundle\Repository\AttributeRepository;
  */
 #[CoversClass(AttributeCrudController::class)]
 #[RunTestsInSeparateProcesses]
-class AttributeCrudControllerTest extends AbstractEasyAdminControllerTestCase
+final class AttributeCrudControllerTest extends AbstractEasyAdminControllerTestCase
 {
     private AttributeRepository $attributeRepository;
 

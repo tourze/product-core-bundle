@@ -15,7 +15,7 @@ use Tourze\ProductCoreBundle\Entity\SpuAttribute;
  * @extends ServiceEntityRepository<SpuAttribute>
  */
 #[AsRepository(entityClass: SpuAttribute::class)]
-class SpuAttributeRepository extends ServiceEntityRepository
+final class SpuAttributeRepository extends ServiceEntityRepository
 {
     public function __construct(
         ManagerRegistry $registry,

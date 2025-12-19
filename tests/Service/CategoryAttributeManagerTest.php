@@ -4,334 +4,364 @@ declare(strict_types=1);
 
 namespace Tourze\ProductCoreBundle\Tests\Service;
 
-use Doctrine\ORM\EntityManagerInterface;
 use PHPUnit\Framework\Attributes\CoversClass;
-use PHPUnit\Framework\MockObject\MockObject;
-use PHPUnit\Framework\TestCase;
+use PHPUnit\Framework\Attributes\RunTestsInSeparateProcesses;
 use Tourze\CatalogBundle\Entity\Catalog;
+use Tourze\CatalogBundle\Entity\CatalogType;
+use Tourze\PHPUnitSymfonyKernelTest\AbstractIntegrationTestCase;
 use Tourze\ProductCoreBundle\Entity\Attribute;
 use Tourze\ProductCoreBundle\Entity\AttributeGroup;
 use Tourze\ProductCoreBundle\Entity\CategoryAttribute;
-use Tourze\ProductCoreBundle\Repository\CategoryAttributeRepository;
 use Tourze\ProductCoreBundle\Service\CategoryAttributeManager;
 
 /**
  * @internal
  */
 #[CoversClass(CategoryAttributeManager::class)]
-class CategoryAttributeManagerTest extends TestCase
+#[RunTestsInSeparateProcesses]
+final class CategoryAttributeManagerTest extends AbstractIntegrationTestCase
 {
     private CategoryAttributeManager $service;
 
-    private EntityManagerInterface&MockObject $entityManager;
-
-    private CategoryAttributeRepository&MockObject $repository;
-
-    private Catalog&MockObject $mockCategory;
-
-    private Attribute&MockObject $mockAttribute;
-
-    private AttributeGroup&MockObject $mockGroup;
-
-    protected function setUp(): void
+    protected function onSetUp(): void
     {
-        parent::setUp();
-
-        $this->entityManager = $this->createMock(EntityManagerInterface::class);
-        $this->repository = $this->createMock(CategoryAttributeRepository::class);
-        $this->service = new CategoryAttributeManager($this->entityManager, $this->repository);
-
-        $this->createMockData();
+        $this->service = self::getService(CategoryAttributeManager::class);
+        $this->cleanupTestData();
     }
 
-    private function createMockData(): void
+    protected function onTearDown(): void
     {
-        $this->mockCategory = $this->createMock(Catalog::class);
-
-        $this->mockAttribute = $this->createMock(Attribute::class);
-        $this->mockAttribute->method('getName')->willReturn('Test Attribute');
-
-        $this->mockGroup = $this->createMock(AttributeGroup::class);
+        $this->cleanupTestData();
     }
 
     public function testAssociateAttributeCreatesNewAssociation(): void
     {
-        // 模拟不存在现有关联
-        $this->repository
-            ->expects($this->once())
-            ->method('findOneBy')
-            ->with([
-                'category' => $this->mockCategory,
-                'attribute' => $this->mockAttribute,
-            ])
-            ->willReturn(null)
-        ;
-
-        $this->entityManager
-            ->expects($this->once())
-            ->method('persist')
-            ->with(self::isInstanceOf(CategoryAttribute::class))
-        ;
-
-        $this->entityManager
-            ->expects($this->once())
-            ->method('flush')
-        ;
+        $catalog = $this->createTestCatalog('TEST-CATALOG-NEW-ASSOC');
+        $attribute = $this->createTestAttribute('TEST-ATTR-NEW-ASSOC');
+        $group = $this->createTestAttributeGroup('TEST-ATTRGROUP-NEW-ASSOC');
 
         $result = $this->service->associateAttribute(
-            $this->mockCategory,
-            $this->mockAttribute,
-            $this->mockGroup,
+            $catalog,
+            $attribute,
+            $group,
             ['isRequired' => true, 'sortOrder' => 10]
         );
 
         $this->assertInstanceOf(CategoryAttribute::class, $result);
+        $this->assertSame($catalog, $result->getCategory());
+        $this->assertSame($attribute, $result->getAttribute());
+        $this->assertSame($group, $result->getGroup());
+        $this->assertTrue($result->getIsRequired());
+        $this->assertSame(10, $result->getSortOrder());
     }
 
     public function testAssociateAttributeUpdatesExistingAssociation(): void
     {
-        $existingCategoryAttribute = $this->createMock(CategoryAttribute::class);
+        $catalog = $this->createTestCatalog('TEST-CATALOG-UPDATE-ASSOC');
+        $attribute = $this->createTestAttribute('TEST-ATTR-UPDATE-ASSOC');
+        $group1 = $this->createTestAttributeGroup('TEST-ATTRGROUP-UPDATE-ASSOC-1');
+        $group2 = $this->createTestAttributeGroup('TEST-ATTRGROUP-UPDATE-ASSOC-2');
 
-        // 模拟存在现有关联
-        $this->repository
-            ->expects($this->once())
-            ->method('findOneBy')
-            ->with([
-                'category' => $this->mockCategory,
-                'attribute' => $this->mockAttribute,
-            ])
-            ->willReturn($existingCategoryAttribute)
-        ;
+        // 首次关联
+        $first = $this->service->associateAttribute(
+            $catalog,
+            $attribute,
+            $group1,
+            ['isRequired' => false]
+        );
+        $firstId = $first->getId();
 
-        $this->entityManager
-            ->expects($this->once())
-            ->method('flush')
-        ;
-
+        // 再次关联，应该更新现有记录
         $result = $this->service->associateAttribute(
-            $this->mockCategory,
-            $this->mockAttribute,
-            $this->mockGroup,
+            $catalog,
+            $attribute,
+            $group2,
             ['isRequired' => true]
         );
 
-        $this->assertSame($existingCategoryAttribute, $result);
+        $this->assertSame($firstId, $result->getId());
+        $this->assertSame($group2, $result->getGroup());
+        $this->assertTrue($result->getIsRequired());
     }
 
     public function testBatchAssociate(): void
     {
+        $catalog = $this->createTestCatalog('TEST-CATALOG-BATCH');
+        $attribute1 = $this->createTestAttribute('TEST-ATTR-BATCH-1');
+        $attribute2 = $this->createTestAttribute('TEST-ATTR-BATCH-2');
+        $group = $this->createTestAttributeGroup('TEST-ATTRGROUP-BATCH');
+
         $attributesData = [
             [
-                'attribute' => $this->mockAttribute,
-                'group' => $this->mockGroup,
+                'attribute' => $attribute1,
+                'group' => $group,
                 'isRequired' => true,
                 'sortOrder' => 5,
             ],
             [
-                'attribute' => $this->mockAttribute,
+                'attribute' => $attribute2,
                 'isVisible' => false,
             ],
         ];
 
-        // 模拟不存在现有关联
-        $this->repository
-            ->method('findOneBy')
-            ->willReturn(null)
-        ;
-
-        $this->entityManager
-            ->expects($this->exactly(2))
-            ->method('persist')
-        ;
-
-        $this->entityManager
-            ->expects($this->exactly(2))
-            ->method('flush')
-        ;
-
-        $result = $this->service->batchAssociate($this->mockCategory, $attributesData);
+        $result = $this->service->batchAssociate($catalog, $attributesData);
 
         $this->assertCount(2, $result);
         $this->assertContainsOnlyInstancesOf(CategoryAttribute::class, $result);
+        $this->assertSame($attribute1, $result[0]->getAttribute());
+        $this->assertTrue($result[0]->getIsRequired());
+        $this->assertSame(5, $result[0]->getSortOrder());
+        $this->assertSame($attribute2, $result[1]->getAttribute());
+        $this->assertFalse($result[1]->isVisible());
     }
 
     public function testUpdateCategoryAttribute(): void
     {
-        $categoryAttribute = $this->createMock(CategoryAttribute::class);
-        $data = ['isRequired' => false, 'sortOrder' => 20];
+        $catalog = $this->createTestCatalog('TEST-CATALOG-UPDATE');
+        $attribute = $this->createTestAttribute('TEST-ATTR-UPDATE');
 
-        $this->entityManager
-            ->expects($this->once())
-            ->method('flush')
-        ;
+        $categoryAttribute = $this->service->associateAttribute(
+            $catalog,
+            $attribute,
+            null,
+            ['isRequired' => true, 'sortOrder' => 10]
+        );
+
+        $data = ['isRequired' => false, 'sortOrder' => 20];
 
         $result = $this->service->updateCategoryAttribute($categoryAttribute, $data);
 
         $this->assertSame($categoryAttribute, $result);
+        $this->assertFalse($result->getIsRequired());
+        $this->assertSame(20, $result->getSortOrder());
     }
 
     public function testDissociateAttributeWithExistingAssociation(): void
     {
-        $categoryAttribute = $this->createMock(CategoryAttribute::class);
+        $catalog = $this->createTestCatalog('TEST-CATALOG-DISSOC');
+        $attribute = $this->createTestAttribute('TEST-ATTR-DISSOC');
 
-        $this->repository
-            ->expects($this->once())
-            ->method('findOneBy')
-            ->with([
-                'category' => $this->mockCategory,
-                'attribute' => $this->mockAttribute,
-            ])
-            ->willReturn($categoryAttribute)
-        ;
+        $this->service->associateAttribute($catalog, $attribute);
 
-        $this->entityManager
-            ->expects($this->once())
-            ->method('remove')
-            ->with($categoryAttribute)
-        ;
+        $em = self::getEntityManager();
+        $em->clear();
 
-        $this->entityManager
-            ->expects($this->once())
-            ->method('flush')
-        ;
+        // 验证关联存在
+        $repository = $em->getRepository(CategoryAttribute::class);
+        $before = $repository->findOneBy([
+            'category' => $catalog,
+            'attribute' => $attribute,
+        ]);
+        $this->assertInstanceOf(CategoryAttribute::class, $before);
 
-        $this->service->dissociateAttribute($this->mockCategory, $this->mockAttribute);
+        // 移除关联
+        $this->service->dissociateAttribute($catalog, $attribute);
+
+        $em->clear();
+
+        // 验证关联已被删除
+        $after = $repository->findOneBy([
+            'category' => $catalog,
+            'attribute' => $attribute,
+        ]);
+        $this->assertNull($after);
     }
 
     public function testDissociateAttributeWithNoExistingAssociation(): void
     {
-        $this->repository
-            ->expects($this->once())
-            ->method('findOneBy')
-            ->with([
-                'category' => $this->mockCategory,
-                'attribute' => $this->mockAttribute,
-            ])
-            ->willReturn(null)
-        ;
+        $catalog = $this->createTestCatalog('TEST-CATALOG-DISSOC-NONE');
+        $attribute = $this->createTestAttribute('TEST-ATTR-DISSOC-NONE');
 
-        $this->entityManager
-            ->expects($this->never())
-            ->method('remove')
-        ;
+        // 移除不存在的关联，应该不报错
+        $this->service->dissociateAttribute($catalog, $attribute);
 
-        $this->entityManager
-            ->expects($this->never())
-            ->method('flush')
-        ;
-
-        $this->service->dissociateAttribute($this->mockCategory, $this->mockAttribute);
+        // 验证没有异常抛出
+        $this->assertTrue(true);
     }
 
     public function testAssociateAttributeWithMinimalOptions(): void
     {
-        $this->repository
-            ->method('findOneBy')
-            ->willReturn(null)
-        ;
+        $catalog = $this->createTestCatalog('TEST-CATALOG-MINIMAL');
+        $attribute = $this->createTestAttribute('TEST-ATTR-MINIMAL');
 
-        $this->entityManager
-            ->expects($this->once())
-            ->method('persist')
-        ;
-
-        $this->entityManager
-            ->expects($this->once())
-            ->method('flush')
-        ;
-
-        $result = $this->service->associateAttribute($this->mockCategory, $this->mockAttribute);
+        $result = $this->service->associateAttribute($catalog, $attribute);
 
         $this->assertInstanceOf(CategoryAttribute::class, $result);
+        $this->assertSame($catalog, $result->getCategory());
+        $this->assertSame($attribute, $result->getAttribute());
+        $this->assertNull($result->getGroup());
     }
 
     public function testCopyAttributesToCategory(): void
     {
-        $targetCategory = $this->createMock(Catalog::class);
+        $sourceCategory = $this->createTestCatalog('TEST-CATALOG-COPY-SOURCE');
+        $targetCategory = $this->createTestCatalog('TEST-CATALOG-COPY-TARGET');
+        $attribute = $this->createTestAttribute('TEST-ATTR-COPY');
+        $group = $this->createTestAttributeGroup('TEST-ATTRGROUP-COPY');
 
-        $sourceCategoryAttribute = $this->createMock(CategoryAttribute::class);
-        $sourceCategoryAttribute->method('getAttribute')->willReturn($this->mockAttribute);
-        $sourceCategoryAttribute->method('getGroup')->willReturn($this->mockGroup);
-        $sourceCategoryAttribute->method('getIsRequired')->willReturn(true);
-        $sourceCategoryAttribute->method('isVisible')->willReturn(true);
-        $sourceCategoryAttribute->method('getDefaultValue')->willReturn('default');
-        $sourceCategoryAttribute->method('getAllowedValues')->willReturn(['value1', 'value2']);
-        $sourceCategoryAttribute->method('getSortOrder')->willReturn(10);
-        $sourceCategoryAttribute->method('getConfig')->willReturn(['key' => 'value']);
+        // 为源类目添加属性
+        $this->service->associateAttribute(
+            $sourceCategory,
+            $attribute,
+            $group,
+            [
+                'isRequired' => true,
+                'isVisible' => true,
+                'defaultValue' => 'default',
+                'allowedValues' => ['value1', 'value2'],
+                'sortOrder' => 10,
+                'config' => ['key' => 'value'],
+            ]
+        );
 
-        // 模拟从源类目获取属性
-        $this->repository
-            ->expects($this->once())
-            ->method('findByCategory')
-            ->with($this->mockCategory)
-            ->willReturn([$sourceCategoryAttribute])
-        ;
-
-        // 期望持久化新的类目属性关联
-        $this->entityManager
-            ->expects($this->once())
-            ->method('persist')
-            ->with(self::isInstanceOf(CategoryAttribute::class))
-        ;
-
-        $this->entityManager
-            ->expects($this->once())
-            ->method('flush')
-        ;
-
-        $result = $this->service->copyAttributesToCategory($this->mockCategory, $targetCategory);
+        // 复制到目标类目
+        $result = $this->service->copyAttributesToCategory($sourceCategory, $targetCategory);
 
         $this->assertCount(1, $result);
         $this->assertContainsOnlyInstancesOf(CategoryAttribute::class, $result);
+
+        $copied = $result[0];
+        $this->assertSame($targetCategory, $copied->getCategory());
+        $this->assertSame($attribute, $copied->getAttribute());
+        $this->assertSame($group, $copied->getGroup());
+        $this->assertTrue($copied->getIsRequired());
+        $this->assertTrue($copied->isVisible());
+        $this->assertSame('default', $copied->getDefaultValue());
+        $this->assertSame(['value1', 'value2'], $copied->getAllowedValues());
+        $this->assertSame(10, $copied->getSortOrder());
+        $this->assertSame(['key' => 'value'], $copied->getConfig());
     }
 
     public function testCopyAttributesToCategoryWithEmptySource(): void
     {
-        $targetCategory = $this->createMock(Catalog::class);
+        $sourceCategory = $this->createTestCatalog('TEST-CATALOG-COPY-EMPTY-SOURCE');
+        $targetCategory = $this->createTestCatalog('TEST-CATALOG-COPY-EMPTY-TARGET');
 
-        // 模拟源类目没有属性
-        $this->repository
-            ->expects($this->once())
-            ->method('findByCategory')
-            ->with($this->mockCategory)
-            ->willReturn([])
-        ;
-
-        // 不应该调用持久化操作
-        $this->entityManager
-            ->expects($this->never())
-            ->method('persist')
-        ;
-
-        // 即使没有属性，flush仍然会被调用（这是Service的实现逻辑）
-        $this->entityManager
-            ->expects($this->once())
-            ->method('flush')
-        ;
-
-        $result = $this->service->copyAttributesToCategory($this->mockCategory, $targetCategory);
+        // 源类目没有属性
+        $result = $this->service->copyAttributesToCategory($sourceCategory, $targetCategory);
 
         $this->assertCount(0, $result);
     }
 
     public function testDissociateAllAttributes(): void
     {
-        // 模拟调用repository的removeAllByCategory方法
-        $this->repository
-            ->expects($this->once())
-            ->method('removeAllByCategory')
-            ->with($this->mockCategory)
-        ;
+        $catalog = $this->createTestCatalog('TEST-CATALOG-DISSOC-ALL');
+        $attribute1 = $this->createTestAttribute('TEST-ATTR-DISSOC-ALL-1');
+        $attribute2 = $this->createTestAttribute('TEST-ATTR-DISSOC-ALL-2');
 
-        $this->service->dissociateAllAttributes($this->mockCategory);
+        // 添加多个属性
+        $this->service->associateAttribute($catalog, $attribute1);
+        $this->service->associateAttribute($catalog, $attribute2);
+
+        $em = self::getEntityManager();
+        $em->clear();
+
+        // 验证关联存在
+        $repository = $em->getRepository(CategoryAttribute::class);
+        $before = $repository->findBy(['category' => $catalog]);
+        $this->assertCount(2, $before);
+
+        // 移除所有关联
+        $this->service->dissociateAllAttributes($catalog);
+
+        $em->clear();
+
+        // 验证所有关联已被删除
+        $after = $repository->findBy(['category' => $catalog]);
+        $this->assertCount(0, $after);
     }
 
     public function testBasicOperations(): void
     {
-        $service = new CategoryAttributeManager(
-            $this->entityManager,
-            $this->repository
-        );
+        $service = self::getService(CategoryAttributeManager::class);
         $this->assertInstanceOf(CategoryAttributeManager::class, $service);
+    }
+
+    private function createTestCatalog(string $name): Catalog
+    {
+        $catalogType = new CatalogType();
+        $catalogType->setCode('test_catalog_type_' . uniqid());
+        $catalogType->setName('Test Catalog Type');
+
+        $catalog = new Catalog();
+        $catalog->setType($catalogType);
+        $catalog->setName($name);
+
+        $em = self::getEntityManager();
+        $em->persist($catalogType);
+        $em->persist($catalog);
+        $em->flush();
+
+        return $catalog;
+    }
+
+    private function createTestAttribute(string $code): Attribute
+    {
+        $attr = new Attribute();
+        $attr->setCode($code);
+        $attr->setName('Test Attribute ' . $code);
+
+        $em = self::getEntityManager();
+        $em->persist($attr);
+        $em->flush();
+
+        return $attr;
+    }
+
+    private function createTestAttributeGroup(string $code): AttributeGroup
+    {
+        $group = new AttributeGroup();
+        $group->setCode($code);
+        $group->setName('Test Group ' . $code);
+
+        $em = self::getEntityManager();
+        $em->persist($group);
+        $em->flush();
+
+        return $group;
+    }
+
+    private function cleanupTestData(): void
+    {
+        try {
+            $em = self::getEntityManager();
+            if (!$em->isOpen() || !$em->getConnection()->isConnected()) {
+                return;
+            }
+
+            // 清理顺序很重要：先清理关联表，再清理主表
+            $connection = $em->getConnection();
+
+            // 1. CategoryAttribute (关联表)
+            $connection->executeStatement(
+                "DELETE ca FROM product_category_attribute ca
+                 INNER JOIN product_attribute a ON ca.attribute_id = a.id
+                 WHERE a.code LIKE 'TEST-ATTR-%'"
+            );
+
+            // 2. AttributeGroup
+            $connection->executeStatement(
+                "DELETE FROM product_attribute_group WHERE code LIKE 'TEST-ATTRGROUP-%'"
+            );
+
+            // 3. Attribute
+            $connection->executeStatement(
+                "DELETE FROM product_attribute WHERE code LIKE 'TEST-ATTR-%'"
+            );
+
+            // 4. Catalog
+            $connection->executeStatement(
+                "DELETE FROM catalogs WHERE name LIKE 'TEST-CATALOG-%'"
+            );
+
+            // 5. CatalogType (清理所有测试创建的临时类型)
+            $connection->executeStatement(
+                "DELETE FROM catalog_types WHERE code LIKE 'test_catalog_type_%'"
+            );
+
+            $em->clear();
+        } catch (\Exception $e) {
+            // ignore cleanup errors
+        }
     }
 }

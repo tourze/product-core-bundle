@@ -12,7 +12,7 @@ use Tourze\ProductCoreBundle\Enum\AttributeStatus;
  * @internal
  */
 #[CoversClass(AttributeStatus::class)]
-class AttributeStatusTest extends AbstractEnumTestCase
+final class AttributeStatusTest extends AbstractEnumTestCase
 {
     public function testEnumValues(): void
     {

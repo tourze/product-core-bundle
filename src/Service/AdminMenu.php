@@ -12,7 +12,6 @@ use Tourze\ProductCoreBundle\Entity\AttributeGroup;
 use Tourze\ProductCoreBundle\Entity\AttributeValue;
 use Tourze\ProductCoreBundle\Entity\Brand;
 use Tourze\ProductCoreBundle\Entity\CategoryAttribute;
-use Tourze\ProductCoreBundle\Entity\Price;
 use Tourze\ProductCoreBundle\Entity\Sku;
 use Tourze\ProductCoreBundle\Entity\SkuAttribute;
 use Tourze\ProductCoreBundle\Entity\SkuPackage;
@@ -36,7 +35,6 @@ final readonly class AdminMenu implements MenuProviderInterface
         $root->addChild('商品规格/SKU')->setUri($this->linkGenerator->getCurdListPage(Sku::class));
         $root->addChild('分类管理')->setUri($this->linkGenerator->getCurdListPage(Catalog::class));
         $root->addChild('品牌管理')->setUri($this->linkGenerator->getCurdListPage(Brand::class));
-        $root->addChild('价格管理')->setUri($this->linkGenerator->getCurdListPage(Price::class));
         $root->addChild('SKU打包')->setUri($this->linkGenerator->getCurdListPage(SkuPackage::class));
 
         // 属性管理菜单

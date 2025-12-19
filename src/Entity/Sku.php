@@ -129,6 +129,19 @@ class Sku implements \Stringable, Itemable, AdminArrayInterface, LockEntity, \To
     #[Assert\PositiveOrZero(message: '原价必须大于等于0')]
     private ?string $originalPrice = null;
 
+    #[Assert\NotBlank(message: '币种不能为空')]
+    #[Assert\Length(max: 10, maxMessage: '币种长度不能超过 {{ limit }} 个字符')]
+    #[ORM\Column(type: Types::STRING, length: 10, options: ['default' => 'CNY', 'comment' => '币种'])]
+    private string $currency = 'CNY';
+
+    #[ORM\Column(type: Types::INTEGER, nullable: true, options: ['comment' => '积分价格'])]
+    #[Assert\PositiveOrZero(message: '积分价格必须大于等于0')]
+    private ?int $integralPrice = null;
+
+    #[ORM\Column(type: Types::FLOAT, nullable: true, options: ['comment' => '税率(%)'])]
+    #[Assert\Range(notInRangeMessage: '税率必须在 {{ min }}% 到 {{ max }}% 之间', min: 0, max: 100)]
+    private ?float $taxRate = null;
+
     public function __construct()
     {
         $this->attributes = new ArrayCollection();
@@ -440,6 +453,12 @@ class Sku implements \Stringable, Itemable, AdminArrayInterface, LockEntity, \To
             'needConsignee' => $this->isNeedConsignee(),
             'thumbs' => $this->getThumbs(),
             'salesCount' => $this->getSalesReal() + $this->getSalesVirtual(),
+            'currency' => $this->getCurrency(),
+            'integralPrice' => $this->getIntegralPrice(),
+            'taxRate' => $this->getTaxRate(),
+            'marketPrice' => $this->getMarketPrice(),
+            'costPrice' => $this->getCostPrice(),
+            'originalPrice' => $this->getOriginalPrice(),
         ];
     }
 
@@ -502,6 +521,9 @@ class Sku implements \Stringable, Itemable, AdminArrayInterface, LockEntity, \To
             'marketPrice' => $this->getMarketPrice(),
             'costPrice' => $this->getCostPrice(),
             'originalPrice' => $this->getOriginalPrice(),
+            'currency' => $this->getCurrency(),
+            'integralPrice' => $this->getIntegralPrice(),
+            'taxRate' => $this->getTaxRate(),
         ];
     }
 
@@ -608,6 +630,39 @@ class Sku implements \Stringable, Itemable, AdminArrayInterface, LockEntity, \To
             'mpn' => $this->getMpn(),
             'unit' => $this->getUnit(),
             'thumbs' => $this->getThumbs(),
+            'currency' => $this->getCurrency(),
+            'integralPrice' => $this->getIntegralPrice(),
+            'taxRate' => $this->getTaxRate(),
         ];
+    }
+
+    public function getCurrency(): string
+    {
+        return $this->currency;
+    }
+
+    public function setCurrency(string $currency): void
+    {
+        $this->currency = $currency;
+    }
+
+    public function getIntegralPrice(): ?int
+    {
+        return $this->integralPrice;
+    }
+
+    public function setIntegralPrice(?int $integralPrice): void
+    {
+        $this->integralPrice = $integralPrice;
+    }
+
+    public function getTaxRate(): ?float
+    {
+        return $this->taxRate;
+    }
+
+    public function setTaxRate(?float $taxRate): void
+    {
+        $this->taxRate = $taxRate;
     }
 }

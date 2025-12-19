@@ -5,12 +5,14 @@ namespace Tourze\ProductCoreBundle\Procedure;
 use Doctrine\ORM\QueryBuilder;
 use Tourze\JsonRPC\Core\Attribute\MethodDoc;
 use Tourze\JsonRPC\Core\Attribute\MethodExpose;
-use Tourze\JsonRPC\Core\Attribute\MethodParam;
 use Tourze\JsonRPC\Core\Attribute\MethodTag;
+use Tourze\JsonRPC\Core\Contracts\RpcParamInterface;
+use Tourze\JsonRPC\Core\Result\ArrayResult;
 use Tourze\JsonRPC\Core\Procedure\BaseProcedure;
 use Tourze\JsonRPCPaginatorBundle\Procedure\PaginatorTrait;
 use Tourze\ProductCoreBundle\Entity\Sku;
 use Tourze\ProductCoreBundle\Entity\Spu;
+use Tourze\ProductCoreBundle\Param\GetProductListWithFilterParam;
 use Tourze\ProductCoreBundle\Repository\SpuRepository;
 use Tourze\ProductCoreBundle\Service\ProductArrayFormatterService;
 
@@ -21,29 +23,7 @@ final class GetProductListWithFilter extends BaseProcedure
 {
     use PaginatorTrait;
 
-    #[MethodParam(description: '最低价格')]
-    public ?float $minPrice = null;
-
-    #[MethodParam(description: '关键词')]
-    public ?string $keyword = null;
-
-    #[MethodParam(description: '最高价格')]
-    public ?float $maxPrice = null;
-
-    #[MethodParam(description: '销量排序 (sales_desc, sales_asc)')]
-    public ?string $salesSort = null;
-
-    #[MethodParam(description: '价格排序 (price_desc, price_asc)')]
-    public ?string $priceSort = null;
-
-    #[MethodParam(description: '分类ID')]
-    public ?int $categoryId = null;
-
-    #[MethodParam(description: '标签ID')]
-    public ?int $tagId = null;
-
-    #[MethodParam(description: '是否包含SKU数据')]
-    public bool $includeSku = true;
+    private GetProductListWithFilterParam $param;
 
     public function __construct(
         private readonly SpuRepository $spuRepository,
@@ -51,12 +31,17 @@ final class GetProductListWithFilter extends BaseProcedure
     ) {
     }
 
-    public function execute(): array
+    /**
+     * @phpstan-param GetProductListWithFilterParam $param
+     */
+    public function execute(GetProductListWithFilterParam|RpcParamInterface $param): ArrayResult
     {
+        $this->param = $param;
+
         $qb = $this->createBaseQueryBuilder();
 
-        if (null !== $this->keyword && '' !== $this->keyword) {
-            $keyword = trim($this->keyword);
+        if (null !== $param->keyword && '' !== $param->keyword) {
+            $keyword = trim($param->keyword);
             $qb->andWhere('s.title LIKE :keyword')
                 ->setParameter('keyword', "%{$keyword}%")
             ;
@@ -72,7 +57,7 @@ final class GetProductListWithFilter extends BaseProcedure
             return $this->executeWithManualPagination($qb);
         }
 
-        return $this->fetchList($qb, $this->formatItem(...));
+        return new ArrayResult($this->fetchList($qb, $this->formatItem(...), null, $param));
     }
 
     private function createBaseQueryBuilder(): QueryBuilder
@@ -84,7 +69,7 @@ final class GetProductListWithFilter extends BaseProcedure
 
         // 如果需要包含 SKU 数据且没有排序，预加载相关数据以避免 N+1 查询
         // 当有排序时，不能使用 fetch join，因为会和聚合函数冲突
-        if ($this->includeSku && !$this->needsSorting()) {
+        if ($this->param->includeSku && !$this->needsSorting()) {
             $qb->leftJoin('s.skus', 'sk')
                 ->leftJoin('sk.attributes', 'sa')
                 ->addSelect('sk', 'sa')
@@ -96,46 +81,46 @@ final class GetProductListWithFilter extends BaseProcedure
 
     private function applyPriceFilter(QueryBuilder $qb): void
     {
-        if (null === $this->minPrice && null === $this->maxPrice) {
+        if (null === $this->param->minPrice && null === $this->param->maxPrice) {
             return;
         }
 
         $qb->innerJoin('s.skus', 'sku');
 
-        if (null !== $this->minPrice) {
+        if (null !== $this->param->minPrice) {
             $qb->andWhere('sku.marketPrice >= :minPrice')
-                ->setParameter('minPrice', $this->minPrice)
+                ->setParameter('minPrice', $this->param->minPrice)
             ;
         }
 
-        if (null !== $this->maxPrice) {
+        if (null !== $this->param->maxPrice) {
             $qb->andWhere('sku.marketPrice <= :maxPrice')
-                ->setParameter('maxPrice', $this->maxPrice)
+                ->setParameter('maxPrice', $this->param->maxPrice)
             ;
         }
     }
 
     private function applyCategoryFilter(QueryBuilder $qb): void
     {
-        if (null === $this->categoryId) {
+        if (null === $this->param->categoryId) {
             return;
         }
 
         $qb->innerJoin('s.categories', 'c')
             ->andWhere('c.id = :categoryId')
-            ->setParameter('categoryId', $this->categoryId)
+            ->setParameter('categoryId', $this->param->categoryId)
         ;
     }
 
     private function applyTagFilter(QueryBuilder $qb): void
     {
-        if (null === $this->tagId) {
+        if (null === $this->param->tagId) {
             return;
         }
 
         $qb->innerJoin('s.tags', 't')
             ->andWhere('t.id = :tagId')
-            ->setParameter('tagId', $this->tagId)
+            ->setParameter('tagId', $this->param->tagId)
         ;
     }
 
@@ -145,8 +130,8 @@ final class GetProductListWithFilter extends BaseProcedure
         $skuAlias = $this->getOrAddSkuJoin($qb);
 
         // Handle sales sorting
-        if (null !== $this->salesSort) {
-            $direction = 'sales_desc' === $this->salesSort ? 'DESC' : 'ASC';
+        if (null !== $this->param->salesSort) {
+            $direction = 'sales_desc' === $this->param->salesSort ? 'DESC' : 'ASC';
             $qb->addSelect("SUM({$skuAlias}.salesReal + {$skuAlias}.salesVirtual) as HIDDEN salesTotal")
                 ->addOrderBy('salesTotal', $direction)
             ;
@@ -154,9 +139,9 @@ final class GetProductListWithFilter extends BaseProcedure
         }
 
         // Handle price sorting
-        if (null !== $this->priceSort) {
-            $direction = 'price_desc' === $this->priceSort ? 'DESC' : 'ASC';
-            $aggregateFunc = 'price_desc' === $this->priceSort ? 'MAX' : 'MIN';
+        if (null !== $this->param->priceSort) {
+            $direction = 'price_desc' === $this->param->priceSort ? 'DESC' : 'ASC';
+            $aggregateFunc = 'price_desc' === $this->param->priceSort ? 'MAX' : 'MIN';
             $qb->addSelect("{$aggregateFunc}({$skuAlias}.marketPrice) as HIDDEN sortPrice")
                 ->addOrderBy('sortPrice', $direction)
             ;
@@ -210,21 +195,21 @@ final class GetProductListWithFilter extends BaseProcedure
      */
     private function needsSorting(): bool
     {
-        return null !== $this->salesSort || null !== $this->priceSort;
+        return null !== $this->param->salesSort || null !== $this->param->priceSort;
     }
 
     /**
      * 使用手动分页执行查询（避免 Doctrine 分页器限制）
      *
-     * @return array{list: array<mixed>, pagination: array{current: int, pageSize: int, total: int, hasMore: bool}}
+     * @return ArrayResult ArrayResult containing list and pagination data
      */
-    private function executeWithManualPagination(QueryBuilder $qb): array
+    private function executeWithManualPagination(QueryBuilder $qb): ArrayResult
     {
         // 获取总数（不带分页限制和排序）
         $countQb = $this->createCountQueryBuilder();
 
-        if (null !== $this->keyword && '' !== $this->keyword) {
-            $keyword = trim($this->keyword);
+        if (null !== $this->param->keyword && '' !== $this->param->keyword) {
+            $keyword = trim($this->param->keyword);
             $countQb->andWhere('s.title LIKE :keyword')
                 ->setParameter('keyword', "%{$keyword}%")
             ;
@@ -237,9 +222,9 @@ final class GetProductListWithFilter extends BaseProcedure
         $total = (int) $countQb->getQuery()->getSingleScalarResult();
 
         // 应用分页限制
-        $offset = ($this->currentPage - 1) * $this->pageSize;
+        $offset = ($this->param->currentPage - 1) * $this->param->pageSize;
         $qb->setFirstResult($offset)
-            ->setMaxResults($this->pageSize)
+            ->setMaxResults($this->param->pageSize)
         ;
 
         // 执行查询
@@ -255,15 +240,15 @@ final class GetProductListWithFilter extends BaseProcedure
             }
         }
 
-        return [
+        return new ArrayResult([
             'list' => $items,
             'pagination' => [
-                'current' => $this->currentPage,
-                'pageSize' => $this->pageSize,
+                'current' => $this->param->currentPage,
+                'pageSize' => $this->param->pageSize,
                 'total' => $total,
                 'hasMore' => ($offset + count($items)) < $total,
             ],
-        ];
+        ]);
     }
 
     /**
@@ -277,12 +262,12 @@ final class GetProductListWithFilter extends BaseProcedure
         $marketPrice = $sku->getMarketPrice();
         $priceValue = null !== $marketPrice ? (float) $marketPrice : null;
 
-        return [
+        return new ArrayResult([
             'minPrice' => $priceValue,
             'maxPrice' => $priceValue,
             'skuMinPrice' => $priceValue,
             'skuMaxPrice' => $priceValue,
-        ];
+        ]);
     }
 
     /**
@@ -298,7 +283,7 @@ final class GetProductListWithFilter extends BaseProcedure
         $skuData['salesReal'] = $sku->getSalesReal();
         $skuData['salesVirtual'] = $sku->getSalesVirtual();
 
-        return $skuData;
+        return new ArrayResult($skuData);
     }
 
     /**
@@ -330,7 +315,7 @@ final class GetProductListWithFilter extends BaseProcedure
 
             $totalSales += $sku->getSalesReal() + $sku->getSalesVirtual();
 
-            if ($this->includeSku) {
+            if ($this->param->includeSku) {
                 $skuDataArray[] = $this->formatSkuData($sku, $prices['skuMinPrice'], $prices['skuMaxPrice']);
             }
         }
@@ -345,10 +330,10 @@ final class GetProductListWithFilter extends BaseProcedure
             'stock' => $totalStock,
         ];
 
-        if ($this->includeSku) {
+        if ($this->param->includeSku) {
             $result['skus'] = $skuDataArray;
         }
 
-        return $result;
+        return new ArrayResult($result);
     }
 }

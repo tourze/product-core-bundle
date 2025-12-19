@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Tourze\ProductCoreBundle\Tests;
 
 use PHPUnit\Framework\Attributes\CoversClass;
+use PHPUnit\Framework\TestCase;
 use Tourze\ProductCoreBundle\ProductCoreBundle;
 
 /**
@@ -12,7 +13,7 @@ use Tourze\ProductCoreBundle\ProductCoreBundle;
  * @internal
  */
 #[CoversClass(ProductCoreBundle::class)]
-class ProductCoreTest extends ProductCoreBaseTestCase
+final class ProductCoreTest extends TestCase
 {
     public function testProductCoreBundleIsLoaded(): void
     {

@@ -10,7 +10,7 @@ use Doctrine\Persistence\ObjectManager;
 use Tourze\ProductCoreBundle\Entity\Sku;
 use Tourze\ProductCoreBundle\Entity\SkuAttribute;
 
-class SkuAttributeFixtures extends Fixture implements DependentFixtureInterface
+final class SkuAttributeFixtures extends Fixture implements DependentFixtureInterface
 {
     public function load(ObjectManager $manager): void
     {

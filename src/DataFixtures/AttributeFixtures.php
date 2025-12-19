@@ -13,7 +13,7 @@ use Tourze\ProductCoreBundle\Enum\AttributeStatus;
 use Tourze\ProductCoreBundle\Enum\AttributeType;
 use Tourze\ProductCoreBundle\Enum\AttributeValueType;
 
-class AttributeFixtures extends Fixture implements DependentFixtureInterface
+final class AttributeFixtures extends Fixture implements DependentFixtureInterface
 {
     public const ATTR_COLOR = 'attribute-color';
     public const ATTR_SIZE = 'attribute-size';

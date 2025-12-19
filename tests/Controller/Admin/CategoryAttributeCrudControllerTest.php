@@ -24,7 +24,7 @@ use Tourze\ProductCoreBundle\Repository\CategoryAttributeRepository;
  */
 #[CoversClass(CategoryAttributeCrudController::class)]
 #[RunTestsInSeparateProcesses]
-class CategoryAttributeCrudControllerTest extends AbstractEasyAdminControllerTestCase
+final class CategoryAttributeCrudControllerTest extends AbstractEasyAdminControllerTestCase
 {
     private ?CategoryAttributeRepository $categoryAttributeRepository = null;
 

@@ -21,7 +21,7 @@ use Tourze\ProductCoreBundle\Repository\AttributeValueRepository;
  */
 #[CoversClass(AttributeValueRepository::class)]
 #[RunTestsInSeparateProcesses]
-class AttributeValueRepositoryTest extends AbstractRepositoryTestCase
+final class AttributeValueRepositoryTest extends AbstractRepositoryTestCase
 {
     protected function getRepositoryClass(): string
     {

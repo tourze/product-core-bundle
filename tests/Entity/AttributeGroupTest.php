@@ -14,7 +14,7 @@ use Tourze\ProductCoreBundle\Enum\AttributeStatus;
  * @internal
  */
 #[CoversClass(AttributeGroup::class)]
-class AttributeGroupTest extends AbstractEntityTestCase
+final class AttributeGroupTest extends AbstractEntityTestCase
 {
 
     protected function createEntity(): object

@@ -23,7 +23,7 @@ use Tourze\ProductCoreBundle\Repository\CategoryAttributeRepository;
  */
 #[CoversClass(CategoryAttributeRepository::class)]
 #[RunTestsInSeparateProcesses]
-class CategoryAttributeRepositoryTest extends AbstractRepositoryTestCase
+final class CategoryAttributeRepositoryTest extends AbstractRepositoryTestCase
 {
     protected function getRepositoryClass(): string
     {

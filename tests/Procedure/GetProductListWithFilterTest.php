@@ -6,7 +6,8 @@ namespace Tourze\ProductCoreBundle\Tests\Procedure;
 
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\RunTestsInSeparateProcesses;
-use Tourze\JsonRPC\Core\Tests\AbstractProcedureTestCase;
+use Tourze\PHPUnitJsonRPC\AbstractProcedureTestCase;
+use Tourze\ProductCoreBundle\Param\GetProductListWithFilterParam;
 use Tourze\ProductCoreBundle\Procedure\GetProductListWithFilter;
 
 /**
@@ -26,62 +27,62 @@ final class GetProductListWithFilterTest extends AbstractProcedureTestCase
         $this->assertInstanceOf(GetProductListWithFilter::class, $procedure);
     }
 
-    public function testPublicProperties(): void
+    public function testParamDefaultValues(): void
     {
-        $procedure = self::getContainer()->get(GetProductListWithFilter::class);
-        $this->assertInstanceOf(GetProductListWithFilter::class, $procedure);
+        $param = new GetProductListWithFilterParam();
 
-        $this->assertNull($procedure->minPrice);
-        $this->assertNull($procedure->maxPrice);
-        $this->assertNull($procedure->salesSort);
-        $this->assertNull($procedure->priceSort);
-        $this->assertNull($procedure->categoryId);
-        $this->assertNull($procedure->tagId);
-        $this->assertTrue($procedure->includeSku);
+        $this->assertNull($param->minPrice);
+        $this->assertNull($param->maxPrice);
+        $this->assertNull($param->salesSort);
+        $this->assertNull($param->priceSort);
+        $this->assertNull($param->categoryId);
+        $this->assertNull($param->tagId);
+        $this->assertTrue($param->includeSku);
+        $this->assertSame(10, $param->pageSize);
+        $this->assertSame(1, $param->currentPage);
     }
 
-    public function testPropertyAssignment(): void
+    public function testParamAssignment(): void
     {
-        $procedure = self::getContainer()->get(GetProductListWithFilter::class);
-        $this->assertInstanceOf(GetProductListWithFilter::class, $procedure);
+        $param = new GetProductListWithFilterParam(
+            minPrice: 10.0,
+            maxPrice: 100.0,
+            salesSort: 'sales_desc',
+            priceSort: 'price_asc',
+            categoryId: 123,
+            tagId: 456,
+            includeSku: false,
+            pageSize: 20,
+            currentPage: 2
+        );
 
-        $procedure->minPrice = 10.0;
-        $procedure->maxPrice = 100.0;
-        $procedure->salesSort = 'sales_desc';
-        $procedure->priceSort = 'price_asc';
-        $procedure->categoryId = 123;
-        $procedure->tagId = 456;
-        $procedure->includeSku = false;
-
-        $this->assertSame(10.0, $procedure->minPrice);
-        $this->assertSame(100.0, $procedure->maxPrice);
-        $this->assertSame('sales_desc', $procedure->salesSort);
-        $this->assertSame('price_asc', $procedure->priceSort);
-        $this->assertSame(123, $procedure->categoryId);
-        $this->assertSame(456, $procedure->tagId);
-        $this->assertFalse($procedure->includeSku);
+        $this->assertSame(10.0, $param->minPrice);
+        $this->assertSame(100.0, $param->maxPrice);
+        $this->assertSame('sales_desc', $param->salesSort);
+        $this->assertSame('price_asc', $param->priceSort);
+        $this->assertSame(123, $param->categoryId);
+        $this->assertSame(456, $param->tagId);
+        $this->assertFalse($param->includeSku);
+        $this->assertSame(20, $param->pageSize);
+        $this->assertSame(2, $param->currentPage);
     }
 
     public function testIncludeSkuDefaultValue(): void
     {
-        $procedure = self::getContainer()->get(GetProductListWithFilter::class);
-        $this->assertInstanceOf(GetProductListWithFilter::class, $procedure);
+        $param = new GetProductListWithFilterParam();
 
         // 默认情况下，includeSku 应该为 true
-        $this->assertTrue($procedure->includeSku);
+        $this->assertTrue($param->includeSku);
     }
 
     public function testIncludeSkuParameterControl(): void
     {
-        $procedure = self::getContainer()->get(GetProductListWithFilter::class);
-        $this->assertInstanceOf(GetProductListWithFilter::class, $procedure);
-
         // 测试 includeSku 参数可以被正确设置
-        $procedure->includeSku = false;
-        $this->assertFalse($procedure->includeSku);
+        $param = new GetProductListWithFilterParam(includeSku: false);
+        $this->assertFalse($param->includeSku);
 
-        $procedure->includeSku = true;
-        $this->assertTrue($procedure->includeSku);
+        $param = new GetProductListWithFilterParam(includeSku: true);
+        $this->assertTrue($param->includeSku);
     }
 
     public function testSalesSortParameter(): void
@@ -90,14 +91,19 @@ final class GetProductListWithFilterTest extends AbstractProcedureTestCase
         $this->assertInstanceOf(GetProductListWithFilter::class, $procedure);
 
         // 测试销量排序参数
-        $procedure->salesSort = 'sales_desc';
-        $procedure->pageSize = 10;
-        $procedure->currentPage = 1;
+        $param = new GetProductListWithFilterParam(
+            salesSort: 'sales_desc',
+            pageSize: 10,
+            currentPage: 1
+        );
 
-        $result = $procedure->execute();
-        $this->assertIsArray($result);
-        $this->assertArrayHasKey('list', $result);
-        $this->assertArrayHasKey('pagination', $result);
+        $result = $procedure->execute($param);
+        $this->assertInstanceOf(\Tourze\JsonRPC\Core\Result\ArrayResult::class, $result);
+
+        $data = $result->data;
+        $this->assertIsArray($data);
+        $this->assertArrayHasKey('list', $data);
+        $this->assertArrayHasKey('pagination', $data);
     }
 
     public function testPriceSortParameter(): void
@@ -106,20 +112,32 @@ final class GetProductListWithFilterTest extends AbstractProcedureTestCase
         $this->assertInstanceOf(GetProductListWithFilter::class, $procedure);
 
         // 测试价格排序参数 - 升序（应使用MIN价格）
-        $procedure->priceSort = 'price_asc';
-        $procedure->pageSize = 10;
-        $procedure->currentPage = 1;
+        $param = new GetProductListWithFilterParam(
+            priceSort: 'price_asc',
+            pageSize: 10,
+            currentPage: 1
+        );
 
-        $result = $procedure->execute();
-        $this->assertIsArray($result);
-        $this->assertArrayHasKey('list', $result);
+        $result = $procedure->execute($param);
+        $this->assertInstanceOf(\Tourze\JsonRPC\Core\Result\ArrayResult::class, $result);
+
+        $data = $result->data;
+        $this->assertIsArray($data);
+        $this->assertArrayHasKey('list', $data);
 
         // 测试价格排序参数 - 降序（应使用MAX价格）
-        $procedure->priceSort = 'price_desc';
+        $param = new GetProductListWithFilterParam(
+            priceSort: 'price_desc',
+            pageSize: 10,
+            currentPage: 1
+        );
 
-        $result = $procedure->execute();
-        $this->assertIsArray($result);
-        $this->assertArrayHasKey('list', $result);
+        $result = $procedure->execute($param);
+        $this->assertInstanceOf(\Tourze\JsonRPC\Core\Result\ArrayResult::class, $result);
+
+        $data = $result->data;
+        $this->assertIsArray($data);
+        $this->assertArrayHasKey('list', $data);
     }
 
     public function testCombinedSortParameters(): void
@@ -128,15 +146,20 @@ final class GetProductListWithFilterTest extends AbstractProcedureTestCase
         $this->assertInstanceOf(GetProductListWithFilter::class, $procedure);
 
         // 测试同时设置销量和价格排序
-        $procedure->salesSort = 'sales_desc';
-        $procedure->priceSort = 'price_asc';
-        $procedure->pageSize = 5;
-        $procedure->currentPage = 1;
+        $param = new GetProductListWithFilterParam(
+            salesSort: 'sales_desc',
+            priceSort: 'price_asc',
+            pageSize: 5,
+            currentPage: 1
+        );
 
-        $result = $procedure->execute();
-        $this->assertIsArray($result);
-        $this->assertArrayHasKey('list', $result);
-        $this->assertArrayHasKey('pagination', $result);
+        $result = $procedure->execute($param);
+        $this->assertInstanceOf(\Tourze\JsonRPC\Core\Result\ArrayResult::class, $result);
+
+        $data = $result->data;
+        $this->assertIsArray($data);
+        $this->assertArrayHasKey('list', $data);
+        $this->assertArrayHasKey('pagination', $data);
     }
 
     public function testExecute(): void
@@ -145,12 +168,102 @@ final class GetProductListWithFilterTest extends AbstractProcedureTestCase
         $this->assertInstanceOf(GetProductListWithFilter::class, $procedure);
 
         // 测试基本执行
-        $procedure->pageSize = 10;
-        $procedure->currentPage = 1;
+        $param = new GetProductListWithFilterParam(
+            pageSize: 10,
+            currentPage: 1
+        );
 
-        $result = $procedure->execute();
-        $this->assertIsArray($result);
-        $this->assertArrayHasKey('list', $result);
-        $this->assertArrayHasKey('pagination', $result);
+        $result = $procedure->execute($param);
+        $this->assertInstanceOf(\Tourze\JsonRPC\Core\Result\ArrayResult::class, $result);
+
+        $data = $result->data;
+        $this->assertIsArray($data);
+        $this->assertArrayHasKey('list', $data);
+        $this->assertArrayHasKey('pagination', $data);
+    }
+
+    public function testExecuteWithKeyword(): void
+    {
+        $procedure = self::getContainer()->get(GetProductListWithFilter::class);
+        $this->assertInstanceOf(GetProductListWithFilter::class, $procedure);
+
+        // 测试关键词搜索
+        $param = new GetProductListWithFilterParam(
+            keyword: 'test',
+            pageSize: 10,
+            currentPage: 1
+        );
+
+        $result = $procedure->execute($param);
+        $this->assertInstanceOf(\Tourze\JsonRPC\Core\Result\ArrayResult::class, $result);
+
+        $data = $result->data;
+        $this->assertIsArray($data);
+        $this->assertArrayHasKey('list', $data);
+        $this->assertArrayHasKey('pagination', $data);
+    }
+
+    public function testExecuteWithPriceFilter(): void
+    {
+        $procedure = self::getContainer()->get(GetProductListWithFilter::class);
+        $this->assertInstanceOf(GetProductListWithFilter::class, $procedure);
+
+        // 测试价格过滤
+        $param = new GetProductListWithFilterParam(
+            minPrice: 10.0,
+            maxPrice: 100.0,
+            pageSize: 10,
+            currentPage: 1
+        );
+
+        $result = $procedure->execute($param);
+        $this->assertInstanceOf(\Tourze\JsonRPC\Core\Result\ArrayResult::class, $result);
+
+        $data = $result->data;
+        $this->assertIsArray($data);
+        $this->assertArrayHasKey('list', $data);
+        $this->assertArrayHasKey('pagination', $data);
+    }
+
+    public function testExecuteWithCategoryFilter(): void
+    {
+        $procedure = self::getContainer()->get(GetProductListWithFilter::class);
+        $this->assertInstanceOf(GetProductListWithFilter::class, $procedure);
+
+        // 测试分类过滤
+        $param = new GetProductListWithFilterParam(
+            categoryId: 123,
+            pageSize: 10,
+            currentPage: 1
+        );
+
+        $result = $procedure->execute($param);
+        $this->assertInstanceOf(\Tourze\JsonRPC\Core\Result\ArrayResult::class, $result);
+
+        $data = $result->data;
+        $this->assertIsArray($data);
+        $this->assertArrayHasKey('list', $data);
+        $this->assertArrayHasKey('pagination', $data);
+    }
+
+    public function testExecuteWithTagFilter(): void
+    {
+        $procedure = self::getContainer()->get(GetProductListWithFilter::class);
+        $this->assertInstanceOf(GetProductListWithFilter::class, $procedure);
+
+        // 测试标签过滤
+        $param = new GetProductListWithFilterParam(
+            tagId: 456,
+            pageSize: 10,
+            currentPage: 1
+        );
+
+        $result = $procedure->execute($param);
+        $this->assertInstanceOf(\Tourze\JsonRPC\Core\Result\ArrayResult::class, $result);
+
+        $data = $result->data;
+        $this->assertIsArray($data);
+        $this->assertArrayHasKey('list', $data);
+        $this->assertArrayHasKey('pagination', $data);
     }
 }

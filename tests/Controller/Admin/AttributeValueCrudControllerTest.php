@@ -23,7 +23,7 @@ use Tourze\ProductCoreBundle\Repository\AttributeValueRepository;
  */
 #[CoversClass(AttributeValueCrudController::class)]
 #[RunTestsInSeparateProcesses]
-class AttributeValueCrudControllerTest extends AbstractEasyAdminControllerTestCase
+final class AttributeValueCrudControllerTest extends AbstractEasyAdminControllerTestCase
 {
     private ?AttributeValueRepository $attributeValueRepository = null;
 

@@ -9,7 +9,7 @@ use Doctrine\Persistence\ObjectManager;
 use Tourze\ProductCoreBundle\Entity\AttributeGroup;
 use Tourze\ProductCoreBundle\Enum\AttributeStatus;
 
-class AttributeGroupFixtures extends Fixture
+final class AttributeGroupFixtures extends Fixture
 {
     public const GROUP_BASIC = 'attribute-group-basic';
     public const GROUP_APPEARANCE = 'attribute-group-appearance';

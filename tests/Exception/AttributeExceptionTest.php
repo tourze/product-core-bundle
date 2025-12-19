@@ -12,7 +12,7 @@ use Tourze\ProductCoreBundle\Exception\AttributeException;
  * @internal
  */
 #[CoversClass(AttributeException::class)]
-class AttributeExceptionTest extends AbstractExceptionTestCase
+final class AttributeExceptionTest extends AbstractExceptionTestCase
 {
     public function testExceptionCreation(): void
     {

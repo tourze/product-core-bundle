@@ -14,7 +14,7 @@ use Tourze\ProductCoreBundle\Enum\AttributeStatus;
  * @extends ServiceEntityRepository<AttributeGroup>
  */
 #[AsRepository(entityClass: AttributeGroup::class)]
-class AttributeGroupRepository extends ServiceEntityRepository
+final class AttributeGroupRepository extends ServiceEntityRepository
 {
     public function __construct(ManagerRegistry $registry)
     {

@@ -6,8 +6,9 @@ namespace Tourze\ProductCoreBundle\Tests\Procedure;
 
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\RunTestsInSeparateProcesses;
-use Tourze\JsonRPC\Core\Tests\AbstractProcedureTestCase;
+use Tourze\PHPUnitJsonRPC\AbstractProcedureTestCase;
 use Tourze\ProductCoreBundle\Exception\ProductNotFoundException;
+use Tourze\ProductCoreBundle\Param\GetProductDetailParam;
 use Tourze\ProductCoreBundle\Procedure\GetProductDetail;
 
 /**
@@ -31,23 +32,25 @@ final class GetProductDetailTest extends AbstractProcedureTestCase
     {
         $procedure = self::getContainer()->get(GetProductDetail::class);
         $this->assertInstanceOf(GetProductDetail::class, $procedure);
-        $procedure->id = 0;
+
+        $param = new GetProductDetailParam(id: 0);
 
         $this->expectException(ProductNotFoundException::class);
         $this->expectExceptionMessage('商品ID不能为空');
 
-        $procedure->execute();
+        $procedure->execute($param);
     }
 
     public function testExecuteWithNegativeId(): void
     {
         $procedure = self::getContainer()->get(GetProductDetail::class);
         $this->assertInstanceOf(GetProductDetail::class, $procedure);
-        $procedure->id = -1;
+
+        $param = new GetProductDetailParam(id: -1);
 
         $this->expectException(ProductNotFoundException::class);
         $this->expectExceptionMessage('商品ID不能为空');
 
-        $procedure->execute();
+        $procedure->execute($param);
     }
 }

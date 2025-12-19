@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace Tourze\ProductCoreBundle\Exception;
 
-class AttributeException extends \RuntimeException
+final class AttributeException extends \RuntimeException
 {
     public static function codeAlreadyExists(string $code): self
     {

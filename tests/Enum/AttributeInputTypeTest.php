@@ -12,7 +12,7 @@ use Tourze\ProductCoreBundle\Enum\AttributeInputType;
  * @internal
  */
 #[CoversClass(AttributeInputType::class)]
-class AttributeInputTypeTest extends AbstractEnumTestCase
+final class AttributeInputTypeTest extends AbstractEnumTestCase
 {
     public function testLabels(): void
     {

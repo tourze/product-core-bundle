@@ -16,7 +16,7 @@ use Tourze\ProductCoreBundle\Enum\AttributeValueType;
  * @internal
  */
 #[CoversClass(SkuAttribute::class)]
-class SkuAttributeTest extends AbstractEntityTestCase
+final class SkuAttributeTest extends AbstractEntityTestCase
 {
 
     protected function createEntity(): object

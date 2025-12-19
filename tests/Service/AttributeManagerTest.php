@@ -4,10 +4,9 @@ declare(strict_types=1);
 
 namespace Tourze\ProductCoreBundle\Tests\Service;
 
-use Doctrine\ORM\EntityManagerInterface;
 use PHPUnit\Framework\Attributes\CoversClass;
-use PHPUnit\Framework\MockObject\MockObject;
-use PHPUnit\Framework\TestCase;
+use PHPUnit\Framework\Attributes\RunTestsInSeparateProcesses;
+use Tourze\PHPUnitSymfonyKernelTest\AbstractIntegrationTestCase;
 use Tourze\ProductCoreBundle\Entity\Attribute;
 use Tourze\ProductCoreBundle\Entity\AttributeValue;
 use Tourze\ProductCoreBundle\Enum\AttributeStatus;
@@ -21,320 +20,378 @@ use Tourze\ProductCoreBundle\Service\AttributeManager;
  * @internal
  */
 #[CoversClass(AttributeManager::class)]
-class AttributeManagerTest extends TestCase
+#[RunTestsInSeparateProcesses]
+final class AttributeManagerTest extends AbstractIntegrationTestCase
 {
-    private AttributeManager $attributeManager;
+    private AttributeManager $service;
 
-    private MockObject&EntityManagerInterface $entityManager;
+    private AttributeRepository $attributeRepository;
 
-    private MockObject&AttributeRepository $attributeRepository;
+    private AttributeValueRepository $attributeValueRepository;
 
-    private MockObject&AttributeValueRepository $attributeValueRepository;
-
-    protected function setUp(): void
+    protected function onSetUp(): void
     {
-        parent::setUp();
-        $this->entityManager = $this->createMock(EntityManagerInterface::class);
-        $this->attributeRepository = $this->createMock(AttributeRepository::class);
-        $this->attributeValueRepository = $this->createMock(AttributeValueRepository::class);
+        $this->service = self::getService(AttributeManager::class);
+        $this->attributeRepository = self::getService(AttributeRepository::class);
+        $this->attributeValueRepository = self::getService(AttributeValueRepository::class);
+        $this->cleanupTestData();
+    }
 
-        $this->attributeManager = new AttributeManager(
-            $this->entityManager,
-            $this->attributeRepository,
-            $this->attributeValueRepository
-        );
+    protected function onTearDown(): void
+    {
+        $this->cleanupTestData();
     }
 
     public function testCreateAttributeSuccess(): void
     {
         $data = [
-            'code' => 'color',
+            'code' => 'test_attr_color',
             'name' => '颜色',
             'type' => AttributeType::SALES,
         ];
 
-        $this->attributeRepository
-            ->expects($this->once())
-            ->method('isCodeExists')
-            ->with('color')
-            ->willReturn(false)
-        ;
+        $attribute = $this->service->createAttribute($data);
 
-        $this->entityManager
-            ->expects($this->once())
-            ->method('persist')
-        ;
-
-        $this->entityManager
-            ->expects($this->once())
-            ->method('flush')
-        ;
-
-        $attribute = $this->attributeManager->createAttribute($data);
-
-        $this->assertEquals('color', $attribute->getCode());
+        $this->assertNotNull($attribute->getId());
+        $this->assertEquals('test_attr_color', $attribute->getCode());
         $this->assertEquals('颜色', $attribute->getName());
         $this->assertEquals(AttributeType::SALES, $attribute->getType());
+
+        // 验证数据库持久化
+        $em = self::getEntityManager();
+        $em->clear();
+
+        $foundAttribute = $this->attributeRepository->find($attribute->getId());
+        $this->assertNotNull($foundAttribute);
+        $this->assertEquals('test_attr_color', $foundAttribute->getCode());
     }
 
     public function testCreateAttributeWithDuplicateCode(): void
     {
+        // 先创建一个属性
         $data = [
-            'code' => 'color',
-            'name' => '颜色',
+            'code' => 'test_attr_duplicate',
+            'name' => '重复属性',
         ];
+        $this->service->createAttribute($data);
 
-        $this->attributeRepository
-            ->expects($this->once())
-            ->method('isCodeExists')
-            ->with('color')
-            ->willReturn(true)
-        ;
-
+        // 尝试创建同样 code 的属性
         $this->expectException(AttributeException::class);
-        $this->expectExceptionMessage('属性编码 "color" 已存在');
+        $this->expectExceptionMessage('属性编码 "test_attr_duplicate" 已存在');
 
-        $this->attributeManager->createAttribute($data);
+        $this->service->createAttribute($data);
     }
 
     public function testUpdateAttributeSuccess(): void
     {
-        $attribute = new Attribute();
-        $attribute->setCode('old_code');
-        $attribute->setName('Old Name');
-
+        // 创建初始属性
         $data = [
-            'code' => 'new_code',
+            'code' => 'test_attr_old_code',
+            'name' => 'Old Name',
+        ];
+        $attribute = $this->service->createAttribute($data);
+
+        // 更新属性
+        $updateData = [
+            'code' => 'test_attr_new_code',
             'name' => 'New Name',
         ];
+        $updatedAttribute = $this->service->updateAttribute($attribute, $updateData);
 
-        $this->attributeRepository
-            ->expects($this->once())
-            ->method('isCodeExists')
-            ->with('new_code', null)
-            ->willReturn(false)
-        ;
-
-        $this->entityManager
-            ->expects($this->once())
-            ->method('flush')
-        ;
-
-        $updatedAttribute = $this->attributeManager->updateAttribute($attribute, $data);
-
-        $this->assertEquals('new_code', $updatedAttribute->getCode());
+        $this->assertEquals('test_attr_new_code', $updatedAttribute->getCode());
         $this->assertEquals('New Name', $updatedAttribute->getName());
+
+        // 验证数据库中的更新
+        $em = self::getEntityManager();
+        $em->clear();
+
+        $foundAttribute = $this->attributeRepository->find($attribute->getId());
+        $this->assertNotNull($foundAttribute);
+        $this->assertEquals('test_attr_new_code', $foundAttribute->getCode());
+        $this->assertEquals('New Name', $foundAttribute->getName());
     }
 
     public function testUpdateAttributeWithDuplicateCode(): void
     {
-        $attribute = new Attribute();
-        $attribute->setCode('old_code');
+        // 创建两个属性
+        $attribute1 = $this->service->createAttribute([
+            'code' => 'test_attr_existing',
+            'name' => 'Existing',
+        ]);
 
-        // 模拟 getId 方法返回
-        $reflection = new \ReflectionClass($attribute);
-        $idProperty = $reflection->getProperty('id');
-        $idProperty->setAccessible(true);
-        $idProperty->setValue($attribute, '123');
+        $attribute2 = $this->service->createAttribute([
+            'code' => 'test_attr_to_update',
+            'name' => 'To Update',
+        ]);
 
-        $data = [
-            'code' => 'existing_code',
-        ];
-
-        $this->attributeRepository
-            ->expects($this->once())
-            ->method('isCodeExists')
-            ->with('existing_code', '123')
-            ->willReturn(true)
-        ;
-
+        // 尝试将 attribute2 更新为 attribute1 的 code
         $this->expectException(AttributeException::class);
-        $this->expectExceptionMessage('属性编码 "existing_code" 已存在');
+        $this->expectExceptionMessage('属性编码 "test_attr_existing" 已存在');
 
-        $this->attributeManager->updateAttribute($attribute, $data);
+        $this->service->updateAttribute($attribute2, [
+            'code' => 'test_attr_existing',
+        ]);
     }
 
     public function testDeleteAttribute(): void
     {
-        $attribute = new Attribute();
-        $attribute->setStatus(AttributeStatus::ACTIVE);
+        // 创建属性
+        $attribute = $this->service->createAttribute([
+            'code' => 'test_attr_to_delete',
+            'name' => '待删除属性',
+        ]);
 
-        $this->entityManager
-            ->expects($this->once())
-            ->method('flush')
-        ;
+        $this->assertEquals(AttributeStatus::ACTIVE, $attribute->getStatus());
 
-        $this->attributeManager->deleteAttribute($attribute);
+        // 删除属性（软删除）
+        $this->service->deleteAttribute($attribute);
 
         $this->assertEquals(AttributeStatus::INACTIVE, $attribute->getStatus());
+
+        // 验证数据库中的状态
+        $em = self::getEntityManager();
+        $em->clear();
+
+        $foundAttribute = $this->attributeRepository->find($attribute->getId());
+        $this->assertNotNull($foundAttribute);
+        $this->assertEquals(AttributeStatus::INACTIVE, $foundAttribute->getStatus());
     }
 
     public function testActivateAttribute(): void
     {
-        $attribute = new Attribute();
-        $attribute->setStatus(AttributeStatus::INACTIVE);
+        // 创建已停用的属性
+        $attribute = $this->service->createAttribute([
+            'code' => 'test_attr_to_activate',
+            'name' => '待激活属性',
+            'status' => AttributeStatus::INACTIVE,
+        ]);
 
-        $this->entityManager
-            ->expects($this->once())
-            ->method('flush')
-        ;
+        $this->assertEquals(AttributeStatus::INACTIVE, $attribute->getStatus());
 
-        $this->attributeManager->activateAttribute($attribute);
+        // 激活属性
+        $this->service->activateAttribute($attribute);
 
         $this->assertEquals(AttributeStatus::ACTIVE, $attribute->getStatus());
+
+        // 验证数据库中的状态
+        $em = self::getEntityManager();
+        $em->clear();
+
+        $foundAttribute = $this->attributeRepository->find($attribute->getId());
+        $this->assertNotNull($foundAttribute);
+        $this->assertEquals(AttributeStatus::ACTIVE, $foundAttribute->getStatus());
     }
 
     public function testAddAttributeValueSuccess(): void
     {
-        $attribute = new Attribute();
-        $data = [
-            'code' => 'red',
+        // 先创建属性
+        $attribute = $this->service->createAttribute([
+            'code' => 'test_attr_with_value',
+            'name' => '有值属性',
+        ]);
+
+        // 添加属性值
+        $valueData = [
+            'code' => 'test_attrval_red',
             'value' => '红色',
         ];
+        $value = $this->service->addAttributeValue($attribute, $valueData);
 
-        $this->attributeValueRepository
-            ->expects($this->once())
-            ->method('isCodeExists')
-            ->with($attribute, 'red')
-            ->willReturn(false)
-        ;
-
-        $this->entityManager
-            ->expects($this->once())
-            ->method('persist')
-        ;
-
-        $this->entityManager
-            ->expects($this->once())
-            ->method('flush')
-        ;
-
-        $value = $this->attributeManager->addAttributeValue($attribute, $data);
-
-        $this->assertEquals($attribute, $value->getAttribute());
-        $this->assertEquals('red', $value->getCode());
+        $this->assertNotNull($value->getId());
+        $this->assertEquals($attribute->getId(), $value->getAttribute()?->getId());
+        $this->assertEquals('test_attrval_red', $value->getCode());
         $this->assertEquals('红色', $value->getValue());
+
+        // 验证数据库持久化
+        $em = self::getEntityManager();
+        $em->clear();
+
+        $foundValue = $this->attributeValueRepository->find($value->getId());
+        $this->assertNotNull($foundValue);
+        $this->assertEquals('test_attrval_red', $foundValue->getCode());
     }
 
     public function testAddAttributeValueWithDuplicateCode(): void
     {
-        $attribute = new Attribute();
-        $data = [
-            'code' => 'red',
-            'value' => '红色',
+        // 创建属性
+        $attribute = $this->service->createAttribute([
+            'code' => 'test_attr_duplicate_value',
+            'name' => '重复值属性',
+        ]);
+
+        // 添加第一个属性值
+        $valueData = [
+            'code' => 'test_attrval_duplicate',
+            'value' => '重复值',
         ];
+        $this->service->addAttributeValue($attribute, $valueData);
 
-        $this->attributeValueRepository
-            ->expects($this->once())
-            ->method('isCodeExists')
-            ->with($attribute, 'red')
-            ->willReturn(true)
-        ;
-
+        // 尝试添加同样 code 的属性值
         $this->expectException(AttributeException::class);
-        $this->expectExceptionMessage('属性值编码 "red" 已存在');
+        $this->expectExceptionMessage('属性值编码 "test_attrval_duplicate" 已存在');
 
-        $this->attributeManager->addAttributeValue($attribute, $data);
+        $this->service->addAttributeValue($attribute, $valueData);
     }
 
     public function testImportAttributeValues(): void
     {
-        $attribute = new Attribute();
+        // 创建属性
+        $attribute = $this->service->createAttribute([
+            'code' => 'test_attr_import',
+            'name' => '导入属性',
+        ]);
+
+        // 先创建一个已存在的属性值
+        $existingValue = $this->service->addAttributeValue($attribute, [
+            'code' => 'test_attrval_blue',
+            'value' => '蓝色',
+        ]);
+
+        // 批量导入属性值
         $valuesData = [
-            ['code' => 'red', 'value' => '红色'],
-            ['code' => 'blue', 'value' => '蓝色'],
+            ['code' => 'test_attrval_red', 'value' => '红色'],
+            ['code' => 'test_attrval_blue', 'value' => '蓝色更新'], // 更新已存在的
         ];
 
-        // 第一个值不存在，第二个值已存在
-        $this->attributeValueRepository
-            ->method('findByAttributeAndCode')
-            ->willReturnMap([
-                [$attribute, 'red', null],
-                [$attribute, 'blue', new AttributeValue()],
-            ])
-        ;
-
-        $this->entityManager
-            ->expects($this->once())
-            ->method('persist')
-        ;
-
-        $this->entityManager
-            ->expects($this->once())
-            ->method('flush')
-        ;
-
-        $values = $this->attributeManager->importAttributeValues($attribute, $valuesData);
+        $values = $this->service->importAttributeValues($attribute, $valuesData);
 
         $this->assertCount(2, $values);
-        $this->assertInstanceOf(AttributeValue::class, $values[0]);
-        $this->assertInstanceOf(AttributeValue::class, $values[1]);
+
+        // 验证新创建的值
+        $redValue = array_values(array_filter($values, fn ($v) => $v->getCode() === 'test_attrval_red'))[0] ?? null;
+        $this->assertNotNull($redValue);
+        $this->assertEquals('红色', $redValue->getValue());
+
+        // 验证更新的值
+        $em = self::getEntityManager();
+        $em->clear();
+
+        $updatedBlue = $this->attributeValueRepository->find($existingValue->getId());
+        $this->assertNotNull($updatedBlue);
+        $this->assertEquals('蓝色更新', $updatedBlue->getValue());
     }
 
     public function testDeactivateAttribute(): void
     {
-        $attribute = new Attribute();
-        $attribute->setStatus(AttributeStatus::ACTIVE);
+        // 创建激活的属性
+        $attribute = $this->service->createAttribute([
+            'code' => 'test_attr_to_deactivate',
+            'name' => '待停用属性',
+        ]);
 
-        $this->entityManager
-            ->expects($this->once())
-            ->method('flush')
-        ;
+        $this->assertEquals(AttributeStatus::ACTIVE, $attribute->getStatus());
 
-        $this->attributeManager->deactivateAttribute($attribute);
+        // 停用属性
+        $this->service->deactivateAttribute($attribute);
 
         $this->assertEquals(AttributeStatus::INACTIVE, $attribute->getStatus());
+
+        // 验证数据库中的状态
+        $em = self::getEntityManager();
+        $em->clear();
+
+        $foundAttribute = $this->attributeRepository->find($attribute->getId());
+        $this->assertNotNull($foundAttribute);
+        $this->assertEquals(AttributeStatus::INACTIVE, $foundAttribute->getStatus());
     }
 
     public function testUpdateAttributeValue(): void
     {
-        $attribute = new Attribute();
-        $value = new AttributeValue();
-        $value->setAttribute($attribute);
-        $value->setCode('old_code');
-        $value->setValue('Old Value');
+        // 创建属性和属性值
+        $attribute = $this->service->createAttribute([
+            'code' => 'test_attr_update_value',
+            'name' => '更新值属性',
+        ]);
 
-        // 模拟 getId 方法返回
-        $reflection = new \ReflectionClass($value);
-        $idProperty = $reflection->getProperty('id');
-        $idProperty->setAccessible(true);
-        $idProperty->setValue($value, '456');
+        $value = $this->service->addAttributeValue($attribute, [
+            'code' => 'test_attrval_old',
+            'value' => 'Old Value',
+        ]);
 
-        $data = [
-            'code' => 'new_code',
+        // 更新属性值
+        $updateData = [
+            'code' => 'test_attrval_new',
             'value' => 'New Value',
         ];
+        $updatedValue = $this->service->updateAttributeValue($value, $updateData);
 
-        $this->attributeValueRepository
-            ->expects($this->once())
-            ->method('isCodeExists')
-            ->with($attribute, 'new_code', '456')
-            ->willReturn(false)
-        ;
-
-        $this->entityManager
-            ->expects($this->once())
-            ->method('flush')
-        ;
-
-        $updatedValue = $this->attributeManager->updateAttributeValue($value, $data);
-
-        $this->assertEquals('new_code', $updatedValue->getCode());
+        $this->assertEquals('test_attrval_new', $updatedValue->getCode());
         $this->assertEquals('New Value', $updatedValue->getValue());
+
+        // 验证数据库中的更新
+        $em = self::getEntityManager();
+        $em->clear();
+
+        $foundValue = $this->attributeValueRepository->find($value->getId());
+        $this->assertNotNull($foundValue);
+        $this->assertEquals('test_attrval_new', $foundValue->getCode());
+        $this->assertEquals('New Value', $foundValue->getValue());
     }
 
     public function testDeleteAttributeValue(): void
     {
-        $value = new AttributeValue();
-        $value->setStatus(AttributeStatus::ACTIVE);
+        // 创建属性和属性值
+        $attribute = $this->service->createAttribute([
+            'code' => 'test_attr_delete_value',
+            'name' => '删除值属性',
+        ]);
 
-        $this->entityManager
-            ->expects($this->once())
-            ->method('flush')
-        ;
+        $value = $this->service->addAttributeValue($attribute, [
+            'code' => 'test_attrval_to_delete',
+            'value' => '待删除值',
+        ]);
 
-        $this->attributeManager->deleteAttributeValue($value);
+        $this->assertEquals(AttributeStatus::ACTIVE, $value->getStatus());
+
+        // 删除属性值（软删除）
+        $this->service->deleteAttributeValue($value);
 
         $this->assertEquals(AttributeStatus::INACTIVE, $value->getStatus());
+
+        // 验证数据库中的状态
+        $em = self::getEntityManager();
+        $em->clear();
+
+        $foundValue = $this->attributeValueRepository->find($value->getId());
+        $this->assertNotNull($foundValue);
+        $this->assertEquals(AttributeStatus::INACTIVE, $foundValue->getStatus());
+    }
+
+    private function cleanupTestData(): void
+    {
+        try {
+            $em = self::getEntityManager();
+            if (!$em->isOpen() || !$em->getConnection()->isConnected()) {
+                return;
+            }
+
+            // 先清理 AttributeValue
+            $testValues = $em->createQuery(
+                'SELECT v FROM Tourze\ProductCoreBundle\Entity\AttributeValue v WHERE v.code LIKE :pattern'
+            )->setParameter('pattern', 'test_attrval_%')->getResult();
+
+            if (is_iterable($testValues)) {
+                foreach ($testValues as $value) {
+                    $this->assertInstanceOf(AttributeValue::class, $value);
+                    $em->remove($value);
+                }
+            }
+
+            // 再清理 Attribute
+            $testAttrs = $em->createQuery(
+                'SELECT a FROM Tourze\ProductCoreBundle\Entity\Attribute a WHERE a.code LIKE :pattern'
+            )->setParameter('pattern', 'test_attr_%')->getResult();
+
+            if (is_iterable($testAttrs)) {
+                foreach ($testAttrs as $attr) {
+                    $this->assertInstanceOf(Attribute::class, $attr);
+                    $em->remove($attr);
+                }
+            }
+
+            $em->flush();
+        } catch (\Exception $e) {
+            // 忽略数据库清理失败的情况
+        }
     }
 }

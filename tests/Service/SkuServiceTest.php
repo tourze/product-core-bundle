@@ -260,6 +260,94 @@ final class SkuServiceTest extends AbstractIntegrationTestCase
         $this->assertContains($sku3->getId(), $mixedFoundIds);
     }
 
+    public function testFindByGtin(): void
+    {
+        // 创建测试数据
+        $spu = new Spu();
+        $spu->setTitle('Test SPU for FindByGtin');
+
+        $sku = new Sku();
+        $sku->setSpu($spu);
+        $sku->setUnit('个');
+        $sku->setGtin('TEST-SKU-FIND-BY-GTIN');
+
+        $entityManager = self::getEntityManager();
+        $entityManager->persist($spu);
+        $entityManager->persist($sku);
+        $entityManager->flush();
+
+        // 测试查找存在的SKU
+        $foundSku = $this->service->findByGtin('TEST-SKU-FIND-BY-GTIN');
+        $this->assertNotNull($foundSku);
+        $this->assertInstanceOf(Sku::class, $foundSku);
+        $this->assertEquals('TEST-SKU-FIND-BY-GTIN', $foundSku->getGtin());
+
+        // 测试查找不存在的GTIN
+        $notFoundSku = $this->service->findByGtin('NON-EXISTENT-GTIN');
+        $this->assertNull($notFoundSku);
+    }
+
+    public function testFindByGtins(): void
+    {
+        // 创建测试数据
+        $spu = new Spu();
+        $spu->setTitle('Test SPU for FindByGtins');
+
+        $sku1 = new Sku();
+        $sku1->setSpu($spu);
+        $sku1->setUnit('个');
+        $sku1->setGtin('TEST-SKU-GTINS-1');
+
+        $sku2 = new Sku();
+        $sku2->setSpu($spu);
+        $sku2->setUnit('个');
+        $sku2->setGtin('TEST-SKU-GTINS-2');
+
+        $sku3 = new Sku();
+        $sku3->setSpu($spu);
+        $sku3->setUnit('个');
+        $sku3->setGtin('TEST-SKU-GTINS-3');
+
+        $entityManager = self::getEntityManager();
+        $entityManager->persist($spu);
+        $entityManager->persist($sku1);
+        $entityManager->persist($sku2);
+        $entityManager->persist($sku3);
+        $entityManager->flush();
+
+        // 测试根据GTIN列表查找
+        $gtins = ['TEST-SKU-GTINS-1', 'TEST-SKU-GTINS-2'];
+        $foundSkus = $this->service->findByGtins($gtins);
+
+        $this->assertIsArray($foundSkus);
+        $this->assertCount(2, $foundSkus);
+
+        $foundGtins = array_map(fn ($sku) => $sku->getGtin(), $foundSkus);
+        $this->assertContains('TEST-SKU-GTINS-1', $foundGtins);
+        $this->assertContains('TEST-SKU-GTINS-2', $foundGtins);
+
+        // 测试空GTIN列表
+        $emptyResult = $this->service->findByGtins([]);
+        $this->assertIsArray($emptyResult);
+        $this->assertEmpty($emptyResult);
+
+        // 测试不存在的GTIN
+        $nonExistentResult = $this->service->findByGtins(['NON-EXISTENT-GTIN']);
+        $this->assertIsArray($nonExistentResult);
+        $this->assertEmpty($nonExistentResult);
+
+        // 测试部分存在、部分不存在的GTIN
+        $mixedGtins = ['TEST-SKU-GTINS-1', 'NON-EXISTENT-GTIN', 'TEST-SKU-GTINS-3'];
+        $mixedResult = $this->service->findByGtins($mixedGtins);
+
+        $this->assertIsArray($mixedResult);
+        $this->assertCount(2, $mixedResult);
+
+        $mixedFoundGtins = array_map(fn ($sku) => $sku->getGtin(), $mixedResult);
+        $this->assertContains('TEST-SKU-GTINS-1', $mixedFoundGtins);
+        $this->assertContains('TEST-SKU-GTINS-3', $mixedFoundGtins);
+    }
+
     private function cleanupTestData(): void
     {
         try {

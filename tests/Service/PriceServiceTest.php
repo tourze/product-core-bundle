@@ -26,20 +26,4 @@ final class PriceServiceTest extends AbstractIntegrationTestCase
         $service = self::getService(PriceService::class);
         $this->assertInstanceOf(PriceService::class, $service);
     }
-
-    public function testFindFreightPriceBySkus(): void
-    {
-        $service = self::getService(PriceService::class);
-        $result = $service->findFreightPriceBySkus('test-freight-id', []);
-
-        $this->assertNull($result);
-    }
-
-    public function testFindPriceById(): void
-    {
-        $service = self::getService(PriceService::class);
-        $result = $service->findPriceById('test-price-id');
-
-        $this->assertNull($result);
-    }
 }

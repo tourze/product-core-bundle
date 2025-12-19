@@ -23,7 +23,7 @@ use Tourze\ProductCoreBundle\Repository\SpuAttributeRepository;
  */
 #[CoversClass(SpuAttributeCrudController::class)]
 #[RunTestsInSeparateProcesses]
-class SpuAttributeCrudControllerTest extends AbstractEasyAdminControllerTestCase
+final class SpuAttributeCrudControllerTest extends AbstractEasyAdminControllerTestCase
 {
     private ?SpuAttributeRepository $spuAttributeRepository = null;
     protected function getControllerService(): SpuAttributeCrudController

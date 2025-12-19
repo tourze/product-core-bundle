@@ -20,7 +20,7 @@ use Tourze\ProductCoreBundle\Repository\AttributeGroupRepository;
  */
 #[CoversClass(AttributeGroupCrudController::class)]
 #[RunTestsInSeparateProcesses]
-class AttributeGroupCrudControllerTest extends AbstractEasyAdminControllerTestCase
+final class AttributeGroupCrudControllerTest extends AbstractEasyAdminControllerTestCase
 {
     private ?AttributeGroupRepository $attributeGroupRepository = null;
 

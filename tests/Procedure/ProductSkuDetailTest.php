@@ -6,7 +6,8 @@ namespace Tourze\ProductCoreBundle\Tests\Procedure;
 
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\RunTestsInSeparateProcesses;
-use Tourze\JsonRPC\Core\Tests\AbstractProcedureTestCase;
+use Tourze\PHPUnitJsonRPC\AbstractProcedureTestCase;
+use Tourze\ProductCoreBundle\Param\ProductSkuDetailParam;
 use Tourze\ProductCoreBundle\Procedure\ProductSkuDetail;
 
 /**
@@ -31,11 +32,11 @@ final class ProductSkuDetailTest extends AbstractProcedureTestCase
         $procedure = self::getService(ProductSkuDetail::class);
         $this->assertInstanceOf(ProductSkuDetail::class, $procedure);
 
-        // Test that execute method exists and can be called
-        $procedure->skuId = '999999';
+        // Create parameter with test data
+        $param = new ProductSkuDetailParam('999999');
 
         // Handle both expected API exception and database table not found
         $this->expectException(\Exception::class);
-        $procedure->execute();
+        $procedure->execute($param);
     }
 }

@@ -7,8 +7,9 @@ use Symfony\Contracts\EventDispatcher\EventDispatcherInterface;
 use Tourze\DoctrineHelper\CacheHelper;
 use Tourze\JsonRPC\Core\Attribute\MethodDoc;
 use Tourze\JsonRPC\Core\Attribute\MethodExpose;
-use Tourze\JsonRPC\Core\Attribute\MethodParam;
 use Tourze\JsonRPC\Core\Attribute\MethodTag;
+use Tourze\JsonRPC\Core\Contracts\RpcParamInterface;
+use Tourze\JsonRPC\Core\Result\ArrayResult;
 use Tourze\JsonRPC\Core\Exception\ApiException;
 use Tourze\JsonRPC\Core\Model\JsonRpcRequest;
 use Tourze\JsonRPCCacheBundle\Procedure\CacheableProcedure;
@@ -16,6 +17,7 @@ use Tourze\ProductCoreBundle\Entity\Sku;
 use Tourze\ProductCoreBundle\Entity\Spu;
 use Tourze\ProductCoreBundle\Event\SpuDetailEvent;
 use Tourze\ProductCoreBundle\Exception\ParameterValidationException;
+use Tourze\ProductCoreBundle\Param\ProductSpuDetailParam;
 use Tourze\ProductCoreBundle\Repository\SpuRepository;
 use Tourze\UserIDBundle\Model\SystemUser;
 
@@ -24,9 +26,6 @@ use Tourze\UserIDBundle\Model\SystemUser;
 #[MethodExpose(method: 'ProductSpuDetail')]
 final class ProductSpuDetail extends CacheableProcedure
 {
-    #[MethodParam(description: 'SPU ID')]
-    public string $spuId;
-
     public function __construct(
         private readonly SpuRepository $spuRepository,
         private readonly EventDispatcherInterface $eventDispatcher,
@@ -34,23 +33,26 @@ final class ProductSpuDetail extends CacheableProcedure
     ) {
     }
 
-    public function execute(): array
+    /**
+     * @phpstan-param ProductSpuDetailParam $param
+     */
+    public function execute(ProductSpuDetailParam|RpcParamInterface $param): ArrayResult
     {
-        $spu = $this->findSpu();
+        $spu = $this->findSpu($param);
         $result = $spu->retrieveSpuArray();
         $result = $this->filterInvalidSkus($result);
 
         if (null === $this->security->getUser()) {
-            return $result;
+            return new ArrayResult($result);
         }
 
         return $this->dispatchSpuDetailEvent($spu, $result);
     }
 
-    private function findSpu(): Spu
+    private function findSpu(ProductSpuDetailParam $param): Spu
     {
         $spu = $this->spuRepository->findOneBy([
-            'id' => (int) $this->spuId,
+            'id' => (int) $param->spuId,
             'valid' => true,
         ]);
         if (null === $spu) {
@@ -96,7 +98,7 @@ final class ProductSpuDetail extends CacheableProcedure
 
         $result = $event->getResult();
         /** @var array<string, mixed> $result */
-        return $result;
+        return new ArrayResult($result);
     }
 
     public function getCacheKey(JsonRpcRequest $request): string

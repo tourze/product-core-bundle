@@ -45,7 +45,7 @@ final class AdminMenuTest extends AbstractEasyAdminMenuTestCase
         $mainItem = $this->createMock(ItemInterface::class);
         $childItem = $this->createMock(ItemInterface::class);
 
-        $childItem->expects($this->exactly(12))
+        $childItem->expects($this->exactly(11))
             ->method('addChild')
             ->willReturnCallback(function ($name) use ($childItem) {
                 $expectedNames = [

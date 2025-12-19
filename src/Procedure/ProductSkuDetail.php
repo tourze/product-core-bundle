@@ -4,10 +4,12 @@ namespace Tourze\ProductCoreBundle\Procedure;
 
 use Tourze\JsonRPC\Core\Attribute\MethodDoc;
 use Tourze\JsonRPC\Core\Attribute\MethodExpose;
-use Tourze\JsonRPC\Core\Attribute\MethodParam;
 use Tourze\JsonRPC\Core\Attribute\MethodTag;
+use Tourze\JsonRPC\Core\Contracts\RpcParamInterface;
+use Tourze\JsonRPC\Core\Result\ArrayResult;
 use Tourze\JsonRPC\Core\Exception\ApiException;
 use Tourze\JsonRPC\Core\Procedure\BaseProcedure;
+use Tourze\ProductCoreBundle\Param\ProductSkuDetailParam;
 use Tourze\ProductCoreBundle\Repository\SkuRepository;
 
 #[MethodTag(name: '产品模块')]
@@ -15,17 +17,17 @@ use Tourze\ProductCoreBundle\Repository\SkuRepository;
 #[MethodExpose(method: 'ProductSkuDetail')]
 final class ProductSkuDetail extends BaseProcedure
 {
-    #[MethodParam(description: 'SKU ID')]
-    public string $skuId;
-
     public function __construct(
         private readonly SkuRepository $skuRepository,
     ) {
     }
 
-    public function execute(): array
+    /**
+     * @phpstan-param ProductSkuDetailParam $param
+     */
+    public function execute(ProductSkuDetailParam|RpcParamInterface $param): ArrayResult
     {
-        $sku = $this->skuRepository->find((int) $this->skuId);
+        $sku = $this->skuRepository->find((int) $param->skuId);
         if (null === $sku) {
             throw new ApiException('找不到SKU');
         }

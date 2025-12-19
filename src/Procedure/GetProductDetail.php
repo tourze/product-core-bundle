@@ -4,12 +4,14 @@ namespace Tourze\ProductCoreBundle\Procedure;
 
 use Tourze\JsonRPC\Core\Attribute\MethodDoc;
 use Tourze\JsonRPC\Core\Attribute\MethodExpose;
-use Tourze\JsonRPC\Core\Attribute\MethodParam;
 use Tourze\JsonRPC\Core\Attribute\MethodTag;
+use Tourze\JsonRPC\Core\Contracts\RpcParamInterface;
+use Tourze\JsonRPC\Core\Result\ArrayResult;
 use Tourze\JsonRPC\Core\Procedure\BaseProcedure;
 use Tourze\ProductCoreBundle\Entity\Spu;
 use Tourze\ProductCoreBundle\Exception\ProductNotFoundException;
 use Tourze\ProductCoreBundle\Exception\ProductStatusException;
+use Tourze\ProductCoreBundle\Param\GetProductDetailParam;
 use Tourze\ProductCoreBundle\Repository\SpuRepository;
 use Tourze\ProductCoreBundle\Service\ProductArrayFormatterService;
 
@@ -18,9 +20,6 @@ use Tourze\ProductCoreBundle\Service\ProductArrayFormatterService;
 #[MethodExpose(method: 'GetProductDetail')]
 final class GetProductDetail extends BaseProcedure
 {
-    #[MethodParam(description: '商品ID')]
-    public int $id = 0;
-
     public function __construct(
         private readonly SpuRepository $spuRepository,
         private readonly ProductArrayFormatterService $formatterService,
@@ -28,15 +27,15 @@ final class GetProductDetail extends BaseProcedure
     }
 
     /**
-     * @return array<string, mixed>
+     * @phpstan-param GetProductDetailParam $param
      */
-    public function execute(): array
+    public function execute(GetProductDetailParam|RpcParamInterface $param): ArrayResult
     {
-        if ($this->id <= 0) {
+        if ($param->id <= 0) {
             throw new ProductNotFoundException('商品ID不能为空');
         }
 
-        $spu = $this->spuRepository->find($this->id);
+        $spu = $this->spuRepository->find($param->id);
 
         if (null === $spu) {
             throw new ProductNotFoundException('商品不存在');
@@ -118,7 +117,7 @@ final class GetProductDetail extends BaseProcedure
             ];
         }
 
-        return [
+        return new ArrayResult([
             'id' => $spu->getId(),
             'gtin' => $spu->getGtin(),
             'title' => $spu->getTitle(),
@@ -139,6 +138,6 @@ final class GetProductDetail extends BaseProcedure
             'attributes' => $attributes,
             'descriptionAttributes' => $descriptionAttributes,
             'categories' => $categories,
-        ];
+        ]);
     }
 }

@@ -24,7 +24,7 @@ use Tourze\ProductCoreBundle\Repository\SkuAttributeRepository;
  */
 #[CoversClass(SkuAttributeCrudController::class)]
 #[RunTestsInSeparateProcesses]
-class SkuAttributeCrudControllerTest extends AbstractEasyAdminControllerTestCase
+final class SkuAttributeCrudControllerTest extends AbstractEasyAdminControllerTestCase
 {
     private ?SkuAttributeRepository $skuAttributeRepository = null;
 

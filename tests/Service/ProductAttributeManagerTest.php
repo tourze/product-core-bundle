@@ -19,7 +19,7 @@ use Tourze\ProductCoreBundle\Service\ProductAttributeManager;
  */
 #[CoversClass(ProductAttributeManager::class)]
 #[RunTestsInSeparateProcesses]
-class ProductAttributeManagerTest extends AbstractIntegrationTestCase
+final class ProductAttributeManagerTest extends AbstractIntegrationTestCase
 {
     private ?ProductAttributeManager $service = null;
 

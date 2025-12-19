@@ -14,7 +14,7 @@ use Tourze\ProductCoreBundle\Entity\Attribute;
 use Tourze\ProductCoreBundle\Entity\AttributeGroup;
 use Tourze\ProductCoreBundle\Entity\CategoryAttribute;
 
-class CategoryAttributeFixtures extends Fixture implements DependentFixtureInterface
+final class CategoryAttributeFixtures extends Fixture implements DependentFixtureInterface
 {
     public function load(ObjectManager $manager): void
     {

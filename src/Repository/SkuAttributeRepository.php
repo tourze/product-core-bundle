@@ -16,7 +16,7 @@ use Tourze\ProductCoreBundle\Exception\AttributeException;
  * @extends ServiceEntityRepository<SkuAttribute>
  */
 #[AsRepository(entityClass: SkuAttribute::class)]
-class SkuAttributeRepository extends ServiceEntityRepository
+final class SkuAttributeRepository extends ServiceEntityRepository
 {
     public function __construct(
         ManagerRegistry $registry,

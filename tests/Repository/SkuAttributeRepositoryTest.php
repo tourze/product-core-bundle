@@ -24,7 +24,7 @@ use Tourze\ProductCoreBundle\Repository\SkuAttributeRepository;
  */
 #[CoversClass(SkuAttributeRepository::class)]
 #[RunTestsInSeparateProcesses]
-class SkuAttributeRepositoryTest extends AbstractRepositoryTestCase
+final class SkuAttributeRepositoryTest extends AbstractRepositoryTestCase
 {
     protected function getRepositoryClass(): string
     {

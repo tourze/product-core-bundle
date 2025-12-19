@@ -11,7 +11,7 @@ use Tourze\ProductCoreBundle\Entity\Attribute;
 use Tourze\ProductCoreBundle\Entity\AttributeValue;
 use Tourze\ProductCoreBundle\Enum\AttributeStatus;
 
-class AttributeValueFixtures extends Fixture implements DependentFixtureInterface
+final class AttributeValueFixtures extends Fixture implements DependentFixtureInterface
 {
     public const VALUE_RED = 'attribute-value-red';
     public const VALUE_BLUE = 'attribute-value-blue';

@@ -16,7 +16,7 @@ use Tourze\ProductCoreBundle\Enum\AttributeValueType;
  * @internal
  */
 #[CoversClass(SpuAttribute::class)]
-class SpuAttributeTest extends AbstractEntityTestCase
+final class SpuAttributeTest extends AbstractEntityTestCase
 {
 
     protected function createEntity(): object
