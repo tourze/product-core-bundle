@@ -50,7 +50,7 @@
     "tourze/easy-admin-extra-bundle": "1.0.*",
     "tourze/easy-admin-menu-bundle": "1.0.*",
     "tourze/enum-extra": "1.0.*",
-    "tourze/file-storage-bundle": "1.0.*",
+    "tourze/file-storage-bundle": "1.1.*",
     "tourze/json-rpc-cache-bundle": "2.0.*",
     "tourze/json-rpc-core": "2.0.*",
     "tourze/json-rpc-paginator-bundle": "2.0.*",
